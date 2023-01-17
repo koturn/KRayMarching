@@ -6,12 +6,12 @@ Shader "koturn/KRayMarching/ColorHexagram"
         _MaxLoop ("Maximum loop count", Int) = 256
         _MinRayLength ("Minimum length of the ray", Float) = 0.001
         _MaxRayLength ("Maximum length of the ray", Float) = 1000.0
-        _Scale ("Scale vector", Vector) = (1.0, 1.0, 1.0, 1.0)
+        _Scales ("Scale vector", Vector) = (1.0, 1.0, 1.0, 1.0)
         _MarchingFactor ("Marching Factor", Float) = 0.5
 
         // Lighting Parameters.
-        _SpecularPower ("Specular Power", Range(0.0, 100.0)) = 1.0
-        _SpecularColor ("Color of specular", Color) = (1.0, 1.0, 1.0, 1.0)
+        _SpecColor ("Color of specular", Color) = (0.5, 0.5, 0.5, 1.0)
+        _SpecPower ("Specular Power", Range(0.0, 100.0)) = 1.0
 
         // SDF parameters.
         _TorusRadius ("Radius of Torus", Float) = 0.25
@@ -146,14 +146,14 @@ Shader "koturn/KRayMarching/ColorHexagram"
         //! Maximum length of the ray.
         uniform float _MaxRayLength;
         //! Scale vector.
-        uniform float3 _Scale;
+        uniform float3 _Scales;
         //! Marching Factor.
         uniform float _MarchingFactor;
 
-        //! Power of specular.
-        uniform float _SpecularPower;
         //! Color of specular.
-        uniform float4 _SpecularColor;
+        uniform half4 _SpecColor;
+        //! Power of specular.
+        uniform half _SpecPower;
 
         //! Multiplier of lines.
         uniform float _LineColorMultiplier;
@@ -178,15 +178,15 @@ Shader "koturn/KRayMarching/ColorHexagram"
             UNITY_INITIALIZE_OUTPUT(v2f, o);
 
             o.localPos = v.vertex.xyz;
-            o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos) * _Scale;
+            o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
 #ifdef USING_DIRECTIONAL_LIGHT
-            o.localSpaceLightPos = normalizeEx(mul((float3x3)unity_WorldToObject, _WorldSpaceLightPos0.xyz) * _Scale.xyz);
+            o.localSpaceLightPos = normalizeEx(mul((float3x3)unity_WorldToObject, _WorldSpaceLightPos0.xyz) * _Scales.xyz);
 #else
-            o.localSpaceLightPos = worldToObjectPos(_WorldSpaceLightPos0) * _Scale;
+            o.localSpaceLightPos = worldToObjectPos(_WorldSpaceLightPos0) * _Scales;
 #endif  // USING_DIRECTIONAL_LIGHT
             UNITY_TRANSFER_LIGHTING(o, v.uv2);
 
-            v.vertex.xyz /= _Scale;
+            v.vertex.xyz /= _Scales;
             o.pos = UnityObjectToClipPos(v.vertex);
 
             return o;
@@ -226,7 +226,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             const half3 diffuse = lightCol * (ro.color.a == 0.0 ? 1.0 : sq(nDotL * 0.5 + 0.5));
 
             // Specular reflection.
-            const half3 specular = ro.color.a * pow(max(0.0, dot(normalize(localLightDir + localViewDir), localNormal)), _SpecularPower) * _SpecularColor.xyz * lightCol;
+            const half3 specular = ro.color.a * pow(max(0.0, dot(normalize(localLightDir + localViewDir), localNormal)), _SpecPower) * _SpecColor.xyz * lightCol;
 
             // Ambient color.
 #if UNITY_SHOULD_SAMPLE_SH

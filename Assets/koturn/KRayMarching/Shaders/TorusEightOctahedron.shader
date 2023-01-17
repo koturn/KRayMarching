@@ -8,12 +8,12 @@ Shader "koturn/RayMarching/TorusEightOctahedron"
         _MaxRayLength ("Maximum length of the ray", Float) = 1000.0
 
         [Vector3]
-        _Scale ("Scale vector", Vector) = (1.0, 1.0, 1.0, 1.0)
+        _Scales ("Scale vector", Vector) = (1.0, 1.0, 1.0, 1.0)
 
         _MarchingFactor ("Marching Factor", Range(0.0, 1.0)) = 0.5
 
-        _SpecularPower ("Specular Power", Range(0.0, 100.0)) = 5.0
-        _SpecularColor ("Color of specular", Color) = (0.5, 0.5, 0.5, 0.5)
+        _SpecColor ("Color of specular", Color) = (0.5, 0.5, 0.5, 0.5)
+        _SpecPower ("Specular Power", Range(0.0, 100.0)) = 5.0
 
         // SDF parameters.
         _TorusRadius ("Radius of Torus", Float) = 0.25
@@ -146,14 +146,14 @@ Shader "koturn/RayMarching/TorusEightOctahedron"
         //! Maximum length of the ray.
         uniform float _MaxRayLength;
         //! Scale vector.
-        uniform float3 _Scale;
+        uniform float3 _Scales;
         //! Marching Factor.
         uniform float _MarchingFactor;
 
-        //! Power of specular.
-        uniform float _SpecularPower;
         //! Color of specular.
-        uniform float4 _SpecularColor;
+        uniform half4 _SpecColor;
+        //! Power of specular.
+        uniform half _SpecPower;
 
         //! Radius of Torus.
         uniform float _TorusRadius;
@@ -176,15 +176,15 @@ Shader "koturn/RayMarching/TorusEightOctahedron"
             UNITY_INITIALIZE_OUTPUT(v2f, o);
 
             o.localPos = v.vertex.xyz;
-            o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos) * _Scale;
+            o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
 #ifdef USING_DIRECTIONAL_LIGHT
-            o.localSpaceLightPos = normalizeEx(mul((float3x3)unity_WorldToObject, _WorldSpaceLightPos0.xyz) * _Scale);
+            o.localSpaceLightPos = normalizeEx(mul((float3x3)unity_WorldToObject, _WorldSpaceLightPos0.xyz) * _Scales);
 #else
-            o.localSpaceLightPos = worldToObjectPos(_WorldSpaceLightPos0) * _Scale;
+            o.localSpaceLightPos = worldToObjectPos(_WorldSpaceLightPos0) * _Scales;
 #endif  // USING_DIRECTIONAL_LIGHT
             UNITY_TRANSFER_LIGHTING(o, v.uv2);
 
-            v.vertex.xyz /= _Scale;
+            v.vertex.xyz /= _Scales;
             o.pos = UnityObjectToClipPos(v.vertex);
 
             return o;
@@ -224,7 +224,7 @@ Shader "koturn/RayMarching/TorusEightOctahedron"
             const half3 diffuse = lightCol * sq(nDotL * 0.5 + 0.5);
 
             // Specular reflection.
-            const half3 specular = pow(max(0.0, dot(normalize(localLightDir + localViewDir), localNormal)), _SpecularPower) * _SpecularColor.xyz * lightCol;
+            const half3 specular = pow(max(0.0, dot(normalize(localLightDir + localViewDir), localNormal)), _SpecPower) * _SpecColor.xyz * lightCol;
 
             // Ambient color.
 #if UNITY_SHOULD_SAMPLE_SH

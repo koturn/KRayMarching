@@ -40,9 +40,9 @@ namespace Koturn.KRayMarching
         /// </summary>
         private const string PropNameMaxRayLength = "_MaxRayLength";
         /// <summary>
-        /// Property name of "_Scale".
+        /// Property name of "_Scales".
         /// </summary>
-        private const string PropNameScale = "_Scale";
+        private const string PropNameScales = "_Scales";
         /// <summary>
         /// Property name of "_MarchingFactor".
         /// </summary>
@@ -61,13 +61,13 @@ namespace Koturn.KRayMarching
         /// </summary>
         private const string PropNameAmbientMode = "_AmbientMode";
         /// <summary>
-        /// Property name of "_SpecularPower".
+        /// Property name of "_SpecColor".
         /// </summary>
-        private const string PropNameSpecularPower = "_SpecularPower";
+        private const string PropNameSpecColor = "_SpecColor";
         /// <summary>
-        /// Property name of "_SpecularColor".
+        /// Property name of "_SpecPower".
         /// </summary>
-        private const string PropNameSpecularColor = "_SpecularColor";
+        private const string PropNameSpecPower = "_SpecPower";
         /// <summary>
         /// Property name of "_EnableRefProbe".
         /// </summary>
@@ -90,7 +90,7 @@ namespace Koturn.KRayMarching
                 ShaderProperty(me, mps, PropNameMaxLoop, false);
                 ShaderProperty(me, mps, PropNameMinRayLength, false);
                 ShaderProperty(me, mps, PropNameMaxRayLength, false);
-                ShaderProperty(me, mps, PropNameScale, false);
+                ShaderProperty(me, mps, PropNameScales, false);
                 ShaderProperty(me, mps, PropNameMarchingFactor, false);
             }
 
@@ -101,8 +101,8 @@ namespace Koturn.KRayMarching
                 ShaderProperty(me, mps, PropNameDiffuseMode, false);
                 ShaderProperty(me, mps, PropNameSpecularMode, false);
                 ShaderProperty(me, mps, PropNameAmbientMode, false);
-                ShaderProperty(me, mps, PropNameSpecularPower, false);
-                ShaderProperty(me, mps, PropNameSpecularColor, false);
+                ShaderProperty(me, mps, PropNameSpecColor, false);
+                ShaderProperty(me, mps, PropNameSpecPower, false);
 
                 var mpEnableReflectionProbe = FindProperty(PropNameEnableReflectionProbe, mps, false);
                 if (mpEnableReflectionProbe != null)

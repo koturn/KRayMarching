@@ -8,12 +8,12 @@ Shader "koturn/RayMarching/Sphere"
         _MaxRayLength ("Maximum length of the ray", Float) = 1000.0
 
         [Vector3]
-        _Scale ("Scale vector", Vector) = (1.0, 1.0, 1.0, 1.0)
+        _Scales ("Scale vector", Vector) = (1.0, 1.0, 1.0, 1.0)
         _MarchingFactor ("Marching Factor", Float) = 1.0
 
         _Color ("Color of the objects", Color) = (1.0, 1.0, 1.0, 1.0)
-        _SpecularPower ("Specular Power", Range(0.0, 100.0)) = 5.0
-        _SpecularColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
+        _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
+        _SpecPower ("Specular Power", Range(0.0, 100.0)) = 5.0
 
         [KeywordEnum(Optimized, Optimized Loop, Conventional)]
         _NormalCalcMode ("Normal Calculation Mode", Int) = 0
@@ -157,13 +157,13 @@ Shader "koturn/RayMarching/Sphere"
         //! Maximum length of the ray.
         uniform float _MaxRayLength;
         //! Scale vector.
-        uniform float3 _Scale;
+        uniform float3 _Scales;
         //! Marching Factor.
         uniform float _MarchingFactor;
-        //! Specular power.
-        uniform float _SpecularPower;
         //! Specular color.
-        uniform float4 _SpecularColor;
+        uniform half4 _SpecColor;
+        //! Specular power.
+        uniform half _SpecPower;
         //! Blend coefficient of reflection probe.
         uniform float _RefProbeBlendCoeff;
 
@@ -179,15 +179,15 @@ Shader "koturn/RayMarching/Sphere"
             UNITY_INITIALIZE_OUTPUT(v2f, o);
 
             o.localPos = v.vertex;
-            o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos) * _Scale;
+            o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
 #ifdef USING_DIRECTIONAL_LIGHT
-            o.localSpaceLightPos = normalizeEx(mul((float3x3)unity_WorldToObject, _WorldSpaceLightPos0.xyz) * _Scale);
+            o.localSpaceLightPos = normalizeEx(mul((float3x3)unity_WorldToObject, _WorldSpaceLightPos0.xyz) * _Scales);
 #else
-            o.localSpaceLightPos = worldToObjectPos(_WorldSpaceLightPos0) * _Scale;
+            o.localSpaceLightPos = worldToObjectPos(_WorldSpaceLightPos0) * _Scales;
 #endif  // USING_DIRECTIONAL_LIGHT
             UNITY_TRANSFER_LIGHTING(o, v.uv2);
 
-            v.vertex.xyz /= _Scale;
+            v.vertex.xyz /= _Scales;
             o.pos = UnityObjectToClipPos(v.vertex);
 
             return o;
@@ -237,9 +237,9 @@ Shader "koturn/RayMarching/Sphere"
 
             // Specular reflection.
 #ifdef _SPECULARMODE_HALF_VECTOR
-            const half3 specular = pow(max(0.0, dot(normalize(localLightDir + localViewDir), localNormal)), _SpecularPower) * _SpecularColor.xyz * lightCol;
+            const half3 specular = pow(max(0.0, dot(normalize(localLightDir + localViewDir), localNormal)), _SpecPower) * _SpecColor.xyz * lightCol;
 #elif _SPECULARMODE_ORIGINAL
-            const half3 specular = pow(max(0.0, dot(reflect(-localLightDir, localNormal), localViewDir)), _SpecularPower) * _SpecularColor.xyz * lightCol;
+            const half3 specular = pow(max(0.0, dot(reflect(-localLightDir, localNormal), localViewDir)), _SpecPower) * _SpecColor.xyz * lightCol;
 #else
             const half3 specular = half3(0.0, 0.0, 0.0);
 #endif  // _SPECULARMODE_HALF_VECTOR
