@@ -1,4 +1,4 @@
-Shader "koturn/RayMarching/Sphere"
+Shader "koturn/KRayMarching/Sphere"
 {
     Properties
     {

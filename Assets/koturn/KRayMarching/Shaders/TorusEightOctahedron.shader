@@ -1,4 +1,4 @@
-Shader "koturn/RayMarching/TorusEightOctahedron"
+Shader "koturn/KRayMarching/TorusEightOctahedron"
 {
     Properties
     {
