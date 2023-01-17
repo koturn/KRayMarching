@@ -21,6 +21,9 @@ Shader "koturn/RayMarching/TorusSixOctahedron"
         _TorusWidth ("Width of Torus", Float) = 0.005
         _OctahedronSize ("Size of Octahedron", Float) = 0.05
 
+        [Toggle(_USE_FAST_INV_TRI_FUNC_ON)]
+        _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
+
         [Enum(UnityEngine.Rendering.CullMode)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front
 
@@ -48,6 +51,7 @@ Shader "koturn/RayMarching/TorusSixOctahedron"
 
         CGINCLUDE
         #pragma multi_compile_fog
+        #pragma shader_feature_local_fragment _ _USE_FAST_INV_TRI_FUNC_ON
 
         #include "UnityCG.cginc"
         #include "UnityStandardUtils.cginc"
@@ -117,11 +121,19 @@ Shader "koturn/RayMarching/TorusSixOctahedron"
         float3 objectToWorldPos(float3 localPos);
         fixed getLightAttenuation(v2f fi, float3 worldPos);
         float sq(float x);
+        float atanPos(float x);
+        float atanFast(float x);
+        float atan2Fast(float x, float y);
         float3 normalizeEx(float3 v);
         float2 getPmodParam(float2 p, float r);
         float2x2 rotate2DMat(float angle);
         float2 rotate2D(float2 v, float angle);
         float2 rotate2D(float2 v, float2 pivot, float angle);
+
+#ifdef _USE_FAST_INV_TRI_FUNC_ON
+        #define atan(x) atanFast(x)
+        #define atan2(x, y) atan2Fast(x, y)
+#endif  // _USE_FAST_INV_TRI_FUNC_ON
 
 
         //! Color of light.
@@ -409,6 +421,51 @@ Shader "koturn/RayMarching/TorusSixOctahedron"
         float sq(float x)
         {
             return x * x;
+        }
+
+        /*
+         * @brief Calculate positive value of atan().
+         * @param [in] x  The first argument of atan().
+         * @return Approximate positive value of atan().
+         */
+        float atanPos(float x)
+        {
+            const float t0 = x < 1.0 ? x : rcp(x);
+#if 1
+            const float t1 = (-0.269408 * t0 + 1.05863) * t0;
+            return x < 1.0 ? t1 : (UNITY_HALF_PI - t1);
+#else
+            const float t1 = t0 * t0;
+            float poly = 0.0872929;
+            poly = -0.301895 + poly * t1;
+            poly = 1.0 + poly * t1;
+            poly *= t0;
+            return x < 1.0 ? poly : (UNITY_HALF_PI - poly);
+#endif
+        }
+
+        /*
+         * @brief Fast atan().
+         * @param [in] x  The first argument of atan().
+         * @return Approximate value of atan().
+         * @see https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
+         */
+        float atanFast(float x)
+        {
+            const float t0 = atanPos(abs(x));
+            return x < 0.0 ? -t0 : t0;
+        }
+
+        /*
+         * @brief Fast atan2().
+         * @param [in] x  The first argument of atan2().
+         * @param [in] y  The second argument of atan2().
+         * @return Approximate value of atan().
+         * @see https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
+         */
+        float atan2Fast(float x, float y)
+        {
+            return atanFast(x / y) + UNITY_PI * (y < 0.0) * (x < 0.0 ? -1.0 : 1.0);
         }
 
         /*!

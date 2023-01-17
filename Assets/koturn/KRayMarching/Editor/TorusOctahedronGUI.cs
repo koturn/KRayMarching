@@ -26,6 +26,10 @@ namespace Koturn.KRayMarching
         /// Property name of "_OctahedronSize".
         /// </summary>
         private const string PropNameOctahedronSize = "_OctahedronSize";
+        /// <summary>
+        /// Property name of "_UseFastInvTriFunc".
+        /// </summary>
+        private const string PropNameUseFastInvTriFunc = "_UseFastInvTriFunc";
 
         /// <summary>
         /// Draw custom properties.
@@ -41,6 +45,7 @@ namespace Koturn.KRayMarching
                 ShaderProperty(me, mps, PropNameTorusRadiusAmp, false);
                 ShaderProperty(me, mps, PropNameTorusWidth, false);
                 ShaderProperty(me, mps, PropNameOctahedronSize, false);
+                ShaderProperty(me, mps, PropNameUseFastInvTriFunc, false);
             }
         }
     }
