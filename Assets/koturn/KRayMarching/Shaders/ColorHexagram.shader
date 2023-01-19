@@ -54,6 +54,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         #include "UnityCG.cginc"
         #include "UnityStandardUtils.cginc"
         #include "AutoLight.cginc"
+        #include "include/Utils.cginc"
 
 
         /*!
@@ -115,9 +116,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
         float sdOctahedron(float3 p, float3 scale, float s);
         float sdCappedCylinder(float3 p, float h, float r);
         float3 getNormal(float3 p);
-        half4 applyFog(float fogFactor, half4 color);
-        float3 worldToObjectPos(float3 worldPos);
-        float3 objectToWorldPos(float3 localPos);
         fixed getLightAttenuation(v2f fi, float3 worldPos);
         float sq(float x);
         float atanPos(float x);
@@ -126,9 +124,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
         float3 normalizeEx(float3 v);
         float2 rotate2D(float2 v, float2 pivot, float angle);
         float2 rotate2D(float2 v, float angle);
-        half3 rgb2hsv(half3 rgb);
-        half3 hsv2rgb(half3 hsv);
-        half3 rgbAddHue(half3 rgb, half hue);
 
 #ifdef _USE_FAST_INV_TRI_FUNC_ON
         #define atan(x) atanFast(x)
@@ -403,44 +398,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
         }
 
         /*!
-         * @brief Apply fog.
-         *
-         * UNITY_APPLY_FOG includes some variable declaration.
-         * This function can be used to localize those declarations.
-         * If fog is disabled, this function returns color as is.
-         *
-         * @param [in] color  Target color.
-         * @return Fog-applied color.
-         */
-        half4 applyFog(float fogFactor, half4 color)
-        {
-            UNITY_APPLY_FOG(fogFactor, color);
-            return color;
-        }
-
-        /*!
-         * @brief Convert from world coordinate to local coordinate.
-         *
-         * @param [in] worldPos  World coordinate.
-         * @return World coordinate.
-         */
-        float3 worldToObjectPos(float3 worldPos)
-        {
-            return mul(unity_WorldToObject, float4(worldPos, 1.0)).xyz;
-        }
-
-        /*!
-         * @brief Convert from local coordinate to world coordinate.
-         *
-         * @param [in] localPos  Local coordinate.
-         * @return World coordinate.
-         */
-        float3 objectToWorldPos(float3 localPos)
-        {
-            return mul(unity_ObjectToWorld, float4(localPos, 1.0)).xyz;
-        }
-
-        /*!
          * @brief Get Light Attenuation.
          *
          * @param [in] fi  Input data for fragment shader.
@@ -542,51 +499,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
             float s, c;
             sincos(angle, s, c);
             return float2(dot(v, float2(c, s)), dot(v, float2(-s, c)));
-        }
-
-        /*!
-         * @brief Convert from RGB to HSV.
-         *
-         * @param [in] rgb  Three-dimensional vector of RGB.
-         * @return Three-dimensional vector of HSV.
-         */
-        half3 rgb2hsv(half3 rgb)
-        {
-            static const half4 k = half4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-            static const half e = 1.0e-5;
-
-            const half4 p = rgb.g < rgb.b ? half4(rgb.bg, k.wz) : half4(rgb.gb, k.xy);
-            const half4 q = rgb.r < p.x ? half4(p.xyw, rgb.r) : half4(rgb.r, p.yzx);
-            const half d = q.x - min(q.w, q.y);
-            return half3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-        }
-
-        /*!
-         * @brief Convert from HSV to RGB.
-         *
-         * @param [in] hsv  Three-dimensional vector of HSV.
-         * @return Three-dimensional vector of RGB.
-         */
-        half3 hsv2rgb(half3 hsv)
-        {
-            static const half4 k = half4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-
-            const half3 p = abs(frac(hsv.xxx + k.xyz) * 6.0 - k.www);
-            return hsv.z * lerp(k.xxx, saturate(p - k.xxx), hsv.y);
-        }
-
-        /*!
-         * @brief Add hue to RGB color.
-         *
-         * @param [in] rgb  Three-dimensional vector of RGB.
-         * @param [in] hue  Scalar of hue.
-         * @return Three-dimensional vector of RGB.
-         */
-        half3 rgbAddHue(half3 rgb, half hue)
-        {
-            half3 hsv = rgb2hsv(rgb);
-            hsv.x += hue;
-            return hsv2rgb(hsv);
         }
         ENDCG
 

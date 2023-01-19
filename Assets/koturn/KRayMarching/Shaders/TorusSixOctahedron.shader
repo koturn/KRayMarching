@@ -56,6 +56,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         #include "UnityCG.cginc"
         #include "UnityStandardUtils.cginc"
         #include "AutoLight.cginc"
+        #include "include/Utils.cginc"
 
 
         /*!
@@ -116,9 +117,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         float sdTorus(float3 p, float2 t);
         float sdOctahedron(float3 p, float s);
         float3 getNormal(float3 p);
-        half4 applyFog(float fogFactor, half4 color);
-        float3 worldToObjectPos(float3 worldPos);
-        float3 objectToWorldPos(float3 localPos);
         fixed getLightAttenuation(v2f fi, float3 worldPos);
         float sq(float x);
         float atanPos(float x);
@@ -360,44 +358,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             }
 
             return normalize(normal);
-        }
-
-        /*!
-         * @brief Apply fog.
-         *
-         * UNITY_APPLY_FOG includes some variable declaration.
-         * This function can be used to localize those declarations.
-         * If fog is disabled, this function returns color as is.
-         *
-         * @param [in] color  Target color.
-         * @return Fog-applied color.
-         */
-        half4 applyFog(float fogFactor, half4 color)
-        {
-            UNITY_APPLY_FOG(fogFactor, color);
-            return color;
-        }
-
-        /*!
-         * @brief Convert from world coordinate to local coordinate.
-         *
-         * @param [in] worldPos  World coordinate.
-         * @return World coordinate.
-         */
-        float3 worldToObjectPos(float3 worldPos)
-        {
-            return mul(unity_WorldToObject, float4(worldPos, 1.0)).xyz;
-        }
-
-        /*!
-         * @brief Convert from local coordinate to world coordinate.
-         *
-         * @param [in] localPos  Local coordinate.
-         * @return World coordinate.
-         */
-        float3 objectToWorldPos(float3 localPos)
-        {
-            return mul(unity_ObjectToWorld, float4(localPos, 1.0)).xyz;
         }
 
         /*!
