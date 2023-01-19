@@ -75,6 +75,7 @@ Shader "koturn/KRayMarching/Sphere"
         #include "UnityCG.cginc"
         #include "UnityStandardUtils.cginc"
         #include "AutoLight.cginc"
+        #include "include/Math.cginc"
         #include "include/RefProbe.cginc"
         #include "include/Utils.cginc"
 
@@ -133,8 +134,6 @@ Shader "koturn/KRayMarching/Sphere"
         float sdSphere(float3 p, float r);
         float3 getNormal(float3 p);
         fixed getLightAttenuation(v2f fi, float3 worldPos);
-        float sq(float x);
-        float3 normalizeEx(float3 v);
 
 
         //! Color of light.
@@ -407,28 +406,6 @@ Shader "koturn/KRayMarching/Sphere"
             //   pos : SV_POSITION
             UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
             return atten;
-        }
-
-        /*!
-         * @brief Calculate squared value.
-         *
-         * @param [in] x  A value.
-         * @return x * x
-         */
-        float sq(float x)
-        {
-            return x * x;
-        }
-
-        /*!
-         * @brief Zero-Division avoided normalize.
-         * @param [in] v  A vector.
-         * @return normalized vector or zero vector.
-         */
-        float3 normalizeEx(float3 v)
-        {
-            const float vDotV = dot(v, v);
-            return vDotV == 0.0 ? v : (rsqrt(vDotV) * v);
         }
         ENDCG
 

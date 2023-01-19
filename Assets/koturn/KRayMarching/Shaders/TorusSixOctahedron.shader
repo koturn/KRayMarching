@@ -21,7 +21,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         _TorusWidth ("Width of Torus", Float) = 0.005
         _OctahedronSize ("Size of Octahedron", Float) = 0.05
 
-        [Toggle(_USE_FAST_INV_TRI_FUNC_ON)]
+        [Toggle(_USE_FAST_INVTRIFUNC_ON)]
         _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
 
         [Enum(UnityEngine.Rendering.CullMode)]
@@ -51,11 +51,16 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         CGINCLUDE
         #pragma multi_compile_fog
-        #pragma shader_feature_local_fragment _ _USE_FAST_INV_TRI_FUNC_ON
+        #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
 
         #include "UnityCG.cginc"
         #include "UnityStandardUtils.cginc"
         #include "AutoLight.cginc"
+
+#ifdef _USE_FAST_INVTRIFUNC_ON
+        #define MATH_REPLACE_TO_FAST_INVTRIFUNC
+#endif  // _USE_FAST_INVTRIFUNC_ON
+        #include "include/Math.cginc"
         #include "include/Utils.cginc"
 
 
@@ -118,20 +123,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         float sdOctahedron(float3 p, float s);
         float3 getNormal(float3 p);
         fixed getLightAttenuation(v2f fi, float3 worldPos);
-        float sq(float x);
-        float atanPos(float x);
-        float atanFast(float x);
-        float atan2Fast(float x, float y);
-        float3 normalizeEx(float3 v);
-        float2 getPmodParam(float2 p, float r);
-        float2x2 rotate2DMat(float angle);
-        float2 rotate2D(float2 v, float angle);
-        float2 rotate2D(float2 v, float2 pivot, float angle);
-
-#ifdef _USE_FAST_INV_TRI_FUNC_ON
-        #define atan(x) atanFast(x)
-        #define atan2(x, y) atan2Fast(x, y)
-#endif  // _USE_FAST_INV_TRI_FUNC_ON
 
 
         //! Color of light.
@@ -372,125 +363,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
             return atten;
         }
-
-        /*!
-         * @brief Calculate squared value.
-         * @param [in] x  A value.
-         * @return x * x
-         */
-        float sq(float x)
-        {
-            return x * x;
-        }
-
-        /*
-         * @brief Calculate positive value of atan().
-         * @param [in] x  The first argument of atan().
-         * @return Approximate positive value of atan().
-         */
-        float atanPos(float x)
-        {
-            const float t0 = x < 1.0 ? x : rcp(x);
-#if 1
-            const float t1 = (-0.269408 * t0 + 1.05863) * t0;
-            return x < 1.0 ? t1 : (UNITY_HALF_PI - t1);
-#else
-            const float t1 = t0 * t0;
-            float poly = 0.0872929;
-            poly = -0.301895 + poly * t1;
-            poly = 1.0 + poly * t1;
-            poly *= t0;
-            return x < 1.0 ? poly : (UNITY_HALF_PI - poly);
-#endif
-        }
-
-        /*
-         * @brief Fast atan().
-         * @param [in] x  The first argument of atan().
-         * @return Approximate value of atan().
-         * @see https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
-         */
-        float atanFast(float x)
-        {
-            const float t0 = atanPos(abs(x));
-            return x < 0.0 ? -t0 : t0;
-        }
-
-        /*
-         * @brief Fast atan2().
-         * @param [in] x  The first argument of atan2().
-         * @param [in] y  The second argument of atan2().
-         * @return Approximate value of atan().
-         * @see https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
-         */
-        float atan2Fast(float x, float y)
-        {
-            return atanFast(x / y) + UNITY_PI * (y < 0.0) * (x < 0.0 ? -1.0 : 1.0);
-        }
-
-        /*!
-         * @brief Zero-Division avoided normalize.
-         * @param [in] v  A vector.
-         * @return normalized vector or zero vector.
-         */
-        float3 normalizeEx(float3 v)
-        {
-            const float vDotV = dot(v, v);
-            return vDotV == 0.0 ? v : (rsqrt(vDotV) * v);
-        }
-
-        /*!
-         * @brief Get unit angle and index of Polar Mod (Fold Rotate).
-         *
-         * @param [in] p  2D-coordinate.
-         * @param [in] r  Number of divisions.
-         * @return Unit angle (x) and index (y) of Polar Mod.
-         */
-        float2 getPmodParam(float2 p, float r)
-        {
-            const float a = atan2(p.y, p.x) + UNITY_PI / r;
-            const float n = UNITY_TWO_PI / r;
-            return float2(n, -floor(a / n));
-        }
-
-        /*!
-         * @brief Get 2D-rotation matrix.
-         *
-         * @param [in] angle  Angle of rotation.
-         * @return 2D-rotation matrix.
-         */
-        float2x2 rotate2DMat(float angle)
-        {
-            float s, c;
-            sincos(angle, /* out */ s, /* out */ c);
-            return float2x2(c, -s, s, c);
-        }
-
-        /*!
-         * @brief Rotate on 2D plane
-         *
-         * @param [in] v  Target vector
-         * @param [in] angle  Angle of rotation.
-         * @return Rotated vector.
-         */
-        float2 rotate2D(float2 v, float angle)
-        {
-            return mul(rotate2DMat(angle), v);
-        }
-
-        /*!
-         * @brief Rotate on 2D plane
-         *
-         * @param [in] v  Target vector
-         * @param [in] pivot  Pivot of rotation.
-         * @param [in] angle  Angle of rotation.
-         * @return Rotated vector.
-         */
-        float2 rotate2D(float2 v, float2 pivot, float angle)
-        {
-            return rotate2D(v - pivot, angle) + pivot;
-        }
-
         ENDCG
 
 

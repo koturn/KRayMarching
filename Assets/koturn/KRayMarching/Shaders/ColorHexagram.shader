@@ -20,7 +20,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         _OctahedronSize ("Size of Octahedron", Float) = 0.05
         _LineColorMultiplier ("Multiplier of lines", Float) = 5.0
 
-        [Toggle(_USE_FAST_INV_TRI_FUNC_ON)]
+        [Toggle(_USE_FAST_INVTRIFUNC_ON)]
         _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
 
         [Enum(UnityEngine.Rendering.CullMode)]
@@ -50,10 +50,16 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
         CGINCLUDE
         #pragma multi_compile_fog
+        #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
 
         #include "UnityCG.cginc"
         #include "UnityStandardUtils.cginc"
         #include "AutoLight.cginc"
+
+#ifdef _USE_FAST_INVTRIFUNC_ON
+        #define MATH_REPLACE_TO_FAST_INVTRIFUNC
+#endif  // _USE_FAST_INVTRIFUNC_ON
+        #include "include/Math.cginc"
         #include "include/Utils.cginc"
 
 
@@ -117,18 +123,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
         float sdCappedCylinder(float3 p, float h, float r);
         float3 getNormal(float3 p);
         fixed getLightAttenuation(v2f fi, float3 worldPos);
-        float sq(float x);
-        float atanPos(float x);
-        float atanFast(float x);
-        float atan2Fast(float x, float y);
-        float3 normalizeEx(float3 v);
-        float2 rotate2D(float2 v, float2 pivot, float angle);
-        float2 rotate2D(float2 v, float angle);
-
-#ifdef _USE_FAST_INV_TRI_FUNC_ON
-        #define atan(x) atanFast(x)
-        #define atan2(x, y) atan2Fast(x, y)
-#endif  // _USE_FAST_INV_TRI_FUNC_ON
 
 
         //! Color of light.
@@ -296,7 +290,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
             float minDist = sdTorus(p, float2(radius, _TorusWidth));
 
-            p.xy = rotate2D(p.xy, _Time.y);
+            p.xy = invRotate2D(p.xy, _Time.y);
 
             const float xyAngle = atan2(p.y, p.x);
             color = half4(
@@ -305,7 +299,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
             const float rotUnit = floor(xyAngle * kInvOneThirdPi);
             float3 rayPos1 = p;
-            rayPos1.xy = rotate2D(rayPos1.xy, kOneThirdPi * rotUnit + kOneSixthPi);
+            rayPos1.xy = invRotate2D(rayPos1.xy, kOneThirdPi * rotUnit + kOneSixthPi);
 
             const float dist = sdOctahedron(rayPos1 - float3(radius, 0.0, 0.0), float3(2.0, 2.0, 0.5), _OctahedronSize);
             if (minDist > dist) {
@@ -319,8 +313,8 @@ Shader "koturn/KRayMarching/ColorHexagram"
                     : kColors[5];
             }
 
-            const float2 posXY1 = rotate2D(float2(radius, 0.0), kTwoThirdPi);
-            const float2 posXY2 = rotate2D(float2(radius, 0.0), -kTwoThirdPi);
+            const float2 posXY1 = invRotate2D(float2(radius, 0.0), kTwoThirdPi);
+            const float2 posXY2 = invRotate2D(float2(radius, 0.0), -kTwoThirdPi);
             const float2 posCenterXY = (posXY1 + posXY2) * 0.5;
             const float length12 = length(posXY2 - posXY1) * 0.5;
 
@@ -328,8 +322,8 @@ Shader "koturn/KRayMarching/ColorHexagram"
                 const float rotUnit2 = floor((xyAngle + kOneSixthPi - kOneThirdPi * i) * kInvTwoThirdPi);
 
                 float3 rayPos2 = p;
-                rayPos2.xy = rotate2D(rayPos2.xy, kTwoThirdPi * rotUnit2 + kOneThirdPi * (i + 3) + kOneSixthPi);
-                rayPos2.xy -= rotate2D(posCenterXY, posCenterXY, kTwoThirdPi * rotUnit2 + kOneSixthPi);
+                rayPos2.xy = invRotate2D(rayPos2.xy, kTwoThirdPi * rotUnit2 + kOneThirdPi * (i + 3) + kOneSixthPi);
+                rayPos2.xy -= invRotate2D(posCenterXY, posCenterXY, kTwoThirdPi * rotUnit2 + kOneSixthPi);
 
                 const float dist2 = sdCappedCylinder(rayPos2, 0.0025, length12 * 5);
                 if (minDist > dist2) {
@@ -408,97 +402,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
         {
             UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
             return atten;
-        }
-
-        /*!
-         * @brief Calculate squared value.
-         * @param [in] x  A value.
-         * @return x * x
-         */
-        float sq(float x)
-        {
-            return x * x;
-        }
-
-        /*
-         * @brief Calculate positive value of atan().
-         * @param [in] x  The first argument of atan().
-         * @return Approximate positive value of atan().
-         */
-        float atanPos(float x)
-        {
-            const float t0 = x < 1.0 ? x : rcp(x);
-#if 1
-            const float t1 = (-0.269408 * t0 + 1.05863) * t0;
-            return x < 1.0 ? t1 : (UNITY_HALF_PI - t1);
-#else
-            const float t1 = t0 * t0;
-            float poly = 0.0872929;
-            poly = -0.301895 + poly * t1;
-            poly = 1.0 + poly * t1;
-            poly *= t0;
-            return x < 1.0 ? poly : (UNITY_HALF_PI - poly);
-#endif
-        }
-
-        /*
-         * @brief Fast atan().
-         * @param [in] x  The first argument of atan().
-         * @return Approximate value of atan().
-         * @see https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
-         */
-        float atanFast(float x)
-        {
-            const float t0 = atanPos(abs(x));
-            return x < 0.0 ? -t0 : t0;
-        }
-
-        /*
-         * @brief Fast atan2().
-         * @param [in] x  The first argument of atan2().
-         * @param [in] y  The second argument of atan2().
-         * @return Approximate value of atan().
-         * @see https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
-         */
-        float atan2Fast(float x, float y)
-        {
-            return atanFast(x / y) + UNITY_PI * (y < 0.0) * (x < 0.0 ? -1.0 : 1.0);
-        }
-
-        /*!
-         * @brief Zero-Division avoided normalize.
-         * @param [in] v  A vector.
-         * @return normalized vector or zero vector.
-         */
-        float3 normalizeEx(float3 v)
-        {
-            const float vDotV = dot(v, v);
-            return vDotV == 0.0 ? v : (rsqrt(vDotV) * v);
-        }
-
-        /*!
-         * @brief Rotate on 2D plane
-         * @param [in] v  Target vector
-         * @param [in] pivot  Pivot of rotation.
-         * @param [in] angle  Angle of rotation.
-         * @return Rotated vector.
-         */
-        float2 rotate2D(float2 v, float2 pivot, float angle)
-        {
-            return rotate2D(v - pivot, angle) + pivot;
-        }
-
-        /*!
-         * @brief Rotate on 2D plane
-         * @param [in] v  Target vector
-         * @param [in] angle  Angle of rotation.
-         * @return Rotated vector.
-         */
-        float2 rotate2D(float2 v, float angle)
-        {
-            float s, c;
-            sincos(angle, s, c);
-            return float2(dot(v, float2(c, s)), dot(v, float2(-s, c)));
         }
         ENDCG
 
