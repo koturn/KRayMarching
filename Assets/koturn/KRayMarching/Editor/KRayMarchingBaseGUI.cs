@@ -49,17 +49,9 @@ namespace Koturn.KRayMarching
         private const string PropNameMarchingFactor = "_MarchingFactor";
 
         /// <summary>
-        /// Property name of "_DiffuseMode".
+        /// Property name of "_LightingMethod".
         /// </summary>
-        private const string PropNameDiffuseMode = "_DiffuseMode";
-        /// <summary>
-        /// Property name of "_SpecularMode".
-        /// </summary>
-        private const string PropNameSpecularMode = "_SpecularMode";
-        /// <summary>
-        /// Property name of "_AmbientMode".
-        /// </summary>
-        private const string PropNameAmbientMode = "_AmbientMode";
+        private const string PropNameLightingMethod = "_LightingMethod";
         /// <summary>
         /// Property name of "_SpecColor".
         /// </summary>
@@ -73,9 +65,29 @@ namespace Koturn.KRayMarching
         /// </summary>
         private const string PropNameEnableReflectionProbe = "_EnableReflectionProbe";
         /// <summary>
-        /// Property name of "_RefProbeBlendCoeff".
+        /// Property name of "_Glossiness".
         /// </summary>
-        private const string PropNameRefProbeBlendCoeff = "_RefProbeBlendCoeff";
+        private const string PropNameGlossiness = "_Glossiness";
+        /// <summary>
+        /// Property name of "_Metallic".
+        /// </summary>
+        private const string PropNameMetallic = "_Metallic";
+        /// <summary>
+        /// Property name of "_DiffuseMode".
+        /// </summary>
+        private const string PropNameDiffuseMode = "_DiffuseMode";
+        /// <summary>
+        /// Property name of "_SpecularMode".
+        /// </summary>
+        private const string PropNameSpecularMode = "_SpecularMode";
+        /// <summary>
+        /// Property name of "_AmbientMode".
+        /// </summary>
+        private const string PropNameAmbientMode = "_AmbientMode";
+        /// <summary>
+        /// Property name of "_NormalCalcMode".
+        /// </summary>
+        private const string PropNameNormalCalcMode = "_NormalCalcMode";
 
         /// <summary>
         /// Draw property items.
@@ -98,22 +110,47 @@ namespace Koturn.KRayMarching
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
                 ShaderProperty(me, mps, PropNameColor, false);
-                ShaderProperty(me, mps, PropNameDiffuseMode, false);
-                ShaderProperty(me, mps, PropNameSpecularMode, false);
-                ShaderProperty(me, mps, PropNameAmbientMode, false);
-                ShaderProperty(me, mps, PropNameSpecColor, false);
-                ShaderProperty(me, mps, PropNameSpecPower, false);
+
+                var mpLightingMethod = FindProperty(PropNameLightingMethod, mps, false);
+                ShaderProperty(me, mpLightingMethod);
+
+                var lightingMethod = (LightingMethod)(mpLightingMethod == null ? -1 : (int)mpLightingMethod.floatValue);
 
                 var mpEnableReflectionProbe = FindProperty(PropNameEnableReflectionProbe, mps, false);
+                ShaderProperty(me, mpEnableReflectionProbe);
+
+                var isNeedGM = true;
                 if (mpEnableReflectionProbe != null)
                 {
-                    ShaderProperty(me, mpEnableReflectionProbe);
-                    using (new EditorGUI.IndentLevelScope())
-                    using (new EditorGUI.DisabledScope(mpEnableReflectionProbe.floatValue < 0.5f))
+                    isNeedGM = (mpEnableReflectionProbe.floatValue >= 0.5f);
+                }
+
+                using (new EditorGUI.DisabledScope(!isNeedGM))
+                {
+                    using (new EditorGUI.DisabledScope(lightingMethod == LightingMethod.UnityLambert))
                     {
-                        ShaderProperty(me, mps, PropNameRefProbeBlendCoeff, false);
+                        ShaderProperty(me, mps, PropNameGlossiness, false);
+                    }
+                    using (new EditorGUI.DisabledScope(lightingMethod != LightingMethod.UnityStandard))
+                    {
+                        ShaderProperty(me, mps, PropNameMetallic, false);
                     }
                 }
+
+                using (new EditorGUI.DisabledScope(lightingMethod == LightingMethod.UnityLambert))
+                {
+                    ShaderProperty(me, mps, PropNameSpecColor, false);
+                    ShaderProperty(me, mps, PropNameSpecPower, false);
+                }
+
+                using (new EditorGUI.DisabledScope(lightingMethod != LightingMethod.Custom))
+                {
+                    ShaderProperty(me, mps, PropNameDiffuseMode, false);
+                    ShaderProperty(me, mps, PropNameSpecularMode, false);
+                    ShaderProperty(me, mps, PropNameAmbientMode, false);
+                }
+
+                ShaderProperty(me, mps, PropNameNormalCalcMode, false);
             }
 
             DrawCustomProperties(me, mps);
@@ -164,7 +201,10 @@ namespace Koturn.KRayMarching
         /// <param name="mp">Target <see cref="MaterialProperty"/>.</param>
         protected static void ShaderProperty(MaterialEditor me, MaterialProperty mp)
         {
-            me.ShaderProperty(mp, mp.displayName);
+            if (mp != null)
+            {
+                me.ShaderProperty(mp, mp.displayName);
+            }
         }
 
         /// <summary>

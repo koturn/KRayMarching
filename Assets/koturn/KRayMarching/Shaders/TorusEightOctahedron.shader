@@ -12,8 +12,14 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
 
         _MarchingFactor ("Marching Factor", Range(0.0, 1.0)) = 0.5
 
+        [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Custom)]
+        _LightingMethod ("Lighting method", Int) = 0
+
+        _Glossiness ("Smoothness", Range(0.0, 1.0)) = 0.5
+        _Metallic ("Metallic", Range(0.0, 1.0)) = 0.0
+
         _SpecColor ("Color of specular", Color) = (0.5, 0.5, 0.5, 0.5)
-        _SpecPower ("Specular Power", Range(0.0, 100.0)) = 5.0
+        _SpecPower ("Specular Power", Range(0.0, 128.0)) = 5.0
 
         // SDF parameters.
         _TorusRadius ("Radius of Torus", Float) = 0.25
@@ -52,6 +58,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         CGINCLUDE
         #pragma multi_compile_fog
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
+        #pragma shader_feature_local_fragment _LIGHTINGMETHOD_UNITY_LAMBERT _LIGHTINGMETHOD_UNITY_BLINN_PHONG _LIGHTINGMETHOD_UNITY_STANDARD _LIGHTINGMETHOD_UNITY_STANDARD_SPECULAR _LIGHTINGMETHOD_CUSTOM
 
         #include "UnityCG.cginc"
         #include "UnityStandardUtils.cginc"
@@ -62,6 +69,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
 #endif  // _USE_FAST_INVTRIFUNC_ON
         #include "include/Math.cginc"
         #include "include/Utils.cginc"
+        #include "include/LightingUtils.cginc"
 
 
         /*!
@@ -119,14 +127,12 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
 
         rmout rayMarch(float3 rayOrigin, float3 rayDir);
         float map(float3 p, out half3 color);
+        half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float sdTorus(float3 p, float2 t);
         float sdOctahedron(float3 p, float s);
         float3 getNormal(float3 p);
         fixed getLightAttenuation(v2f fi, float3 worldPos);
 
-
-        //! Color of light.
-        uniform fixed4 _LightColor0;
 
         //! Maximum loop count.
         uniform int _MaxLoop;
@@ -138,11 +144,6 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         uniform float3 _Scales;
         //! Marching Factor.
         uniform float _MarchingFactor;
-
-        //! Color of specular.
-        uniform half4 _SpecColor;
-        //! Power of specular.
-        uniform half _SpecPower;
 
         //! Radius of Torus.
         uniform float _TorusRadius;
@@ -199,33 +200,17 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
             const float3 localFinalPos = fi.localSpaceCameraPos + localRayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
 
-            const float3 localNormal = getNormal(localFinalPos);
-            const float3 localViewDir = normalize(fi.localSpaceCameraPos - localFinalPos);
-#ifdef USING_DIRECTIONAL_LIGHT
-            const float3 localLightDir = fi.localSpaceLightPos;
-#else
-            const float3 localLightDir = normalize(fi.localSpaceLightPos - localFinalPos);
-#endif  // USING_DIRECTIONAL_LIGHT
-            const fixed3 lightCol = _LightColor0.rgb * getLightAttenuation(fi, worldFinalPos);
-
-            // Lambertian reflectance: Half-Lambert.
-            const float nDotL = dot(localNormal, localLightDir);
-            const half3 diffuse = lightCol * sq(nDotL * 0.5 + 0.5);
-
-            // Specular reflection.
-            const half3 specular = pow(max(0.0, dot(normalize(localLightDir + localViewDir), localNormal)), _SpecPower) * _SpecColor.xyz * lightCol;
-
-            // Ambient color.
-#if UNITY_SHOULD_SAMPLE_SH
-            const half3 ambient = ShadeSHPerPixel(UnityObjectToWorldNormal(localNormal), half3(0.0, 0.0, 0.0), worldFinalPos);
-#else
-            const half3 ambient = half3(0.0, 0.0, 0.0);
-#endif  // UNITY_SHOULD_SAMPLE_SH
+            const half4 color = calcLighting(
+                half4(ro.color, 1.0),
+                worldFinalPos,
+                UnityObjectToWorldNormal(getNormal(localFinalPos)),
+                getLightAttenuation(fi, worldFinalPos),
+                float4(0.0, 0.0, 0.0, 0.0));
 
             const float4 projPos = UnityWorldToClipPos(worldFinalPos);
 
             fout fo;
-            fo.color = applyFog(projPos.z, half4((diffuse + ambient) * ro.color.rgb + specular, 1.0));
+            fo.color = applyFog(projPos.z, color);
             fo.depth = projPos.z / projPos.w;
 
             return fo;
@@ -330,6 +315,30 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         float sdOctahedron(float3 p, float s)
         {
             return (dot(abs(p), float3(0.5, 2.0, 2.0)) - s) * 0.57735027;
+        }
+
+        /*!
+         * Calculate lighting.
+         * @param [in] color  Base color.
+         * @param [in] worldPos  World coordinate.
+         * @param [in] worldNormal  Normal in world space.
+         * @param [in] atten  Light attenuation.
+         * @param [in] lmap  Light map parameters.
+         * @return Color with lighting applied.
+         */
+        half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
+        {
+#if defined(_LIGHTINGMETHOD_LAMBERT)
+            return calcLightingUnityLambert(color, worldPos, worldNormal, atten, lmap);
+#elif defined(_LIGHTINGMETHOD_UNITY_BLINN_PHONG)
+            return calcLightingUnityBlinnPhong(color, worldPos, worldNormal, atten, lmap);
+#elif defined(_LIGHTINGMETHOD_UNITY_STANDARD)
+            return calcLightingUnityStandard(color, worldPos, worldNormal, atten, lmap);
+#elif defined(_LIGHTINGMETHOD_UNITY_STANDARD_SPECULAR)
+            return calcLightingUnityStandardSpecular(color, worldPos, worldNormal, atten, lmap);
+#else
+            return calcLightingCustom(color, worldPos, worldNormal, atten, lmap);
+#endif  // defined(_LIGHTINGMETHOD_LAMBERT)
         }
 
         /*!
