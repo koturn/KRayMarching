@@ -90,6 +90,7 @@ Shader "koturn/KRayMarching/Sphere"
         #include "include/RefProbe.cginc"
         #include "include/Utils.cginc"
         #include "include/LightingUtils.cginc"
+        #include "include/SDF.cginc"
 
 
         /*!
@@ -155,7 +156,6 @@ Shader "koturn/KRayMarching/Sphere"
 
         rmout rayMarch(float3 rayOrigin, float3 rayDir);
         float map(float3 p);
-        float sdSphere(float3 p, float r);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float3 getNormal(float3 p);
         fixed getLightAttenuation(v2f fi, float3 worldPos);
@@ -292,17 +292,6 @@ Shader "koturn/KRayMarching/Sphere"
         float map(float3 p)
         {
             return sdSphere(p, 0.5);
-        }
-
-        /*!
-         * @brief SDF of Sphere.
-         *
-         * @param [in] r  Radius of sphere.
-         * @return Signed Distance to the Sphere.
-         */
-        float sdSphere(float3 p, float r)
-        {
-            return length(p) - r;
         }
 
         /*!

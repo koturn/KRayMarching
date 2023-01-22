@@ -69,6 +69,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         #include "include/Math.cginc"
         #include "include/Utils.cginc"
         #include "include/LightingUtils.cginc"
+        #include "include/SDF.cginc"
 
 
         /*!
@@ -137,9 +138,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
         rmout rayMarch(float3 rayOrigin, float3 rayDir);
         float map(float3 p, out half4 color);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
-        float sdTorus(float3 p, float2 t);
-        float sdOctahedron(float3 p, float3 scale, float s);
-        float sdCappedCylinder(float3 p, float h, float r);
         float3 getNormal(float3 p);
         fixed getLightAttenuation(v2f fi, float3 worldPos);
 
@@ -298,7 +296,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
             const float radius = _TorusRadius + _SinTime.w * _TorusRadiusAmp;
 
-            float minDist = sdTorus(p, float2(radius, _TorusWidth));
+            float minDist = sdTorus(p.xzy, float2(radius, _TorusWidth));
 
             p.xy = invRotate2D(p.xy, _Time.y);
 
@@ -311,7 +309,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             float3 rayPos1 = p;
             rayPos1.xy = invRotate2D(rayPos1.xy, kOneThirdPi * rotUnit + kOneSixthPi);
 
-            const float dist = sdOctahedron(rayPos1 - float3(radius, 0.0, 0.0), float3(2.0, 2.0, 0.5), _OctahedronSize);
+            const float dist = sdOctahedron(rayPos1 - float3(radius, 0.0, 0.0), _OctahedronSize, float3(2.0, 2.0, 0.5));
             if (minDist > dist) {
                 minDist = dist;
                 const int idx = ((int)rotUnit);
@@ -347,35 +345,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
             }
 
             return minDist;
-        }
-
-        /*!
-         * @brief SDF of Torus.
-         * @param [in] p  Position of the tip of the ray.
-         * @param [in] t  (t.x, t.y) = (radius of torus, thickness of torus).
-         * @return Signed Distance to the Sphere.
-         */
-        float sdTorus(float3 p, float2 t)
-        {
-            const float2 q = float2(length(p.xy) - t.x, p.z);
-            return length(q) - t.y;
-        }
-
-        /*!
-         * @brief SDF of Octahedron.
-         * @param [in] p  Position of the tip of the ray.
-         * @param [in] s  Size of Octahedron.
-         * @return Signed Distance to the Octahedron.
-         */
-        float sdOctahedron(float3 p, float3 scale, float s)
-        {
-            return (dot(abs(p), scale) - s) * 0.57735027;
-        }
-
-        float sdCappedCylinder(float3 p, float h, float r)
-        {
-            const float2 d = abs(float2(length(p.xz), p.y)) - float2(h, r);
-            return min(0.0, max(d.x, d.y)) + length(max(d, 0.0));
         }
 
         /*!
