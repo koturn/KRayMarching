@@ -387,7 +387,8 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
                 "LightMode" = "ForwardBase"
             }
 
-            // Blend SrcAlpha OneMinusSrcAlpha
+            Blend Off
+            ZWrite On
 
             CGPROGRAM
             #pragma target 3.0
@@ -407,7 +408,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
                 "LightMode" = "ForwardAdd"
             }
 
-            Blend One OneMinusSrcAlpha
+            Blend One One
             ZWrite Off
 
             CGPROGRAM

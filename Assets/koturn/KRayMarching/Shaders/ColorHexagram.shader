@@ -424,6 +424,9 @@ Shader "koturn/KRayMarching/ColorHexagram"
                 "LightMode" = "ForwardBase"
             }
 
+            Blend Off
+            ZWrite On
+
             CGPROGRAM
             #pragma target 3.0
             #pragma vertex vert
@@ -441,6 +444,9 @@ Shader "koturn/KRayMarching/ColorHexagram"
             {
                 "LightMode" = "ForwardAdd"
             }
+
+            Blend One One
+            ZWrite Off
 
             CGPROGRAM
             #pragma target 3.0
