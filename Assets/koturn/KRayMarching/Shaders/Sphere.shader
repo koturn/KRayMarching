@@ -34,8 +34,11 @@ Shader "koturn/KRayMarching/Sphere"
         [KeywordEnum(Legacy, SH, Disable)]
         _AmbientMode ("Ambient Mode", Int) = 1
 
-        [KeywordEnum(Optimized, Optimized Loop, Conventional)]
-        _NormalCalcMode ("Normal Calculation Mode", Int) = 0
+        [KeywordEnum(Central Differenc, Forward Differece, Tetrahedron)]
+        _NormalCalcMethod ("Normal Calculation Mode", Int) = 2
+
+        [KeywordEnum(Unroll, Loop, Loop Without LUT)]
+        _NormalCalcOptimize ("Normal Calculation Optimization", Int) = 1
 
 
         [Enum(UnityEngine.Rendering.CullMode)]
@@ -76,7 +79,8 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma shader_feature_local_fragment _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR _SPECULARMODE_DISABLE
         #pragma shader_feature_local_fragment _AMBIENTMODE_LEGACY _AMBIENTMODE_SH _AMBIENTMODE_DISABLE
         #pragma shader_feature_local_fragment _LIGHTINGMETHOD_UNITY_LAMBERT _LIGHTINGMETHOD_UNITY_BLINN_PHONG _LIGHTINGMETHOD_UNITY_STANDARD _LIGHTINGMETHOD_UNITY_STANDARD_SPECULAR _LIGHTINGMETHOD_CUSTOM
-        #pragma shader_feature_local_fragment _NORMALCALCMODE_OPTIMIZED _NORMALCALCMODE_OPTIMIZED_LOOP _NORMALCALCMODE_OPTIMIZED_CONVENTIONAL
+        #pragma shader_feature_local_fragment _NORMALCALCMETHOD_CENTRAL_DIFFERENCE _NORMALCALCMETHOD_FOREARD_DIFFERENCE _NORMALCALCMETHOD_TETRAHEDRON
+        #pragma shader_feature_local_fragment _NORMALCALCOPTIMIZE_UNROLL _NORMALCALCOPTIMIZE_LOOP _NORMALCALCOPTIMIZE_LOOP_WITHOUT_LUT
         #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
 
         #include "UnityCG.cginc"
@@ -367,43 +371,108 @@ Shader "koturn/KRayMarching/Sphere"
          */
         float3 getNormal(float3 p)
         {
-#if defined(_NORMALCALCMODE_OPTIMIZED)
-            // Lightweight normal calculation.
-            // SDF is called four times and each calling is inlined.
-            static const float2 k = float2(1.0, -1.0);
-            static const float2 kh = k * 0.0001;
-
-            return normalize(
-                k.xyy * map(p + kh.xyy)
-                    + k.yxy * map(p + kh.yxy)
-                    + k.yyx * map(p + kh.yyx)
-                    + map(p + kh.xxx));
-#elif defined(_NORMALCALCMODE_OPTIMIZED_LOOP)
-            // SDF is called four times.
-            // When the loop is not unrolled, there is only one SDF calling in the loop,
-            // which helps reduce code size.
-            static const float2 k = float2(1.0, -1.0);
             static const float h = 0.0001;
-            static const float3 ks[4] = {k.xyy, k.yxy, k.yyx, k.xxx};
-
-            float3 normal = float3(0.0, 0.0, 0.0);
-
-            // UNITY_LOOP
-            for (int i = 0; i < 4; i++) {
-                normal += ks[i] * map(p + ks[i] * h);
-            }
-            return normalize(normal);
-#else
-            // Naive normal calculation.
-            // SDF is called six times and each calling is inlined.
-            static const float2 d = float2(0.0001, 0.0);
+#if defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
+#    if defined(_NORMALCALCOPTIMIZE_UNROLL)
+            static const float2 d = float2(h, 0.0);
 
             return normalize(
                 float3(
                     map(p + d.xyy) - map(p - d.xyy),
                     map(p + d.yxy) - map(p - d.yxy),
                     map(p + d.yyx) - map(p - d.yyx)));
-#endif  // defined(_NORMALCALCMODE_OPTIMIZED)
+#    elif defined(_NORMALCALCOPTIMIZE_LOOP)
+            static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
+            static const float3 k[6] = {s.xzz, s.yzz, s.zxz, s.zyz, s.zzx, s.zzy};
+
+            float3 normal = float3(0.0, 0.0, 0.0);
+
+            UNITY_LOOP
+            for (int i = 0; i < 6; i++) {
+                normal += k[i] * map(p + h * k[i]);
+            }
+
+            return normalize(normal);
+#    else
+            float3 normal = float3(0.0, 0.0, 0.0);
+
+            UNITY_LOOP
+            for (int i = 0; i < 6; i++) {
+                const int j = i >> 1;
+                const float3 k = float3(int3(((j + 3) >> 1) & 1, j & 1, (j >> 1) & 1) * (2 * (i & 1) - 1));
+                normal += k * map(p + h * k);
+            }
+
+            return normalize(normal);
+#    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
+#elif defined(_NORMALCALCMETHOD_FORWARD_DIFFERENCE)
+#    if defined(_NORMALCALCOPTIMIZE_UNROLL)
+            static const float2 d = float2(h, 0.0);
+
+            const float mp = map(p);
+
+            return normalize(
+                float3(
+                    map(p + d.xyy) - mp,
+                    map(p + d.yxy) - mp,
+                    map(p + d.yyx) - mp));
+#    elif defined(_NORMALCALCOPTIMIZE_LOOP)
+            static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
+            static const float3 k[3] = {s.xzz, s.zxz, s.zzx};
+
+            float3 normal = (-map(p)).xxx;
+
+            UNITY_LOOP
+            for (int i = 0; i < 3; i++) {
+                normal += k[i] * map(p + h * k[i]);
+            }
+
+            return normalize(normal);
+#    else
+            float3 normal = (-map(p)).xxx;
+
+            UNITY_LOOP
+            for (int i = 0; i < 3; i++) {
+                const float3 k = float3(int3((i + 3) >> 1, i, i >> 1) & 1);
+                normal += k * map(p + h * k);
+            }
+
+            return normalize(normal);
+#    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
+#else
+#    if defined(_NORMALCALCOPTIMIZE_UNROLL)
+            static const float2 s = float2(1.0, -1.0);
+            static const float2 hs = h * s;
+
+            return normalize(
+                s.xyy * map(p + hs.xyy)
+                    + s.yxy * map(p + hs.yxy)
+                    + s.yyx * map(p + hs.yyx)
+                    + map(p + hs.xxx).xxx);
+#    elif defined(_NORMALCALCOPTIMIZE_LOOP)
+            static const float2 s = float2(1.0, -1.0);  // used only for generating k.
+            static const float3 k[4] = {s.xyy, s.yxy, s.yyx, s.xxx};
+
+            float3 normal = float3(0.0, 0.0, 0.0);
+
+            UNITY_LOOP
+            for (int i = 0; i < 4; i++) {
+                normal += k[i] * map(p + h * k[i]);
+            }
+
+            return normalize(normal);
+#    else
+            float3 normal = float3(0.0, 0.0, 0.0);
+
+            UNITY_LOOP
+            for (int i = 0; i < 4; i++) {
+                const float3 k = float3(2 * (int3((i + 3) >> 1, i, i >> 1) & 1) - 1);
+                normal += k * map(p + h * k);
+            }
+
+            return normalize(normal);
+#    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
+#endif  // defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
         }
 
         /*!

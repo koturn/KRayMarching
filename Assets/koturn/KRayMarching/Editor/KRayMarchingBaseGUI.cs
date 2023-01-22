@@ -87,7 +87,11 @@ namespace Koturn.KRayMarching
         /// <summary>
         /// Property name of "_NormalCalcMode".
         /// </summary>
-        private const string PropNameNormalCalcMode = "_NormalCalcMode";
+        private const string PropNameNormalCalcMethod = "_NormalCalcMethod";
+        /// <summary>
+        /// Property name of "_NormalCalcOptimize".
+        /// </summary>
+        private const string PropNameNormalCalcOptimize = "_NormalCalcOptimize";
 
         /// <summary>
         /// Draw property items.
@@ -150,7 +154,18 @@ namespace Koturn.KRayMarching
                     ShaderProperty(me, mps, PropNameAmbientMode, false);
                 }
 
-                ShaderProperty(me, mps, PropNameNormalCalcMode, false);
+                var mpNormalCalcMethod = FindProperty(PropNameNormalCalcMethod, mps, false);
+                var mpNormalCalcOptimize = FindProperty(PropNameNormalCalcOptimize, mps, false);
+                if (mpNormalCalcMethod != null && mpNormalCalcOptimize != null)
+                {
+                    EditorGUILayout.LabelField("Normal Calculation Options", EditorStyles.boldLabel);
+                    using (new EditorGUI.IndentLevelScope())
+                    using (new EditorGUILayout.VerticalScope(GUI.skin.box))
+                    {
+                        ShaderProperty(me, mpNormalCalcMethod);
+                        ShaderProperty(me, mpNormalCalcOptimize);
+                    }
+                }
             }
 
             DrawCustomProperties(me, mps);
