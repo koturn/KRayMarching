@@ -200,6 +200,51 @@ half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 wor
 
 
 /*!
+ * Calculate lighting.
+ * @param [in] fi  Input data from vertex shader.
+ * @param [in] color  Base color.
+ * @param [in] worldPos  World coordinate.
+ * @param [in] worldNormal  Normal in world space.
+ * @return Color with lighting applied.
+ */
+half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, /* unused */ float4 lmap)
+{
+    const float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos);
+    const float3 worldLightDir = normalizedWorldSpaceLightDir(worldPos);
+    const fixed3 lightCol = _LightColor0.rgb * atten;
+
+    // Lambertian reflectance.
+    const float nDotL = dot(worldNormal, worldLightDir);
+    const half3 diffuse = lightCol * sq(nDotL * 0.5 + 0.5);
+
+    // Specular reflection.
+    // const half3 specular = pow(max(0.0, dot(normalize(worldLightDir + worldViewDir), worldNormal)), _SpecPower) * _SpecColor.rgb * lightCol;
+    const half3 specular = pow(max(0.0, dot(reflect(-worldLightDir, worldNormal), worldViewDir)), _SpecPower) * _SpecColor.rgb * lightCol;
+
+    // Ambient color.
+#    if UNITY_SHOULD_SAMPLE_SH
+    const half3 ambient = ShadeSHPerPixel(
+        worldNormal,
+        half3(0.0, 0.0, 0.0),
+        worldPos);
+#    else
+    const half3 ambient = half3(0.0, 0.0, 0.0);
+#    endif  // !UNITY_SHOULD_SAMPLE_SH
+
+#    if defined(_ENABLE_REFLECTION_PROBE) && defined(UNITY_PASS_FORWARDBASE)
+    const half4 refColor = getRefProbeColor(
+        reflect(-worldViewDir, worldNormal),
+        worldPos);
+    const half4 outColor = half4((diffuse + ambient) * lerp(color.rgb, refColor.rgb, _Glossiness) + specular, color.a);
+#    else
+    const half4 outColor = half4((diffuse + ambient) * color.rgb + specular, color.a);
+#    endif  // defined(_ENABLE_REFLECTION_PROBE) && defined(UNITY_PASS_FORWARDBASE)
+
+    return outColor;
+}
+
+
+/*!
  * @brief Get initial instance of UnityGI.
  * @param [in] worldPos  World coordinate.
  * @param [in] atten  Light attenuation.
@@ -269,51 +314,6 @@ UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, f
 #endif  // !defined(_LIGHTINGMETHOD_UNITY_LAMBERT) && !defined(_LIGHTINGMETHOD_UNITY_BLINN_PHONG)
 
     return giInput;
-}
-
-
-/*!
- * Calculate lighting.
- * @param [in] fi  Input data from vertex shader.
- * @param [in] color  Base color.
- * @param [in] worldPos  World coordinate.
- * @param [in] worldNormal  Normal in world space.
- * @return Color with lighting applied.
- */
-half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, /* unused */ float4 lmap)
-{
-    const float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos);
-    const float3 worldLightDir = normalizedWorldSpaceLightDir(worldPos);
-    const fixed3 lightCol = _LightColor0.rgb * atten;
-
-    // Lambertian reflectance.
-    const float nDotL = dot(worldNormal, worldLightDir);
-    const half3 diffuse = lightCol * sq(nDotL * 0.5 + 0.5);
-
-    // Specular reflection.
-    // const half3 specular = pow(max(0.0, dot(normalize(worldLightDir + worldViewDir), worldNormal)), _SpecPower) * _SpecColor.rgb * lightCol;
-    const half3 specular = pow(max(0.0, dot(reflect(-worldLightDir, worldNormal), worldViewDir)), _SpecPower) * _SpecColor.rgb * lightCol;
-
-    // Ambient color.
-#    if UNITY_SHOULD_SAMPLE_SH
-    const half3 ambient = ShadeSHPerPixel(
-        worldNormal,
-        half3(0.0, 0.0, 0.0),
-        worldPos);
-#    else
-    const half3 ambient = half3(0.0, 0.0, 0.0);
-#    endif  // !UNITY_SHOULD_SAMPLE_SH
-
-#    if defined(_ENABLE_REFLECTION_PROBE) && defined(UNITY_PASS_FORWARDBASE)
-    const half4 refColor = getRefProbeColor(
-        reflect(-worldViewDir, worldNormal),
-        worldPos);
-    const half4 outColor = half4((diffuse + ambient) * lerp(color.rgb, refColor.rgb, _Glossiness) + specular, color.a);
-#    else
-    const half4 outColor = half4((diffuse + ambient) * color.rgb + specular, color.a);
-#    endif  // defined(_ENABLE_REFLECTION_PROBE) && defined(UNITY_PASS_FORWARDBASE)
-
-    return outColor;
 }
 
 
