@@ -99,6 +99,14 @@ Shader "koturn/KRayMarching/Sphere"
         {
             //! Local position of the vertex.
             float4 vertex : POSITION;
+#ifdef LIGHTMAP_ON
+            //! Lightmap coordinate.
+            float2 texcoord1 : TEXCOORD1;
+#endif  // LIGHTMAP_ON
+#ifdef DYNAMICLIGHTMAP_ON
+            //! Dynamic Lightmap coordinate.
+            float2 texcoord2 : TEXCOORD2;
+#endif  // DYNAMICLIGHTMAP_ON
         };
 
         /*!
@@ -116,6 +124,10 @@ Shader "koturn/KRayMarching/Sphere"
             nointerpolation float3 localSpaceLightPos : TEXCOORD2;
             //! Lighting and shadowing parameters.
             UNITY_LIGHTING_COORDS(3, 4)
+#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+            //! Light map UV coordinates.
+            float4 lmap : TEXCOORD5;
+#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
         };
 
         /*!
@@ -180,7 +192,15 @@ Shader "koturn/KRayMarching/Sphere"
 #else
             o.localSpaceLightPos = worldToObjectPos(_WorldSpaceLightPos0) * _Scales;
 #endif  // USING_DIRECTIONAL_LIGHT
-            UNITY_TRANSFER_LIGHTING(o, v.uv2);
+
+#ifdef LIGHTMAP_ON
+            o.lmap.xy = v.texcoord1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
+#endif  // LIGHTMAP_ON
+#ifdef DYNAMICLIGHTMAP_ON
+            o.lmap.zw = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
+#endif  // DYNAMICLIGHTMAP_ON
+
+            UNITY_TRANSFER_LIGHTING(o, v.texcoord1);
 
             v.vertex.xyz /= _Scales;
             o.pos = UnityObjectToClipPos(v.vertex);
@@ -209,12 +229,18 @@ Shader "koturn/KRayMarching/Sphere"
             const float3 localFinalPos = fi.localSpaceCameraPos + localRayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
 
+#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+            const float4 lmap = fi.lmap;
+#else
+            const float4 lmap = float4(0.0, 0.0, 0.0, 0.0);
+#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+
             const half4 color = calcLighting(
                 _Color,
                 worldFinalPos,
                 UnityObjectToWorldNormal(getNormal(localFinalPos)),
                 getLightAttenuation(fi, worldFinalPos),
-                float4(0.0, 0.0, 0.0, 0.0));
+                lmap);
 
             const float4 projPos = UnityWorldToClipPos(worldFinalPos);
 
