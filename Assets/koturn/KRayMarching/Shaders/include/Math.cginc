@@ -141,7 +141,11 @@ float3 normalizeEx(float3 v)
  */
 float2 rotate2D(float2 v, float angle)
 {
-    return mul(rotate2DMat(angle), v);
+    float s, c;
+    sincos(angle, /* out */ s, /* out */ c);
+    return float2(
+        v.x * c - v.y * s,
+        v.x * s + v.y * c);
 }
 
 
@@ -182,7 +186,11 @@ float2x2 rotate2DMat(float angle)
  */
 float2 invRotate2D(float2 v, float angle)
 {
-    return mul(invRotate2DMat(angle), v);
+    float s, c;
+    sincos(angle, /* out */ s, /* out */ c);
+    return float2(
+        v.x * c + v.y * s,
+        -v.x * s + v.y * c);
 }
 
 
