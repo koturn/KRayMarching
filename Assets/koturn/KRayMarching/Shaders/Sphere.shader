@@ -576,7 +576,13 @@ Shader "koturn/KRayMarching/Sphere"
             //   SPOT
             //   POINT_COOKIE
             //   DIRECTIONAL_COOKIE
-            #pragma multi_compile_fwdadd
+            //   SHADOWS_DEPTH
+            //   SHADOWS_SCREEN
+            //   SHADOWS_CUBE
+            //   SHADOWS_SOFT
+            //   SHADOWS_SHADOWMASK
+            //   LIGHTMAP_SHADOW_MIXING
+            #pragma multi_compile_fwdadd_fullshadows
             ENDCG
         }  // ForwardAdd
 
