@@ -588,8 +588,8 @@ Shader "koturn/KRayMarching/Sphere"
                 "LightMode" = "ShadowCaster"
             }
 
+            Cull Back
             ZWrite On
-            AlphaToMask Off
 
             CGPROGRAM
             #pragma vertex vertShadowCaster
@@ -601,8 +601,8 @@ Shader "koturn/KRayMarching/Sphere"
             #pragma multi_compile_shadowcaster
 
             /*!
-            * @brief Output of vertex shader and input of fragment shader.
-            */
+             * @brief Output of vertex shader and input of fragment shader.
+             */
             struct v2f_shadowcaster
             {
                 //! Clip space position of the vertex.
@@ -611,43 +611,50 @@ Shader "koturn/KRayMarching/Sphere"
                 float3 localPos : TEXCOORD1;
                 //! Local space position of the camera.
                 nointerpolation float3 localSpaceCameraPos : TEXCOORD2;
+                //! Projected position.
+                float4 projPos : TEXCOORD3;
             };
 
 
             /*!
-            * @brief Vertex shader function.
-            *
-            * @param [in] v  Input data
-            * @return Output for fragment shader (v2f_shadowcaster).
-            */
+             * @brief Vertex shader function.
+             * @param [in] v  Input data
+             * @return Output for fragment shader (v2f_shadowcaster).
+             */
             v2f_shadowcaster vertShadowCaster(appdata v)
             {
                 v2f_shadowcaster o;
-                // UNITY_INITIALIZE_OUTPUT(v2f_shadowcaster, o);
+                UNITY_INITIALIZE_OUTPUT(v2f_shadowcaster, o);
 
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.localPos = v.vertex.xyz;
                 o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos);
+                o.projPos = ComputeNonStereoScreenPos(o.pos);
+                COMPUTE_EYEDEPTH(o.projPos.z);
                 TRANSFER_SHADOW_CASTER(o)
 
                 return o;
             }
 
-
             /*!
-            * @brief Fragment shader function for ShadowCaster Pass.
-            *
-            * @param [in] fi  Input data from vertex shader.
-            * @return Output of each texels (fout).
-            */
+             * @brief Fragment shader function for ShadowCaster Pass.
+             * @param [in] fi  Input data from vertex shader.
+             * @return Output of each texels (fout).
+             */
             fout fragShadowCaster(v2f_shadowcaster fi)
             {
-                // Define ray direction by finding the direction of the local coordinates
-                // of the mesh from the local coordinates of the viewpoint.
-                // const float3 localRayDir = normalize(fi.localPos - fi.localSpaceCameraPos);
-
-                const float3 worldPos = objectToWorldPos(fi.localPos);
-                const float3 localRayDir = UnityWorldToObjectDir(-UNITY_MATRIX_V[2].xyz);
+#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+                float3 localRayDir = UnityWorldToObjectDir(getCameraDirection(fi.projPos));
+#else
+                float3 localRayDir;
+                if (!any(UNITY_MATRIX_P[3].xyz)) {
+                    localRayDir = UnityWorldToObjectDir(-UNITY_MATRIX_V[2].xyz);
+                } else if (abs(unity_LightShadowBias.x) < 1e-5) {
+                    localRayDir = normalize(fi.localPos - fi.localSpaceCameraPos);
+                } else {
+                    localRayDir = UnityWorldToObjectDir(getCameraDirection(fi.projPos));
+                }
+#endif
 
                 const rmout ro = rayMarch(fi.localPos, localRayDir);
                 if (!ro.isHit) {
@@ -657,25 +664,17 @@ Shader "koturn/KRayMarching/Sphere"
                 const float3 localFinalPos = fi.localPos + localRayDir * ro.rayLength;
                 const float3 worldFinalPos = objectToWorldPos(localFinalPos);
 
-                const float3 localNormal = getNormal(localFinalPos);
-                const float3 worldNormal = UnityObjectToWorldNormal(localNormal);
-
-                // const float4 projPos = UnityWorldToClipPos(worldFinalPos);
-
-                // See SHADOW_CASTER_FRAGMENT()
-                // fout fo;
-                // fo.color = UnityEncodeCubeShadowDepth(
-                //     (length(worldFinalPos - _LightPositionRange.xyz) + unity_LightShadowBias.x) * _LightPositionRange.w);
-                // fo.depth = projPos.z / projPos.w;
+#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+                i.vec = ray.endPos - _LightPositionRange.xyz;
+                SHADOW_CASTER_FRAGMENT(i);
+#else
+                const float4 projPos = UnityWorldToClipPos(worldFinalPos);
 
                 fout fo;
-
-                float4 oops = UnityApplyLinearShadowBias(UnityClipSpaceShadowCasterPos(localFinalPos, localNormal));
-                float4 projPos = mul(UNITY_MATRIX_VP, oops);
-                fo.color = ro.isHit ? half4(1.0, 1.0, 1.0, 1.0) : half4(0.0, 0.0, 0.0, 0.0);
-                fo.depth = oops.z / oops.w;
+                fo.color = fo.depth = getDepth(projPos);
 
                 return fo;
+#endif
             }
             ENDCG
         }  // ShadowCaster

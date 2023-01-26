@@ -10,6 +10,7 @@ float3 worldToObjectPos(float4 worldPos);
 float3 objectToWorldPos(float3 localPos);
 float3 normalizedWorldSpaceViewDir(float3 worldPos);
 float3 normalizedWorldSpaceLightDir(float3 worldPos);
+float3 getCameraDirection(float4 projPos);
 half4 applyFog(float fogFactor, half4 color);
 half3 rgb2hsv(half3 rgb);
 half3 hsv2rgb(half3 hsv);
@@ -76,6 +77,21 @@ float3 normalizedWorldSpaceLightDir(float3 worldPos)
 #else
     return normalize(_WorldSpaceLightPos0.xyz - worldPos);
 #endif
+}
+
+
+/*!
+ * @brief Get camera direction from projected position.
+ * @param [in] Projected position.
+ * @return Camera direction in world space.
+ */
+float3 getCameraDirection(float4 projPos)
+{
+    float2 sp = (projPos.xy / projPos.w) * 2.0 - 1.0;
+    sp.x *= _ScreenParams.x / _ScreenParams.y;
+    return normalize(UNITY_MATRIX_V[0].xyz * sp.x
+            + UNITY_MATRIX_V[1].xyz * sp.y
+            - UNITY_MATRIX_V[2].xyz * abs(UNITY_MATRIX_P[1][1]));
 }
 
 

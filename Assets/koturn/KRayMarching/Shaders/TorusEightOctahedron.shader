@@ -419,6 +419,102 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
             #pragma multi_compile_fwdadd
             ENDCG
         }
+
+        Pass
+        {
+            Name "SHADOW_CASTER"
+            Tags
+            {
+                "LightMode" = "ShadowCaster"
+            }
+
+            Cull Back
+            ZWrite On
+
+            CGPROGRAM
+            #pragma vertex vertShadowCaster
+            #pragma fragment fragShadowCaster
+
+            #pragma multi_compile_shadowcaster
+
+            /*!
+             * @brief Output of vertex shader and input of fragment shader.
+             */
+            struct v2f_shadowcaster
+            {
+                //! Clip space position of the vertex.
+                V2F_SHADOW_CASTER;
+                //! World position at the pixel.
+                float3 localPos : TEXCOORD1;
+                //! Local space position of the camera.
+                nointerpolation float3 localSpaceCameraPos : TEXCOORD2;
+                //! Projected position.
+                float4 projPos : TEXCOORD3;
+            };
+
+
+            /*!
+             * @brief Vertex shader function.
+             * @param [in] v  Input data
+             * @return Output for fragment shader (v2f_shadowcaster).
+             */
+            v2f_shadowcaster vertShadowCaster(appdata v)
+            {
+                v2f_shadowcaster o;
+                UNITY_INITIALIZE_OUTPUT(v2f_shadowcaster, o);
+
+                o.pos = UnityObjectToClipPos(v.vertex);
+                o.localPos = v.vertex.xyz;
+                o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos);
+                o.projPos = ComputeNonStereoScreenPos(o.pos);
+                COMPUTE_EYEDEPTH(o.projPos.z);
+                TRANSFER_SHADOW_CASTER(o)
+
+                return o;
+            }
+
+            /*!
+             * @brief Fragment shader function for ShadowCaster Pass.
+             * @param [in] fi  Input data from vertex shader.
+             * @return Output of each texels (fout).
+             */
+            fout fragShadowCaster(v2f_shadowcaster fi)
+            {
+#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+                float3 localRayDir = UnityWorldToObjectDir(getCameraDirection(fi.projPos));
+#else
+                float3 localRayDir;
+                if (!any(UNITY_MATRIX_P[3].xyz)) {
+                    localRayDir = UnityWorldToObjectDir(-UNITY_MATRIX_V[2].xyz);
+                } else if (abs(unity_LightShadowBias.x) < 1e-5) {
+                    localRayDir = normalize(fi.localPos - fi.localSpaceCameraPos);
+                } else {
+                    localRayDir = UnityWorldToObjectDir(getCameraDirection(fi.projPos));
+                }
+#endif
+
+                const rmout ro = rayMarch(fi.localPos, localRayDir);
+                if (!ro.isHit) {
+                    discard;
+                }
+
+                const float3 localFinalPos = fi.localPos + localRayDir * ro.rayLength;
+                const float3 worldFinalPos = objectToWorldPos(localFinalPos);
+
+#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+                i.vec = ray.endPos - _LightPositionRange.xyz;
+                SHADOW_CASTER_FRAGMENT(i);
+#else
+                const float4 projPos = UnityWorldToClipPos(worldFinalPos);
+
+                fout fo;
+                fo.color = fo.depth = getDepth(projPos);
+
+                return fo;
+#endif
+            }
+            ENDCG
+        }  // ShadowCaster
     }
 
     CustomEditor "Koturn.KRayMarching.TorusOctahedronGUI"
