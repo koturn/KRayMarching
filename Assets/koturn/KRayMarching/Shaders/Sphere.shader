@@ -414,7 +414,8 @@ Shader "koturn/KRayMarching/Sphere"
             UNITY_LOOP
             for (int i = 0; i < 6; i++) {
                 const int j = i >> 1;
-                const float3 k = float3(int3(((j + 3) >> 1) & 1, j & 1, (j >> 1) & 1) * (2 * (i & 1) - 1));
+                const float4 v = float4(int4((int3(j + 3, i, j) >> 1), i) & 1);
+                const float3 k = v.xyz * (v.w * 2.0 - 1.0);
                 normal += k * map(p + h * k);
             }
 
@@ -481,7 +482,7 @@ Shader "koturn/KRayMarching/Sphere"
 
             UNITY_LOOP
             for (int i = 0; i < 4; i++) {
-                const float3 k = float3(2 * (int3((i + 3) >> 1, i, i >> 1) & 1) - 1);
+                const float3 k = float3(int3((i + 3) >> 1, i, i >> 1) & 1) * 2.0 - 1.0;
                 normal += k * map(p + h * k);
             }
 
