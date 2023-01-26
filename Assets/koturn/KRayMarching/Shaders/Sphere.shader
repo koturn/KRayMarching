@@ -34,7 +34,7 @@ Shader "koturn/KRayMarching/Sphere"
         [KeywordEnum(Legacy, SH, Disable)]
         _AmbientMode ("Ambient Mode", Int) = 1
 
-        [KeywordEnum(Central Differenc, Forward Differece, Tetrahedron)]
+        [KeywordEnum(Central Difference, Forward Differece, Tetrahedron)]
         _NormalCalcMethod ("Normal Calculation Mode", Int) = 2
 
         [KeywordEnum(Unroll, Loop, Loop Without LUT)]
