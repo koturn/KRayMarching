@@ -3,7 +3,15 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
     Properties
     {
         // Common Ray Marching Parameters.
-        _MaxLoop ("Maximum loop count", Int) = 256
+        [IntRange]
+        _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
+
+        [IntRange]
+        _MaxLoopForwardAdd ("Maximum loop count for ForwardAdd", Range(8, 1024)) = 64
+
+        [IntRange]
+        _MaxLoopShadowCaster ("Maximum loop count for ShadowCaster", Range(8, 1024)) = 64
+
         _MinRayLength ("Minimum length of the ray", Float) = 0.001
         _MaxRayLength ("Maximum length of the ray", Float) = 1000.0
 
@@ -143,8 +151,12 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         fixed getLightAttenuation(v2f fi, float3 worldPos);
 
 
-        //! Maximum loop count.
+        //! Maximum loop count for ForwardBase.
         uniform int _MaxLoop;
+        //! Maximum loop count for ForwardAdd.
+        uniform int _MaxLoopForwardAdd;
+        //! Maximum loop count for ShadowCaster.
+        uniform int _MaxLoopShadowCaster;
         //! Minimum length of the ray.
         uniform float _MinRayLength;
         //! Maximum length of the ray.
@@ -253,8 +265,16 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             ro.isHit = false;
             ro.color = half3(0.0, 0.0, 0.0);
 
+#if defined(UNITY_PASS_FORWARDBASE)
+            const int maxLoop = _MaxLoop;
+#elif defined(UNITY_PASS_FORWARDADD)
+            const int maxLoop = _MaxLoopForwardAdd;
+#elif defined(UNITY_PASS_SHADOWCASTER)
+            const int maxLoop = _MaxLoopShadowCaster;
+#endif  // defined(UNITY_PASS_FORWARDBASE)
+
             // Loop of Ray Marching.
-            for (int i = 0; i < _MaxLoop; i++) {
+            for (int i = 0; i < maxLoop; i++) {
                 // Position of the tip of the ray.
                 const float d = map((rayOrigin + rayDir * ro.rayLength), ro.color);
 

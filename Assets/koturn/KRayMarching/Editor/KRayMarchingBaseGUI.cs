@@ -32,6 +32,14 @@ namespace Koturn.KRayMarching
         /// </summary>
         private const string PropNameMaxLoop = "_MaxLoop";
         /// <summary>
+        /// Property name of "_MaxLoopForwardAdd".
+        /// </summary>
+        private const string PropNameMaxLoopForwardAdd = "_MaxLoopForwardAdd";
+        /// <summary>
+        /// Property name of "_MaxLoopShadowCaster".
+        /// </summary>
+        private const string PropNameMaxLoopShadowCaster = "_MaxLoopShadowCaster";
+        /// <summary>
         /// Property name of "_MinRayLength".
         /// </summary>
         private const string PropNameMinRayLength = "_MinRayLength";
@@ -104,6 +112,8 @@ namespace Koturn.KRayMarching
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
                 ShaderProperty(me, mps, PropNameMaxLoop, false);
+                ShaderProperty(me, mps, PropNameMaxLoopForwardAdd, false);
+                ShaderProperty(me, mps, PropNameMaxLoopShadowCaster, false);
                 ShaderProperty(me, mps, PropNameMinRayLength, false);
                 ShaderProperty(me, mps, PropNameMaxRayLength, false);
                 ShaderProperty(me, mps, PropNameScales, false);
