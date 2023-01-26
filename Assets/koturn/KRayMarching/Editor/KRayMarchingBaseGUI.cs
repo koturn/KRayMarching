@@ -125,15 +125,12 @@ namespace Koturn.KRayMarching
             {
                 ShaderProperty(me, mps, PropNameColor, false);
 
-                var mpLightingMethod = FindProperty(PropNameLightingMethod, mps, false);
-                ShaderProperty(me, mpLightingMethod);
-
+                var mpLightingMethod = FindAndDrawProperty(me, mps, PropNameLightingMethod, false);
                 var lightingMethod = (LightingMethod)(mpLightingMethod == null ? -1 : (int)mpLightingMethod.floatValue);
 
-                var mpEnableReflectionProbe = FindProperty(PropNameEnableReflectionProbe, mps, false);
-                ShaderProperty(me, mpEnableReflectionProbe);
 
                 var isNeedGM = true;
+                var mpEnableReflectionProbe = FindAndDrawProperty(me, mps, PropNameEnableReflectionProbe, false);
                 if (mpEnableReflectionProbe != null)
                 {
                     isNeedGM = (mpEnableReflectionProbe.floatValue >= 0.5f);
@@ -214,7 +211,8 @@ namespace Koturn.KRayMarching
         protected static void ShaderProperty(MaterialEditor me, MaterialProperty[] mps, string propName, bool isMandatory = true)
         {
             var prop = FindProperty(propName, mps, isMandatory);
-            if (prop != null) {
+            if (prop != null)
+            {
                 ShaderProperty(me, prop);
             }
         }
@@ -230,6 +228,26 @@ namespace Koturn.KRayMarching
             {
                 me.ShaderProperty(mp, mp.displayName);
             }
+        }
+
+        /// <summary>
+        /// Draw default item of specified shader property and return the property.
+        /// </summary>
+        /// <param name="me">A <see cref="MaterialEditor"/>.</param>
+        /// <param name="mps"><see cref="MaterialProperty"/> array.</param>
+        /// <param name="propName">Name of shader property.</param>
+        /// <param name="isMandatory">If <c>true</c> then this method will throw an exception
+        /// if a property with <<paramref name="propName"/> was not found.</param>
+        /// <return>Found property.</return>
+        protected static MaterialProperty FindAndDrawProperty(MaterialEditor me, MaterialProperty[] mps, string propName, bool isMandatory = true)
+        {
+            var prop = FindProperty(propName, mps, isMandatory);
+            if (prop != null)
+            {
+                ShaderProperty(me, prop);
+            }
+
+            return prop;
         }
 
         /// <summary>
