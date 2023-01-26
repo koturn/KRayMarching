@@ -247,7 +247,7 @@ Shader "koturn/KRayMarching/Sphere"
             fout fo;
             UNITY_INITIALIZE_OUTPUT(fout, fo);
             fo.color = applyFog(projPos.z, color);
-            fo.depth = projPos.z / projPos.w;
+            fo.depth = getDepth(projPos);
 
             return fo;
         }

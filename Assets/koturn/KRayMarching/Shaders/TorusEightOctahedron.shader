@@ -234,7 +234,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
 
             fout fo;
             fo.color = applyFog(projPos.z, color);
-            fo.depth = projPos.z / projPos.w;
+            fo.depth = getDepth(projPos);
 
             return fo;
         }

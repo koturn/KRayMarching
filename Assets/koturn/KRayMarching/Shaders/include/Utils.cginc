@@ -97,6 +97,25 @@ half4 applyFog(float fogFactor, half4 color)
 
 
 /*!
+ * @brief Get depth from projected position.
+ * @param [in] projPos  Projected position.
+ * @return Depth value.
+ */
+float getDepth(float4 projPos)
+{
+    const float depth = projPos.z / projPos.w;
+#if defined(SHADER_API_GLCORE) \
+    || defined(SHADER_API_OPENGL) \
+    || defined(SHADER_API_GLES) \
+    || defined(SHADER_API_GLES3)
+    return depth * 0.5 + 0.5;
+#else
+    return depth;
+#endif
+}
+
+
+/*!
  * @brief Convert from RGB to HSV.
  *
  * @param [in] rgb  Three-dimensional vector of RGB.
