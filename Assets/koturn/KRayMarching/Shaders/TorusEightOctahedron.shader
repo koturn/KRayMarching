@@ -501,16 +501,11 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
             fout fragShadowCaster(v2f_shadowcaster fi)
             {
 #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-                float3 localRayDir = UnityWorldToObjectDir(getCameraDirection(fi.projPos));
+                const float3 localRayDir = UnityWorldToObjectDir(getCameraDirection(fi.projPos));
 #else
-                float3 localRayDir;
-                if (!any(UNITY_MATRIX_P[3].xyz)) {
-                    localRayDir = UnityWorldToObjectDir(-UNITY_MATRIX_V[2].xyz);
-                } else if (abs(unity_LightShadowBias.x) < 1e-5) {
-                    localRayDir = normalize(fi.localPos - fi.localSpaceCameraPos);
-                } else {
-                    localRayDir = UnityWorldToObjectDir(getCameraDirection(fi.projPos));
-                }
+                const float3 localRayDir = all(UNITY_MATRIX_P[3].xyz == float3(0.0, 0.0, 0.0)) ? UnityWorldToObjectDir(-UNITY_MATRIX_V[2].xyz)
+                    : abs(unity_LightShadowBias.x) < 1.0e-5 ? normalize(fi.localPos - fi.localSpaceCameraPos)
+                    : UnityWorldToObjectDir(getCameraDirection(fi.projPos));
 #endif
 
                 const rmout ro = rayMarch(fi.localPos, localRayDir);
