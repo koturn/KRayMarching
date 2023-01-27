@@ -109,6 +109,7 @@ namespace Koturn.KRayMarching
         public override void OnGUI(MaterialEditor me, MaterialProperty[] mps)
         {
             EditorGUILayout.LabelField("Ray Marching Parameters", EditorStyles.boldLabel);
+            using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
                 ShaderProperty(me, mps, PropNameMaxLoop, false);
@@ -121,6 +122,7 @@ namespace Koturn.KRayMarching
             }
 
             EditorGUILayout.LabelField("Lighting Parameters", EditorStyles.boldLabel);
+            using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
                 ShaderProperty(me, mps, PropNameColor, false);
@@ -178,6 +180,7 @@ namespace Koturn.KRayMarching
             DrawCustomProperties(me, mps);
 
             EditorGUILayout.LabelField("Rendering Options", EditorStyles.boldLabel);
+            using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
                 ShaderProperty(me, mps, PropNameCull, false);
@@ -257,7 +260,7 @@ namespace Koturn.KRayMarching
         /// <param name="mps"><see cref="MaterialProperty"/> array.</param>
         private static void DrawAdvancedOptions(MaterialEditor me, MaterialProperty[] mps)
         {
-            GUILayout.Label("Advanced Options", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Advanced Options", EditorStyles.boldLabel);
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
