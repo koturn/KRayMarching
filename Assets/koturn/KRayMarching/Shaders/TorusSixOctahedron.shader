@@ -518,7 +518,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
                 const float3 worldFinalPos = objectToWorldPos(localFinalPos);
 
 #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-                i.vec = ray.endPos - _LightPositionRange.xyz;
+                i.vec = worldFinalPos - _LightPositionRange.xyz;
                 SHADOW_CASTER_FRAGMENT(i);
 #else
                 const float4 projPos = UnityWorldToClipPos(worldFinalPos);
