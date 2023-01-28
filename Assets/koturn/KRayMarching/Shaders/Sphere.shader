@@ -626,6 +626,7 @@ Shader "koturn/KRayMarching/Sphere"
             //   SHADOWS_CUBE
             #pragma multi_compile_shadowcaster
 
+
             /*!
              * @brief Output of vertex shader and input of fragment shader.
              */
@@ -635,10 +636,8 @@ Shader "koturn/KRayMarching/Sphere"
                 V2F_SHADOW_CASTER;
                 //! World position at the pixel.
                 float3 localPos : TEXCOORD1;
-                //! Local space position of the camera.
-                nointerpolation float3 localSpaceCameraPos : TEXCOORD2;
-                //! Projected position.
-                float4 projPos : TEXCOORD3;
+                //! Unnormalized ray direction in object space.
+                float3 localRayDirVector : TEXCOORD2;
             };
 
 
@@ -652,12 +651,19 @@ Shader "koturn/KRayMarching/Sphere"
                 v2f_shadowcaster o;
                 UNITY_INITIALIZE_OUTPUT(v2f_shadowcaster, o);
 
-                o.pos = UnityObjectToClipPos(v.vertex);
-                o.localPos = v.vertex.xyz;
-                o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos);
-                o.projPos = ComputeNonStereoScreenPos(o.pos);
-                COMPUTE_EYEDEPTH(o.projPos.z);
                 TRANSFER_SHADOW_CASTER(o)
+
+                o.localPos = v.vertex.xyz;
+
+                float4 projPos = ComputeNonStereoScreenPos(o.pos);
+                COMPUTE_EYEDEPTH(projPos.z);
+#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+                o.localRayDirVector = mul((float3x3)unity_WorldToObject, getCameraDirectionVector(projPos));
+#else
+                o.localRayDirVector = dot(UNITY_MATRIX_P[3].xyz, UNITY_MATRIX_P[3].xyz) == 0.0 ? mul((float3x3)unity_WorldToObject, -UNITY_MATRIX_V[2].xyz)
+                    : abs(unity_LightShadowBias.x) < 1.0e-5 ? (v.vertex.xyz - worldToObjectPos(_WorldSpaceCameraPos))
+                    : mul((float3x3)unity_WorldToObject, getCameraDirectionVector(projPos));
+#endif
 
                 return o;
             }
@@ -669,30 +675,21 @@ Shader "koturn/KRayMarching/Sphere"
              */
             fout fragShadowCaster(v2f_shadowcaster fi)
             {
-#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-                const float3 localRayDir = UnityWorldToObjectDir(getCameraDirection(fi.projPos));
-#else
-                const float3 localRayDir = all(UNITY_MATRIX_P[3].xyz == float3(0.0, 0.0, 0.0)) ? UnityWorldToObjectDir(-UNITY_MATRIX_V[2].xyz)
-                    : abs(unity_LightShadowBias.x) < 1.0e-5 ? normalize(fi.localPos - fi.localSpaceCameraPos)
-                    : UnityWorldToObjectDir(getCameraDirection(fi.projPos));
-#endif
+                const float3 localRayDir = normalize(fi.localRayDirVector);
 
                 const rmout ro = rayMarch(fi.localPos, localRayDir);
                 if (!ro.isHit) {
                     discard;
                 }
 
-                const float3 localFinalPos = fi.localPos + localRayDir * ro.rayLength;
-                const float3 worldFinalPos = objectToWorldPos(localFinalPos);
+                const float3 worldFinalPos = objectToWorldPos(fi.localPos + localRayDir * ro.rayLength);
 
 #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
                 i.vec = worldFinalPos - _LightPositionRange.xyz;
                 SHADOW_CASTER_FRAGMENT(i);
 #else
-                const float4 projPos = UnityWorldToClipPos(worldFinalPos);
-
                 fout fo;
-                fo.color = fo.depth = getDepth(projPos);
+                fo.color = fo.depth = getDepth(UnityWorldToClipPos(worldFinalPos));
 
                 return fo;
 #endif
