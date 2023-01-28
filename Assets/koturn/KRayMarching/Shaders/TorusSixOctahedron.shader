@@ -105,10 +105,10 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         {
             //! Clip space position of the vertex.
             float4 pos : SV_POSITION;
-            //! World position at the pixel.
-            float3 localPos : TEXCOORD0;
             //! Local space position of the camera.
-            nointerpolation float3 localSpaceCameraPos : TEXCOORD1;
+            nointerpolation float3 localSpaceCameraPos : TEXCOORD0;
+            //! Unnormalized ray direction in object space.
+            float3 localRayDirVector : TEXCOORD1;
             //! Local space light position.
             nointerpolation float3 localSpaceLightPos : TEXCOORD2;
             //! Lighting and shadowing parameters.
@@ -186,8 +186,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             v2f o;
             UNITY_INITIALIZE_OUTPUT(v2f, o);
 
-            o.localPos = v.vertex.xyz;
             o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
+            o.localRayDirVector = v.vertex - o.localSpaceCameraPos;
+
 #ifdef USING_DIRECTIONAL_LIGHT
             o.localSpaceLightPos = normalizeEx(mul((float3x3)unity_WorldToObject, _WorldSpaceLightPos0.xyz) * _Scales);
 #else
@@ -216,9 +217,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
          */
         fout frag(v2f fi)
         {
-            // Define ray direction by finding the direction of the local coordinates
-            // of the mesh from the local coordinates of the viewpoint.
-            const float3 localRayDir = normalize(fi.localPos - fi.localSpaceCameraPos);
+            const float3 localRayDir = normalize(fi.localRayDirVector);
 
             const rmout ro = rayMarch(fi.localSpaceCameraPos, localRayDir);
             if (!ro.isHit) {
