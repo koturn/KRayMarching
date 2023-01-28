@@ -459,6 +459,15 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
 
 
             /*!
+             * @brief Input of vertex shader.
+             */
+            struct appdata_shadowcaster
+            {
+                //! Local position of the vertex.
+                float4 vertex : POSITION;
+            };
+
+            /*!
              * @brief Output of vertex shader and input of fragment shader.
              */
             struct v2f_shadowcaster
@@ -477,7 +486,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
              * @param [in] v  Input data
              * @return Output for fragment shader (v2f_shadowcaster).
              */
-            v2f_shadowcaster vertShadowCaster(appdata v)
+            v2f_shadowcaster vertShadowCaster(appdata_shadowcaster v)
             {
                 v2f_shadowcaster o;
                 UNITY_INITIALIZE_OUTPUT(v2f_shadowcaster, o);
