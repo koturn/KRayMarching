@@ -343,15 +343,14 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
             const float radius = _TorusRadius + _SinTime.w * _TorusRadiusAmp;
 
-            float minDist = sdTorus(p, float2(radius, _TorusWidth));
-            color = half3(1.0, 0.75, 0.25);
+            float minDist = sdTorus(p.xzy, float2(radius, _TorusWidth));
+            color = half3(0.8, 0.8, 0.8);
 
             p.xy = rotate2D(p.xy, _Time.y);
-            const float xyAngle = atan2(p.y, p.x);
-            const float rotUnit = floor(xyAngle * kInvOneThirdPi);
+            const float rotUnit = floor(-atan2(p.y, p.x) * kInvOneThirdPi);
             p.xy = rotate2D(p.xy, kOneThirdPi * rotUnit + kOneThirdPi / 2.0);
 
-            const float d = sdOctahedron(p - float3(radius, 0.0, 0.0), _OctahedronSize);
+            const float d = sdOctahedron(p - float3(radius, 0.0, 0.0), _OctahedronSize, float3(0.5, 2.0, 2.0));
             if (minDist > d) {
                 minDist = d;
                 const int idx = (int)rotUnit;
