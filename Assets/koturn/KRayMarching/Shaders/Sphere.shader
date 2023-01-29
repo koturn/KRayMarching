@@ -17,7 +17,8 @@ Shader "koturn/KRayMarching/Sphere"
 
         [Vector3]
         _Scales ("Scale vector", Vector) = (1.0, 1.0, 1.0, 1.0)
-        _MarchingFactor ("Marching Factor", Float) = 1.0
+
+        _MarchingFactor ("Marching Factor", Range(0.5, 1.0)) = 1.0
 
         _Color ("Color of the objects", Color) = (1.0, 1.0, 1.0, 1.0)
 
@@ -52,11 +53,65 @@ Shader "koturn/KRayMarching/Sphere"
         [Enum(UnityEngine.Rendering.CullMode)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front
 
-        // [ColorMask]
+        [HideInInspector]
+        __RenderingMode ("Rendering Mode", Int) = 1
+
+        [Enum(UnityEngine.Rendering.BlendMode)]
+        _SrcBlend ("Blend Source Factor", Int) = 1  // Default: One
+
+        [Enum(UnityEngine.Rendering.BlendMode)]
+        _DstBlend ("Blend Destination Factor", Int) = 0  // Default: Zero
+
+        [Enum(UnityEngine.Rendering.BlendMode)]
+        _SrcBlendAlpha ("Blend Source Factor", Int) = 1  // Default: One
+
+        [Enum(UnityEngine.Rendering.BlendMode)]
+        _DstBlendAlpha ("Blend Destination Factor", Int) = 0  // Default: Zero
+
+        [Enum(UnityEngine.Rendering.BlendOp)]
+        _BlendOp ("BlendOp", Int) = 0  // Default: Add
+
+        [Enum(UnityEngine.Rendering.BlendOp)]
+        _BlendOpAlpha ("BlendOpAlpha", Int) = 0  // Default: Add
+
+        [Enum(Off, 0, On, 1)]
+        _ZWrite ("ZWrite", Int) = 0  // Default: Off
+
+        [Enum(UnityEngine.Rendering.CompareFunction)]
+        _ZTest ("ZTest", Int) = 4  // Default: LEqual
+
+        [Enum(2D, 0, 3D, 1)]
+        _OffsetFact ("Offset Factor", Int) = 0
+
+        _OffsetUnit ("Offset Units", Range(-100, 100)) = 0
+
+        [ColorMask]
         _ColorMask ("Color Mask", Int) = 15
 
         [Enum(Off, 0, On, 1)]
         _AlphaToMask ("Alpha To Mask", Int) = 0  // Default: Off
+
+
+        [IntRange]
+        _StencilRef ("Stencil Reference Value", Range(0, 255)) = 0
+
+        [IntRange]
+        _StencilReadMask ("Stencil ReadMask Value", Range(0, 255)) = 255
+
+        [IntRange]
+        _StencilWriteMask ("Stencil WriteMask Value", Range(0, 255)) = 255
+
+        [Enum(UnityEngine.Rendering.CompareFunction)]
+        _StencilCompFunc ("Stencil Compare Function", Int) = 8  // Default: Always
+
+        [Enum(UnityEngine.Rendering.StencilOp)]
+        _StencilPass ("Stencil Pass", Int) = 0  // Default: Keep
+
+        [Enum(UnityEngine.Rendering.StencilOp)]
+        _StencilFail ("Stencil Fail", Int) = 0  // Default: Keep
+
+        [Enum(UnityEngine.Rendering.StencilOp)]
+        _StencilZFail ("Stencil ZFail", Int) = 0  // Default: Keep
     }
 
     SubShader
@@ -71,8 +126,22 @@ Shader "koturn/KRayMarching/Sphere"
         }
 
         Cull [_Cull]
+        BlendOp [_BlendOp], [_BlendOpAlpha]
+        Offset [_OffsetFact], [_OffsetUnit]
         ColorMask [_ColorMask]
         AlphaToMask [_AlphaToMask]
+
+        Stencil
+        {
+            Ref [_StencilRef]
+            ReadMask [_StencilReadMask]
+            WriteMask [_StencilWriteMask]
+            Comp [_StencilCompFunc]
+            Pass [_StencilPass]
+            Fail [_StencilFail]
+            ZFail [_StencilZFail]
+        }
+
 
         CGINCLUDE
         #pragma target 3.0
@@ -558,6 +627,10 @@ Shader "koturn/KRayMarching/Sphere"
                 "LightMode" = "ForwardBase"
             }
 
+            Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
+            ZWrite [_ZWrite]
+            ZTest [_ZTest]
+
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -582,8 +655,9 @@ Shader "koturn/KRayMarching/Sphere"
                 "LightMode" = "ForwardAdd"
             }
 
-            Blend One One
+            Blend [_SrcBlend] One, [_SrcBlendAlpha] One
             ZWrite Off
+            ZTest LEqual
 
             CGPROGRAM
             #pragma vertex vert
@@ -615,6 +689,7 @@ Shader "koturn/KRayMarching/Sphere"
 
             Cull Back
             ZWrite On
+            ZTest LEqual
 
             CGPROGRAM
             #pragma vertex vertShadowCaster

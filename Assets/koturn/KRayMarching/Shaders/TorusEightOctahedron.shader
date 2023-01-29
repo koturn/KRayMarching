@@ -18,7 +18,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         [Vector3]
         _Scales ("Scale vector", Vector) = (1.0, 1.0, 1.0, 1.0)
 
-        _MarchingFactor ("Marching Factor", Range(0.0, 1.0)) = 0.5
+        _MarchingFactor ("Marching Factor", Range(0.5, 1.0)) = 0.65
 
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Custom)]
         _LightingMethod ("Lighting method", Int) = 0
@@ -26,7 +26,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         _Glossiness ("Smoothness", Range(0.0, 1.0)) = 0.5
         _Metallic ("Metallic", Range(0.0, 1.0)) = 0.0
 
-        _SpecColor ("Color of specular", Color) = (0.5, 0.5, 0.5, 0.5)
+        _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
         _SpecPower ("Specular Power", Range(0.0, 128.0)) = 5.0
 
         // SDF parameters.
@@ -38,6 +38,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         [Toggle(_USE_FAST_INVTRIFUNC_ON)]
         _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
 
+
         [Enum(UnityEngine.Rendering.CullMode)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front
 
@@ -46,6 +47,28 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
 
         [Enum(Off, 0, On, 1)]
         _AlphaToMask ("Alpha To Mask", Int) = 0  // Default: Off
+
+
+        [IntRange]
+        _StencilRef ("Stencil Reference Value", Range(0, 255)) = 0
+
+        [IntRange]
+        _StencilReadMask ("Stencil ReadMask Value", Range(0, 255)) = 255
+
+        [IntRange]
+        _StencilWriteMask ("Stencil WriteMask Value", Range(0, 255)) = 255
+
+        [Enum(UnityEngine.Rendering.CompareFunction)]
+        _StencilCompFunc ("Stencil Compare Function", Int) = 8  // Default: Always
+
+        [Enum(UnityEngine.Rendering.StencilOp)]
+        _StencilPass ("Stencil Pass", Int) = 0  // Default: Keep
+
+        [Enum(UnityEngine.Rendering.StencilOp)]
+        _StencilFail ("Stencil Fail", Int) = 0  // Default: Keep
+
+        [Enum(UnityEngine.Rendering.StencilOp)]
+        _StencilZFail ("Stencil ZFail", Int) = 0  // Default: Keep
     }
 
     SubShader
@@ -62,6 +85,17 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         Cull [_Cull]
         ColorMask [_ColorMask]
         AlphaToMask [_AlphaToMask]
+
+        Stencil
+        {
+            Ref [_StencilRef]
+            ReadMask [_StencilReadMask]
+            WriteMask [_StencilWriteMask]
+            Comp [_StencilCompFunc]
+            Pass [_StencilPass]
+            Fail [_StencilFail]
+            ZFail [_StencilZFail]
+        }
 
         CGINCLUDE
         #pragma multi_compile_fog

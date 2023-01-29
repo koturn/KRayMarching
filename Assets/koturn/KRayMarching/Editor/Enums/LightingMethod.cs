@@ -1,4 +1,4 @@
-namespace Koturn.KRayMarching
+namespace Koturn.KRayMarching.Enums
 {
     /// <summary>
     /// Lighting methods.

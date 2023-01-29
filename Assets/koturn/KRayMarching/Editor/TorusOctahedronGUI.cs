@@ -39,6 +39,8 @@ namespace Koturn.KRayMarching
         protected override void DrawCustomProperties(MaterialEditor me, MaterialProperty[] mps)
         {
             EditorGUILayout.LabelField("SDF Parameters", EditorStyles.boldLabel);
+
+            using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
                 ShaderProperty(me, mps, PropNameTorusRadius, false);
