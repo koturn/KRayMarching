@@ -100,7 +100,10 @@ float3 getCameraDirection(float4 projPos)
 float3 getCameraDirectionVector(float4 projPos)
 {
     float2 sp = (projPos.xy / projPos.w) * 2.0 - 1.0;
-    sp.x *= _ScreenParams.x / _ScreenParams.y;
+
+    // Following code is equivalent to: sp.x *= _ScreenParams.x / _ScreenParams.y;
+    sp.x *= _ScreenParams.x * _ScreenParams.w - _ScreenParams.x;
+
     return UNITY_MATRIX_V[0].xyz * sp.x
         + UNITY_MATRIX_V[1].xyz * sp.y
         - UNITY_MATRIX_V[2].xyz * abs(UNITY_MATRIX_P[1][1]);
