@@ -301,7 +301,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
          */
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
         {
-#if defined(_LIGHTINGMETHOD_LAMBERT)
+#if defined(_LIGHTINGMETHOD_UNITY_LAMBERT)
             return calcLightingUnityLambert(color, worldPos, worldNormal, atten, lmap);
 #elif defined(_LIGHTINGMETHOD_UNITY_BLINN_PHONG)
             return calcLightingUnityBlinnPhong(color, worldPos, worldNormal, atten, lmap);

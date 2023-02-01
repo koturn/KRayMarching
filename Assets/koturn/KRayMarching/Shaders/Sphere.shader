@@ -34,7 +34,7 @@ Shader "koturn/KRayMarching/Sphere"
         _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
         _SpecPower ("Specular Power", Range(0.0, 128.0)) = 5.0
 
-        [KeywordEnum(Lembert, Half Lembert, Squred Half Lembert, Disable)]
+        [KeywordEnum(Lambert, Half Lambert, Squared Half Lembert, Disable)]
         _DiffuseMode ("Reflection Mode", Int) = 2
 
         [KeywordEnum(Original, Half Vector, Disable)]
@@ -152,7 +152,7 @@ Shader "koturn/KRayMarching/Sphere"
         //   FOG_EXP2
         #pragma multi_compile_fog
 
-        #pragma shader_feature_local_fragment _DIFFUSEMODE_LEMBERT _DIFFUSEMODE_HALF_LEMBERT _DIFFUSEMODE_SQURED_HALF_LEMBERT _DIFFUSEMODE_DISABLE
+        #pragma shader_feature_local_fragment _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT _DIFFUSEMODE_DISABLE
         #pragma shader_feature_local_fragment _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR _SPECULARMODE_DISABLE
         #pragma shader_feature_local_fragment _AMBIENTMODE_LEGACY _AMBIENTMODE_SH _AMBIENTMODE_DISABLE
         #pragma shader_feature_local_fragment _LIGHTINGMETHOD_UNITY_LAMBERT _LIGHTINGMETHOD_UNITY_BLINN_PHONG _LIGHTINGMETHOD_UNITY_STANDARD _LIGHTINGMETHOD_UNITY_STANDARD_SPECULAR _LIGHTINGMETHOD_CUSTOM
@@ -331,7 +331,7 @@ Shader "koturn/KRayMarching/Sphere"
          */
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
         {
-#if defined(_LIGHTINGMETHOD_LAMBERT)
+#if defined(_LIGHTINGMETHOD_UNITY_LAMBERT)
             return calcLightingUnityLambert(color, worldPos, worldNormal, atten, lmap);
 #elif defined(_LIGHTINGMETHOD_UNITY_BLINN_PHONG)
             return calcLightingUnityBlinnPhong(color, worldPos, worldNormal, atten, lmap);
@@ -346,15 +346,15 @@ Shader "koturn/KRayMarching/Sphere"
 
             // Lambertian reflectance.
             const float nDotL = dot(worldNormal, worldLightDir);
-#    if defined(_DIFFUSEMODE_SQURED_HALF_LEMBERT)
+#    if defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
             const half3 diffuse = lightCol * sq(nDotL * 0.5 + 0.5);
-#    elif defined(_DIFFUSEMODE_HALF_LEMBERT)
+#    elif defined(_DIFFUSEMODE_HALF_LAMBERT)
             const half3 diffuse = lightCol * (nDotL * 0.5 + 0.5);
-#    elif defined(_DIFFUSEMODE_LEMBERT)
+#    elif defined(_DIFFUSEMODE_LAMBERT)
             const half3 diffuse = lightCol * max(0.0, nDotL);
 #    else
             const half3 diffuse = half3(1.0, 1.0, 1.0);
-#    endif  // defined(_DIFFUSEMODE_SQURED_HALF_LEMBERT)
+#    endif  // defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
 
             // Specular reflection.
 #    ifdef _SPECULARMODE_HALF_VECTOR
