@@ -300,11 +300,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
          */
         rmout rayMarch(float3 rayOrigin, float3 rayDir)
         {
-            rmout ro;
-            ro.rayLength = 0.0;
-            ro.isHit = false;
-            ro.color = half4(0.0, 0.0, 0.0, 0.0);
-
 #if defined(UNITY_PASS_FORWARDBASE)
             const int maxLoop = _MaxLoop;
 #elif defined(UNITY_PASS_FORWARDADD)
@@ -313,18 +308,21 @@ Shader "koturn/KRayMarching/ColorHexagram"
             const int maxLoop = _MaxLoopShadowCaster;
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 
+            rmout ro;
+            ro.rayLength = 0.0;
+            ro.isHit = false;
+            ro.color = half4(0.0, 0.0, 0.0, 0.0);
+
             // Loop of Ray Marching.
             for (int i = 0; i < maxLoop; i++) {
-                // Position of the tip of the ray.
-                const float d = map((rayOrigin + rayDir * ro.rayLength), ro.color);
-
-                ro.rayLength += d * _MarchingFactor;
-                ro.isHit = d < _MinRayLength;
-
                 // Break this loop if the ray goes too far or collides.
                 if (ro.isHit || ro.rayLength > _MaxRayLength) {
                     break;
                 }
+
+                const float d = map(rayOrigin + rayDir * ro.rayLength, ro.color);
+                ro.rayLength += d * _MarchingFactor;
+                ro.isHit = d < _MinRayLength;
             }
 
             return ro;
