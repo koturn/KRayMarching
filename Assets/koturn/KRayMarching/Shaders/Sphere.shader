@@ -168,6 +168,7 @@ Shader "koturn/KRayMarching/Sphere"
         #include "include/Utils.cginc"
         #include "include/LightingUtils.cginc"
         #include "include/SDF.cginc"
+        #include "include/VertCommon.cginc"
 
 #if defined(UNITY_COMPILER_HLSL) \
     || defined(SHADER_API_GLCORE) \
@@ -184,44 +185,6 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma warning (default : 4700 4701 4702 4703 4704 4705 4706 4707 4708 4710)
         #pragma warning (default : 4711 4712 4713 4714 4715 4716 4717)
 #endif
-
-        /*!
-         * @brief Input of vertex shader.
-         */
-        struct appdata
-        {
-            //! Local position of the vertex.
-            float4 vertex : POSITION;
-#ifdef LIGHTMAP_ON
-            //! Lightmap coordinate.
-            float2 texcoord1 : TEXCOORD1;
-#endif  // LIGHTMAP_ON
-#ifdef DYNAMICLIGHTMAP_ON
-            //! Dynamic Lightmap coordinate.
-            float2 texcoord2 : TEXCOORD2;
-#endif  // DYNAMICLIGHTMAP_ON
-        };
-
-        /*!
-         * @brief Output of vertex shader and input of fragment shader.
-         */
-        struct v2f
-        {
-            //! Clip space position of the vertex.
-            float4 pos : SV_POSITION;
-            //! Local space position of the camera.
-            nointerpolation float3 localSpaceCameraPos : TEXCOORD0;
-            //! Unnormalized ray direction in object space.
-            float3 localRayDirVector : TEXCOORD1;
-            //! Local space light position.
-            nointerpolation float3 localSpaceLightPos : TEXCOORD2;
-            //! Lighting and shadowing parameters.
-            UNITY_LIGHTING_COORDS(3, 4)
-#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
-            //! Light map UV coordinates.
-            float4 lmap : TEXCOORD5;
-#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
-        };
 
         /*!
          * @brief Output of fragment shader.
@@ -250,7 +213,7 @@ Shader "koturn/KRayMarching/Sphere"
         float map(float3 p);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float3 getNormal(float3 p);
-        fixed getLightAttenuation(v2f fi, float3 worldPos);
+        fixed getLightAttenuation(v2f_raymarching_forward fi, float3 worldPos);
 
 
         //! Color of the objects.
@@ -265,63 +228,25 @@ Shader "koturn/KRayMarching/Sphere"
         uniform float _MinRayLength;
         //! Maximum length of the ray.
         uniform float _MaxRayLength;
-        //! Scale vector.
-        uniform float3 _Scales;
         //! Marching Factor.
         uniform float _MarchingFactor;
-
-        /*!
-         * @brief Vertex shader function.
-         *
-         * @param [in] v  Input data
-         * @return Output for fragment shader (v2f).
-         */
-        v2f vert(appdata v)
-        {
-            v2f o;
-            UNITY_INITIALIZE_OUTPUT(v2f, o);
-
-            o.localSpaceCameraPos = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
-            o.localRayDirVector = v.vertex - o.localSpaceCameraPos;
-
-#ifdef USING_DIRECTIONAL_LIGHT
-            o.localSpaceLightPos = normalizeEx(mul((float3x3)unity_WorldToObject, _WorldSpaceLightPos0.xyz) * _Scales);
-#else
-            o.localSpaceLightPos = worldToObjectPos(_WorldSpaceLightPos0) * _Scales;
-#endif  // USING_DIRECTIONAL_LIGHT
-
-#ifdef LIGHTMAP_ON
-            o.lmap.xy = v.texcoord1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
-#endif  // LIGHTMAP_ON
-#ifdef DYNAMICLIGHTMAP_ON
-            o.lmap.zw = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
-#endif  // DYNAMICLIGHTMAP_ON
-
-            UNITY_TRANSFER_LIGHTING(o, v.texcoord1);
-
-            v.vertex.xyz /= _Scales;
-            o.pos = UnityObjectToClipPos(v.vertex);
-
-            return o;
-        }
 
 
         /*!
          * @brief Fragment shader function.
-         *
          * @param [in] fi  Input data from vertex shader.
          * @return Output of each texels (fout).
          */
-        fout frag(v2f fi)
+        fout frag(v2f_raymarching_forward fi)
         {
             const float3 localRayDir = normalize(fi.localRayDirVector);
 
-            const rmout ro = rayMarch(fi.localSpaceCameraPos, localRayDir);
+            const rmout ro = rayMarch(fi.localRayOrigin, localRayDir);
             if (!ro.isHit) {
                 discard;
             }
 
-            const float3 localFinalPos = fi.localSpaceCameraPos + localRayDir * ro.rayLength;
+            const float3 localFinalPos = fi.localRayOrigin + localRayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
 
 #if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
@@ -599,7 +524,7 @@ Shader "koturn/KRayMarching/Sphere"
          * @param [in] worldPos  World coordinate.
          * @return Light Attenuation Value.
          */
-        fixed getLightAttenuation(v2f fi, float3 worldPos)
+        fixed getLightAttenuation(v2f_raymarching_forward fi, float3 worldPos)
         {
             // v must be declared in this scope.
             // v must include following.
@@ -630,7 +555,7 @@ Shader "koturn/KRayMarching/Sphere"
             ZTest [_ZTest]
 
             CGPROGRAM
-            #pragma vertex vert
+            #pragma vertex vertRayMarchingForward
             #pragma fragment frag
 
             // keywords:
@@ -658,7 +583,7 @@ Shader "koturn/KRayMarching/Sphere"
             ZTest LEqual
 
             CGPROGRAM
-            #pragma vertex vert
+            #pragma vertex vertRayMarchingForward
             #pragma fragment frag
 
             // Keywords:
@@ -690,7 +615,7 @@ Shader "koturn/KRayMarching/Sphere"
             ZTest LEqual
 
             CGPROGRAM
-            #pragma vertex vertShadowCaster
+            #pragma vertex vertRayMarchingShadowCaster
             #pragma fragment fragShadowCaster
 
             // Keywords:
@@ -700,70 +625,20 @@ Shader "koturn/KRayMarching/Sphere"
 
 
             /*!
-             * @brief Input of vertex shader.
-             */
-            struct appdata_shadowcaster
-            {
-                //! Local position of the vertex.
-                float4 vertex : POSITION;
-            };
-
-            /*!
-             * @brief Output of vertex shader and input of fragment shader.
-             */
-            struct v2f_shadowcaster
-            {
-                //! Clip space position of the vertex.
-                V2F_SHADOW_CASTER;
-                //! World position at the pixel.
-                float3 localPos : TEXCOORD1;
-                //! Unnormalized ray direction in object space.
-                float3 localRayDirVector : TEXCOORD2;
-            };
-
-
-            /*!
-             * @brief Vertex shader function.
-             * @param [in] v  Input data
-             * @return Output for fragment shader (v2f_shadowcaster).
-             */
-            v2f_shadowcaster vertShadowCaster(appdata_shadowcaster v)
-            {
-                v2f_shadowcaster o;
-                UNITY_INITIALIZE_OUTPUT(v2f_shadowcaster, o);
-
-                TRANSFER_SHADOW_CASTER(o)
-
-                o.localPos = v.vertex.xyz;
-
-                float4 projPos = ComputeNonStereoScreenPos(o.pos);
-                COMPUTE_EYEDEPTH(projPos.z);
-#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-                o.localRayDirVector = mul((float3x3)unity_WorldToObject, getCameraDirectionVector(projPos));
-#else
-                o.localRayDirVector = dot(UNITY_MATRIX_P[3].xyz, UNITY_MATRIX_P[3].xyz) == 0.0 ? mul((float3x3)unity_WorldToObject, -UNITY_MATRIX_V[2].xyz)
-                    : abs(unity_LightShadowBias.x) < 1.0e-5 ? (v.vertex.xyz - worldToObjectPos(_WorldSpaceCameraPos))
-                    : mul((float3x3)unity_WorldToObject, getCameraDirectionVector(projPos));
-#endif
-
-                return o;
-            }
-
-            /*!
              * @brief Fragment shader function for ShadowCaster Pass.
              * @param [in] fi  Input data from vertex shader.
              * @return Output of each texels (fout).
              */
-            fout fragShadowCaster(v2f_shadowcaster fi)
+            fout fragShadowCaster(v2f_raymarching_shadowcaster fi)
             {
                 const float3 localRayDir = normalize(fi.localRayDirVector);
 
-                const rmout ro = rayMarch(fi.localPos, localRayDir);
+                const rmout ro = rayMarch(fi.localRayOrigin, localRayDir);
                 if (!ro.isHit) {
                     discard;
                 }
 
-                const float3 worldFinalPos = objectToWorldPos(fi.localPos + localRayDir * ro.rayLength);
+                const float3 worldFinalPos = objectToWorldPos(fi.localRayOrigin + localRayDir * ro.rayLength);
 
 #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
                 i.vec = worldFinalPos - _LightPositionRange.xyz;
@@ -773,7 +648,7 @@ Shader "koturn/KRayMarching/Sphere"
                 fo.color = fo.depth = getDepth(UnityWorldToClipPos(worldFinalPos));
 
                 return fo;
-#endif
+#endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
             }
             ENDCG
         }  // ShadowCaster
