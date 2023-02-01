@@ -10,6 +10,12 @@ float3 worldToObjectPos(float4 worldPos);
 float3 objectToWorldPos(float3 localPos);
 float3 normalizedWorldSpaceViewDir(float3 worldPos);
 float3 normalizedWorldSpaceLightDir(float3 worldPos);
+float3 getCameraRight();
+float3 getCameraUp();
+float3 getCameraForward();
+float getCameraFocalLength();
+bool isCameraPerspective();
+bool isCameraOrthographic();
 float3 getCameraDirection(float4 projPos);
 float3 getCameraDirectionVector(float4 projPos);
 half4 applyFog(float fogFactor, half4 color);
@@ -82,6 +88,74 @@ float3 normalizedWorldSpaceLightDir(float3 worldPos)
 
 
 /*!
+ * @brief Get right vector of the camera.
+ * @return Right vector of the camera.
+ */
+float3 getCameraRight()
+{
+    return UNITY_MATRIX_V[0].xyz;
+}
+
+
+/*!
+ * @brief Get up vector of the camera.
+ * @return Up vector of the camera.
+ */
+float3 getCameraUp()
+{
+    return UNITY_MATRIX_V[1].xyz;
+}
+
+
+/*!
+ * @brief Get forward direction of the camera.
+ * @return Forward direction of the camera.
+ */
+float3 getCameraForward()
+{
+    return -UNITY_MATRIX_V[2].xyz;
+}
+
+
+/*!
+ * @brief Get focal length of the camera.
+ * @return Focal length of the camera.
+ */
+float getCameraFocalLength()
+{
+    return abs(UNITY_MATRIX_P[1][1]);
+}
+
+
+/*!
+ * @brief Identify whether the camera is perspective or not.
+ * @return True if the camera is perspective, otherwise false.
+ */
+bool isCameraPerspective()
+{
+    // return any(UNITY_MATRIX_P[3].xyz);
+    // return any(UNITY_MATRIX_P[3].xyz != float3(1.0, 1.0, 1.0));
+    // return dot(UNITY_MATRIX_P[3].xyz, UNITY_MATRIX_P[3].xyz) > 0.0;
+    return UNITY_MATRIX_P[3][3] != 1.0;
+    // return unity_OrthoParams.w == 0.0;
+}
+
+
+/*!
+ * @brief Identify whether the camera is orthographic or not.
+ * @return True if the camera is orthographic, otherwise false.
+ */
+bool isCameraOrthographic()
+{
+    // return !any(UNITY_MATRIX_P[3].xyz);
+    // return all(UNITY_MATRIX_P[3].xyz == float3(0.0, 0.0, 0.0));
+    // return dot(UNITY_MATRIX_P[3].xyz, UNITY_MATRIX_P[3].xyz) == 0.0;
+    return UNITY_MATRIX_P[3][3] == 1.0;
+    // return unity_OrthoParams.w == 1.0;
+}
+
+
+/*!
  * @brief Get camera direction from projected position.
  * @param [in] Projected position.
  * @return Camera direction in world space.
@@ -104,9 +178,9 @@ float3 getCameraDirectionVector(float4 projPos)
     // Following code is equivalent to: sp.x *= _ScreenParams.x / _ScreenParams.y;
     sp.x *= _ScreenParams.x * _ScreenParams.w - _ScreenParams.x;
 
-    return UNITY_MATRIX_V[0].xyz * sp.x
-        + UNITY_MATRIX_V[1].xyz * sp.y
-        - UNITY_MATRIX_V[2].xyz * abs(UNITY_MATRIX_P[1][1]);
+    return getCameraRight() * sp.x
+        + getCameraUp() * sp.y
+        + getCameraForward() * getCameraFocalLength();
 }
 
 

@@ -1,6 +1,8 @@
 #ifndef VERT_COMMON_INCLUDED
 #define VERT_COMMON_INCLUDED
 
+#include "Utils.cginc"
+
 
 //! Scale vector.
 uniform float3 _Scales;
@@ -131,7 +133,7 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
     o.localRayDirVector = mul((float3x3)unity_WorldToObject, getCameraDirectionVector(projPos));
 #else
-    o.localRayDirVector = dot(UNITY_MATRIX_P[3].xyz, UNITY_MATRIX_P[3].xyz) == 0.0 ? mul((float3x3)unity_WorldToObject, -UNITY_MATRIX_V[2].xyz)
+    o.localRayDirVector = isCameraOrthographic() ? mul((float3x3)unity_WorldToObject, getCameraForward())
         : abs(unity_LightShadowBias.x) < 1.0e-5 ? (v.vertex.xyz - worldToObjectPos(_WorldSpaceCameraPos))
         : mul((float3x3)unity_WorldToObject, getCameraDirectionVector(projPos));
 #endif
