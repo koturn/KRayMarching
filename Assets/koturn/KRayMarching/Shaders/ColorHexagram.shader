@@ -240,12 +240,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             ro.color = half4(0.0, 0.0, 0.0, 0.0);
 
             // Loop of Ray Marching.
-            for (int i = 0; i < maxLoop; i++) {
-                // Break this loop if the ray goes too far or collides.
-                if (ro.isHit || ro.rayLength > _MaxRayLength) {
-                    break;
-                }
-
+            for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > _MaxRayLength) ? 0x7fffffff : i + 1) {
                 const float d = map(rayOrigin + rayDir * ro.rayLength, ro.color);
                 ro.rayLength += d * _MarchingFactor;
                 ro.isHit = d < _MinRayLength;
