@@ -48,13 +48,11 @@ struct v2f_raymarching_forward
     nointerpolation float3 localRayOrigin : TEXCOORD0;
     //! Unnormalized ray direction in object space.
     float3 localRayDirVector : TEXCOORD1;
-    //! Local space light position.
-    nointerpolation float3 localSpaceLightPos : TEXCOORD2;
     //! Lighting and shadowing parameters.
-    UNITY_LIGHTING_COORDS(3, 4)
+    UNITY_LIGHTING_COORDS(2, 3)
 #if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
     //! Light map UV coordinates.
-    float4 lmap : TEXCOORD5;
+    float4 lmap : TEXCOORD4;
 #endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
 };
 
@@ -88,15 +86,6 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
 
     o.localRayOrigin = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
     o.localRayDirVector = v.vertex - o.localRayOrigin;
-
-#ifdef USING_DIRECTIONAL_LIGHT
-    // Safe normalize.
-    const float3 dirVector = mul((float3x3)unity_WorldToObject, _WorldSpaceLightPos0.xyz) * _Scales;
-    const float vDotV = dot(dirVector, dirVector);
-    o.localSpaceLightPos = vDotV == 0.0 ? dirVector : (dirVector * rsqrt(vDotV));
-#else
-    o.localSpaceLightPos = worldToObjectPos(_WorldSpaceLightPos0) * _Scales;
-#endif  // USING_DIRECTIONAL_LIGHT
 
 #ifdef LIGHTMAP_ON
     o.lmap.xy = v.texcoord1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
