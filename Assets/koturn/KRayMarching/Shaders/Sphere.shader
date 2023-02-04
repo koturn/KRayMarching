@@ -312,6 +312,9 @@ Shader "koturn/KRayMarching/Sphere"
          */
         float map(float3 p)
         {
+#ifdef UNITY_PASS_SHADOWCASTER
+            p *= _Scales;
+#endif  // UNITY_PASS_SHADOWCASTER
             return sdSphere(p, 0.5);
         }
 

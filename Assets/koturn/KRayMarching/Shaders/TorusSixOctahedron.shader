@@ -261,6 +261,10 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             static const float kOneThirdPi = UNITY_PI / 3.0;
             static const float kInvOneThirdPi = 1.0 / kOneThirdPi;
 
+#ifdef UNITY_PASS_SHADOWCASTER
+            p *= _Scales;
+#endif  // UNITY_PASS_SHADOWCASTER
+
             const float radius = _TorusRadius + _SinTime.w * _TorusRadiusAmp;
 
             float minDist = sdTorus(p.xzy, float2(radius, _TorusWidth));

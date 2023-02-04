@@ -270,6 +270,10 @@ Shader "koturn/KRayMarching/ColorHexagram"
             static const float kInvOneThirdPi = rcp(kOneThirdPi);
             static const float kInvTwoThirdPi = rcp(kTwoThirdPi);
 
+#ifdef UNITY_PASS_SHADOWCASTER
+            p *= _Scales;
+#endif  // UNITY_PASS_SHADOWCASTER
+
             const float radius = _TorusRadius + _SinTime.w * _TorusRadiusAmp;
 
             float minDist = sdTorus(p.xzy, float2(radius, _TorusWidth));
