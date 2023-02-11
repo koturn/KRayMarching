@@ -64,71 +64,71 @@ namespace Koturn.KRayMarching
 
             var mesh = new Mesh();
 
-            //      4:(-++)   5:(+++)
+            //      3:(-++)   2:(+++)
             //
-            //  3:(-+-)   2:(++-)
+            //  5:(-+-)   4:(++-)
             //
-            //      7:(--+)   6:(+-+)
+            //      1:(--+)   0:(+-+)
             //
-            //  0:(---)   1:(+--)
+            //  7:(---)   6:(+--)
             var vertices = new []
             {
-                new Vector3(-p.x, -p.y, -p.z),
-                new Vector3(p.x, -p.y, -p.z),
+                new Vector3(p.x, -p.y, p.z),
+                new Vector3(-p.x, -p.y, p.z),
+                new Vector3(p.x, p.y, p.z),
+                new Vector3(-p.x, p.y, p.z),
                 new Vector3(p.x, p.y, -p.z),
                 new Vector3(-p.x, p.y, -p.z),
-                new Vector3(-p.x, p.y, p.z),
-                new Vector3(p.x, p.y, p.z),
-                new Vector3(p.x, -p.y, p.z),
-                new Vector3(-p.x, -p.y, p.z)
+                new Vector3(p.x, -p.y, -p.z),
+                new Vector3(-p.x, -p.y, -p.z)
             };
             mesh.SetVertices(vertices);
 
             mesh.SetTriangles(new []
             {
-                // Face front
-                0, 2, 1,
-                0, 3, 2,
-                // Face top
-                2, 3, 4,
+                // face back
+                0, 2, 3,
+                0, 3, 1,
+                // face top
                 2, 4, 5,
-                // Face right
-                1, 2, 5,
-                1, 5, 6,
-                // Face left
-                0, 7, 4,
-                0, 4, 3,
-                // Face back
-                5, 4, 7,
-                5, 7, 6,
-                // Face bottom
-                0, 6, 7,
-                0, 1, 6
+                2, 5, 3,
+                // face front
+                4, 6, 7,
+                4, 7, 5,
+                // face bottom
+                6, 0, 1,
+                6, 1, 7,
+                // face left
+                1, 3, 5,
+                1, 5, 7,
+                // face right
+                6, 4, 2,
+                6, 2, 0
             }, 0);
 
             if (hasUV)
             {
-                //          4:(1,1)           5:(0,1)
+                //           3:(1,1)          2:(0,1)
                 //
                 //
                 //
-                // 3:(0,1)          2:(1,1)
+                // 5:(0,1)          4:(1,1)
                 //
-                //           7:(1,0)          6:(0,0)
+                //           1:(1,0)          0:(0,0)
                 //
                 //
                 //
-                // 0:(0,0)          1:(1,0)
+                // 7:(0,0)          6:(1,0)
                 mesh.SetUVs(0, new []
                 {
                     new Vector2(0.0f, 0.0f),
                     new Vector2(1.0f, 0.0f),
-                    new Vector2(1.0f, 1.0f),
                     new Vector2(0.0f, 1.0f),
                     new Vector2(1.0f, 1.0f),
+                    new Vector2(1.0f, 1.0f),
                     new Vector2(0.0f, 1.0f),
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f)
+                    new Vector2(1.0f, 0.0f),
+                    new Vector2(0.0f, 0.0f)
                 });
             }
 
