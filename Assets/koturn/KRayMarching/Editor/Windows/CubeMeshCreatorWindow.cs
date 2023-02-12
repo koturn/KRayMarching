@@ -83,6 +83,11 @@ namespace Koturn.KRayMarching.Windows
                     if (ccScope.changed)
                     {
                         _target = target;
+                        var meshFilter = target == null ? null : target.GetComponent<MeshFilter>();
+                        if (meshFilter != null)
+                        {
+                            _size = meshFilter.sharedMesh.bounds.size;
+                        }
                     }
                     if (ccScope.changed || string.IsNullOrEmpty(_assetPath))
                     {
@@ -204,7 +209,13 @@ namespace Koturn.KRayMarching.Windows
         public static void OpenWindow()
         {
             var window = EditorWindow.GetWindow<CubeMeshCreatorWindow>("Cube Mesh Creator");
-            window._target = Selection.activeGameObject;
+            var target = Selection.activeGameObject;
+            window._target = target;
+            var meshFilter = target == null ? null : target.GetComponent<MeshFilter>();
+            if (meshFilter != null)
+            {
+                window._size = meshFilter.sharedMesh.bounds.size;
+            }
         }
     }
 }
