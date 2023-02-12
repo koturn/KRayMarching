@@ -49,7 +49,7 @@ namespace Koturn.KRayMarching
         public static void WriteMeshCreateMethodInplace(Mesh mesh, string filePath, string indentString, string nsName, string className)
         {
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            using (var isw = new IndentStreamWriter(fs, "    "))
+            using (var isw = new IndentStreamWriter(fs, indentString))
             {
                 isw.WriteLine("using UnityEngine;");
                 isw.WriteLine("using System.Collections.Generic;");
@@ -182,7 +182,7 @@ namespace Koturn.KRayMarching
         public static void WriteMeshCreateMethod(Mesh mesh, string filePath, string indentString, string nsName, string className)
         {
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            using (var itw = new IndentStreamWriter(fs, "    "))
+            using (var itw = new IndentStreamWriter(fs, indentString))
             {
                 itw.WriteLine("using UnityEngine;");
                 itw.WriteLine("using System.Collections.Generic;");
