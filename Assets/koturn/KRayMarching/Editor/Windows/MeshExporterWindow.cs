@@ -1,4 +1,6 @@
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
@@ -29,7 +31,19 @@ namespace Koturn.KRayMarching.Windows
         {
             using (new EditorGUILayout.VerticalScope("Box"))
             {
-                _target = (GameObject)EditorGUILayout.ObjectField(_target, typeof(GameObject), true);
+                using (var ccScope = new EditorGUI.ChangeCheckScope())
+                {
+                    var target = (GameObject)EditorGUILayout.ObjectField(_target, typeof(GameObject), true);
+                    if (ccScope.changed)
+                    {
+                        _target = target;
+                    }
+                    if (ccScope.changed || string.IsNullOrEmpty(_filePath))
+                    {
+                        _filePath = (target == null ? string.Empty : ReplaceInvalidFileNameChars(target.name, "_")) + "MeshCreator";
+                    }
+                }
+
                 var mesh = _target == null ? null : _target.GetComponent<MeshFilter>().sharedMesh;
 
                 using (new EditorGUI.DisabledScope(mesh == null))
@@ -99,7 +113,12 @@ namespace Koturn.KRayMarching.Windows
                 return;
             }
             _filePath = filePath;
-            MeshExporter.WriteMeshCreateMethodInplace(mesh, filePath, "    ", "ExportedMeshes", "MeshCreator");
+            MeshExporter.WriteMeshCreateMethodInplace(
+                mesh,
+                filePath,
+                "    ",
+                "ExportedMeshes",
+                ReplaceInvalidClassNameChars(Path.GetFileNameWithoutExtension(filePath), "_"));
         }
 
         /// <summary>
@@ -125,7 +144,58 @@ namespace Koturn.KRayMarching.Windows
                 return;
             }
             _filePath = filePath;
-            MeshExporter.WriteMeshCreateMethod(mesh, filePath, "    ", "ExportedMeshes", "MeshCreator");
+            MeshExporter.WriteMeshCreateMethod(
+                mesh,
+                filePath,
+                "    ",
+                "ExportedMeshes",
+                ReplaceInvalidClassNameChars(Path.GetFileNameWithoutExtension(filePath), "_"));
+        }
+
+
+        /// <summary>
+        /// Replace characters that cannot be used as file name.
+        /// </summary>
+        /// <param name="input">Source text.</param>
+        /// <param name="replacement">The replacement string.</param>
+        /// <returns>Replaced text.</returns>
+        private static string ReplaceInvalidFileNameChars(string input, string replacement)
+        {
+            var sb = new StringBuilder(input.Length);
+            var invalidChars = Path.GetInvalidFileNameChars();
+            foreach (var c1 in input)
+            {
+                var isFoundInvalidChar = false;
+                foreach (var c2 in invalidChars)
+                {
+                    if (c1 == c2)
+                    {
+                        isFoundInvalidChar = true;
+                        break;
+                    }
+                }
+                if (isFoundInvalidChar)
+                {
+                    sb.Append(replacement);
+                }
+                else
+                {
+                    sb.Append(c1);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Replace characters that cannot be used as class name.
+        /// </summary>
+        /// <param name="input">Source string.</param>
+        /// <param name="replacement">The replacement string.</param>
+        /// <returns>Replaced text.</returns>
+        private static string ReplaceInvalidClassNameChars(string input, string replacement)
+        {
+            return Regex.Replace(input, @"^\d|\W", replacement);
         }
 
         /// <summary>
