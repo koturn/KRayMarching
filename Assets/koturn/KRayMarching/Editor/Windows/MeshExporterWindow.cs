@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
+using Koturn.KRayMarching.Enums;
 
 
 namespace Koturn.KRayMarching.Windows
@@ -22,7 +23,22 @@ namespace Koturn.KRayMarching.Windows
         /// </summary>
         [SerializeField]
         private string _filePath;
+        /// <summary>
+        /// Color Format.
+        /// </summary>
+        [SerializeField]
+        private ColorFormat _colorFormat;
 
+
+        /// <summary>
+        /// Initialize members.
+        /// </summary>
+        public MeshExporterWindow()
+        {
+            _target = null;
+            _filePath = string.Empty;
+            _colorFormat = ColorFormat.RGBAFloat;
+        }
 
         /// <summary>
         /// Draw window components.
@@ -48,17 +64,27 @@ namespace Koturn.KRayMarching.Windows
 
                 using (new EditorGUI.DisabledScope(mesh == null))
                 {
-                    if (GUILayout.Button("Export mesh as CSV"))
+                    EditorGUILayout.LabelField("CSV", EditorStyles.boldLabel);
+                    using (new EditorGUI.IndentLevelScope())
                     {
-                        OnExportMeshAsCsvButtonClicked();
+                        if (GUILayout.Button("Export mesh as CSV"))
+                        {
+                            OnExportMeshAsCsvButtonClicked();
+                        }
                     }
-                    if (GUILayout.Button("Export mesh as C# (Inplace)"))
+
+                    EditorGUILayout.LabelField("C#", EditorStyles.boldLabel);
+                    using (new EditorGUI.IndentLevelScope())
                     {
-                        OnExportMeshAsCSharpInplaceButtonClicked();
-                    }
-                    if (GUILayout.Button("Export mesh as C#"))
-                    {
-                        OnExportMeshAsCSharpButtonClicked();
+                        _colorFormat = (ColorFormat)EditorGUILayout.EnumPopup("Color Format", _colorFormat);
+                        if (GUILayout.Button("Export mesh as C# (Inplace)"))
+                        {
+                            OnExportMeshAsCSharpInplaceButtonClicked();
+                        }
+                        if (GUILayout.Button("Export mesh as C#"))
+                        {
+                            OnExportMeshAsCSharpButtonClicked();
+                        }
                     }
                 }
             }
@@ -118,7 +144,8 @@ namespace Koturn.KRayMarching.Windows
                 filePath,
                 "    ",
                 "ExportedMeshes",
-                ReplaceInvalidClassNameChars(Path.GetFileNameWithoutExtension(filePath), "_"));
+                ReplaceInvalidClassNameChars(Path.GetFileNameWithoutExtension(filePath), "_"),
+                _colorFormat);
         }
 
         /// <summary>
@@ -149,7 +176,8 @@ namespace Koturn.KRayMarching.Windows
                 filePath,
                 "    ",
                 "ExportedMeshes",
-                ReplaceInvalidClassNameChars(Path.GetFileNameWithoutExtension(filePath), "_"));
+                ReplaceInvalidClassNameChars(Path.GetFileNameWithoutExtension(filePath), "_"),
+                _colorFormat);
         }
 
 

@@ -1,8 +1,9 @@
-using UnityEngine;
-using UnityEngine.Rendering;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
+using UnityEngine.Rendering;
+using Koturn.KRayMarching.Enums;
 
 
 namespace Koturn.KRayMarching
@@ -46,7 +47,7 @@ namespace Koturn.KRayMarching
         /// <param name="indentString">A string for indentation.</param>
         /// <param name="nsName">Name of namespace. Null or empty string means no namespace.</param>
         /// <param name="className">Class name.</param>
-        public static void WriteMeshCreateMethodInplace(Mesh mesh, string filePath, string indentString, string nsName, string className)
+        public static void WriteMeshCreateMethodInplace(Mesh mesh, string filePath, string indentString, string nsName, string className, ColorFormat colorFormat = ColorFormat.RGBAFloat)
         {
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
             using (var isw = new IndentStreamWriter(fs, indentString))
@@ -117,7 +118,17 @@ namespace Koturn.KRayMarching
                 isw.WriteLine("}");
                 isw.WriteLine();
 
-                EmitSetColors(isw, mesh.colors);
+                switch (colorFormat)
+                {
+                    case ColorFormat.RGBA32:
+                        EmitSetColors(isw, mesh.colors32);
+                        break;
+                    case ColorFormat.RGBAFloat:
+                        EmitSetColors(isw, mesh.colors);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(colorFormat), colorFormat, $"Invalid value for {nameof(ColorFormat)}");
+                }
                 isw.WriteLine();
 
                 for (int i = 0; i < 8; i++)
@@ -179,7 +190,7 @@ namespace Koturn.KRayMarching
         /// <param name="indentString">A string for indentation.</param>
         /// <param name="nsName">Name of namespace. Null or empty string means no namespace.</param>
         /// <param name="className">Class name.</param>
-        public static void WriteMeshCreateMethod(Mesh mesh, string filePath, string indentString, string nsName, string className)
+        public static void WriteMeshCreateMethod(Mesh mesh, string filePath, string indentString, string nsName, string className, ColorFormat colorFormat = ColorFormat.RGBAFloat)
         {
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
             using (var isw = new IndentStreamWriter(fs, indentString))
@@ -361,7 +372,17 @@ namespace Koturn.KRayMarching
                 if (mesh.HasVertexAttribute(VertexAttribute.Color))
                 {
                     isw.WriteLine();
-                    EmitMethodLoadColorArray(isw, "LoadColors", "Color", mesh.colors);
+                    switch (colorFormat)
+                    {
+                        case ColorFormat.RGBA32:
+                            EmitMethodLoadColorArray(isw, "LoadColors", "Color", mesh.colors32);
+                            break;
+                        case ColorFormat.RGBAFloat:
+                            EmitMethodLoadColorArray(isw, "LoadColors", "Color", mesh.colors);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(colorFormat), colorFormat, $"Invalid value for {nameof(ColorFormat)}");
+                    }
                 }
 
                 for (int i = 0; i < hasUVFlags.Length; i++)
@@ -377,8 +398,14 @@ namespace Koturn.KRayMarching
                 }
                 vertices = null;  // for GC.
 
+                // Emit conversion methods.
                 isw.WriteLine();
-                EmitMethodConvertArray(isw);
+                EmitMethodConvertArray(isw, "float");
+                if (mesh.HasVertexAttribute(VertexAttribute.Color) && colorFormat == ColorFormat.RGBA32)
+                {
+                    isw.WriteLine();
+                    EmitMethodConvertArray(isw, "byte");
+                }
 
                 isw.IndentLevel--;
                 isw.WriteLine("}");  // End of class
@@ -530,7 +557,7 @@ namespace Koturn.KRayMarching
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
         /// <param name="channel">Channel of uvs.</param>
         /// <param name="uvs">UV coordinates for each vertices.</param>
-        private static void EmitSetUVs(IndentStreamWriter isw, int channel, IList<Vector2> uvs)
+        private static void EmitSetUVs(IndentStreamWriter isw, int channel, List<Vector2> uvs)
         {
             if (uvs.Count == 0)
             {
@@ -574,7 +601,7 @@ namespace Koturn.KRayMarching
             int itemCnt = 1;
             foreach (var color in colors)
             {
-                isw.Write("new Color({0}, {1}, {2})", color.r, color.g, color.b, color.a);
+                isw.Write("new Color({0}, {1}, {2}, {3})", color.r, color.g, color.b, color.a);
                 isw.WriteLine(itemCnt < colors.Length ? "," : "");
                 itemCnt++;
             }
@@ -582,6 +609,37 @@ namespace Koturn.KRayMarching
             isw.IndentLevel--;
             isw.WriteLine("});");  // End of method call
         }
+
+        /// <summary>
+        /// Emit code fragment to call <see cref="Mesh.SetColors(Color32[])"/>.
+        /// </summary>
+        /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
+        /// <param name="colors">Vertex colors.</param>
+        private static void EmitSetColors(IndentStreamWriter isw, Color32[] colors)
+        {
+            if (colors.Length == 0)
+            {
+                isw.WriteLine("// Has no Vertex Colors.");
+                return;
+            }
+
+            isw.WriteLine("mesh.SetColors(new []");
+            isw.WriteLine("{");
+            isw.IndentLevel++;
+
+            int itemCnt = 1;
+            foreach (var color in colors)
+            {
+                isw.Write("new Color32({0}, {1}, {2}, {3})", color.r, color.g, color.b, color.a);
+                isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                itemCnt++;
+            }
+
+            isw.IndentLevel--;
+            isw.WriteLine("});");  // End of method call
+        }
+
+
 
         /// <summary>
         /// Emit code fragment to call <see cref="Mesh.SetTriangles(int[], int)"/>.
@@ -615,8 +673,8 @@ namespace Koturn.KRayMarching
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
         /// <param name="methodName">Name of method.</param>
         /// <param name="itemName">Item name to write in doc. comment.</param>
-        /// <param name="vectors"><see cref="Vector2"/> array to embedded in C# code.</param>
-        private static void EmitMethodLoadVector2Array(IndentStreamWriter isw, string methodName, string itemName, IList<Vector2> vectors)
+        /// <param name="vectors"><see cref="Vector2"/> list to embed in C# code.</param>
+        private static void EmitMethodLoadVector2Array(IndentStreamWriter isw, string methodName, string itemName, List<Vector2> vectors)
         {
             isw.WriteLine("/// <summary>");
             isw.WriteLine("/// Load {0} data.", itemName);
@@ -651,7 +709,7 @@ namespace Koturn.KRayMarching
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
         /// <param name="methodName">Name of method.</param>
         /// <param name="itemName">Item name to write in doc. comment.</param>
-        /// <param name="vectors"><see cref="Vector3"/> array to embedded in C# code.</param>
+        /// <param name="vectors"><see cref="Vector3"/> array to embed in C# code.</param>
         private static void EmitMethodLoadVector3Array(IndentStreamWriter isw, string methodName, string itemName, Vector3[] vectors)
         {
             isw.WriteLine("/// <summary>");
@@ -687,7 +745,7 @@ namespace Koturn.KRayMarching
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
         /// <param name="methodName">Name of method.</param>
         /// <param name="itemName">Item name to write in doc. comment.</param>
-        /// <param name="vectors"><see cref="Vector4"/> array to embedded in C# code.</param>
+        /// <param name="vectors"><see cref="Vector4"/> array to embed in C# code.</param>
         private static void EmitMethodLoadVector4Array(IndentStreamWriter isw, string methodName, string itemName, Vector4[] vectors)
         {
             isw.WriteLine("/// <summary>");
@@ -723,7 +781,7 @@ namespace Koturn.KRayMarching
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
         /// <param name="methodName">Name of method.</param>
         /// <param name="itemName">Item name to write in doc. comment.</param>
-        /// <param name="data"><see cref="int"/> array to embedded in C# code.</param>
+        /// <param name="data"><see cref="int"/> array to embed in C# code.</param>
         /// <param name="nCols">Number of rows.</param>
         private static void EmitMethodLoadIntArray(IndentStreamWriter isw, string methodName, string itemName, int[] data, int nCols)
         {
@@ -775,7 +833,7 @@ namespace Koturn.KRayMarching
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
         /// <param name="methodName">Name of method.</param>
         /// <param name="itemName">Item name to write in doc. comment.</param>
-        /// <param name="colors"><see cref="Color"/> array to embedded in C# code.</param>
+        /// <param name="colors"><see cref="Color"/> array to embed in C# code.</param>
         private static void EmitMethodLoadColorArray(IndentStreamWriter isw, string methodName, string itemName, Color[] colors)
         {
             isw.WriteLine("/// <summary>");
@@ -806,25 +864,61 @@ namespace Koturn.KRayMarching
         }
 
         /// <summary>
+        /// Emit a method which returns <see cref="Color32"/> array created from embedded <see cref="float"/> array.
+        /// </summary>
+        /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
+        /// <param name="methodName">Name of method.</param>
+        /// <param name="itemName">Item name to write in doc. comment.</param>
+        /// <param name="colors"><see cref="Color32"/> array to embed in C# code.</param>
+        private static void EmitMethodLoadColorArray(IndentStreamWriter isw, string methodName, string itemName, Color32[] colors)
+        {
+            isw.WriteLine("/// <summary>");
+            isw.WriteLine("/// Load {0} data.", itemName);
+            isw.WriteLine("/// </summary>");
+            isw.WriteLine("/// <returns><see cref=\"Color32\"/> array of {0}.</returns>", itemName);
+            isw.WriteLine("private static Color32[] {0}()", methodName);
+            isw.WriteLine("{");
+            isw.IndentLevel++;
+
+            isw.WriteLine("return ConvertArray<Color32>(new byte[]");
+            isw.WriteLine("{");
+            isw.IndentLevel++;
+
+            var itemCnt = 1;
+            foreach (var c in colors)
+            {
+                isw.Write("{0}, {1}, {2}, {3}", c.r, c.g, c.b, c.a);
+                isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                itemCnt++;
+            }
+
+            isw.IndentLevel--;
+            isw.WriteLine("});");  // End of method call
+
+            isw.IndentLevel--;
+            isw.WriteLine("}");  // End of method
+        }
+
+        /// <summary>
         /// Emit ConvertArray method which converts <see cref="float"/> array to specified type array.
         /// </summary>
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
-        private static void EmitMethodConvertArray(IndentStreamWriter isw)
+        private static void EmitMethodConvertArray(IndentStreamWriter isw, string primTypeName)
         {
             isw.WriteLine("/// <summary>");
-            isw.WriteLine("/// Convert float array to a specified type array.");
+            isw.WriteLine("/// Convert {0} array to a specified type array.", primTypeName);
             isw.WriteLine("/// </summary>");
             isw.WriteLine("/// <typeparam name=\"T\">Destination type of array.</param>");
             isw.WriteLine("/// <param name=\"data\">Source data array.</param>");
             isw.WriteLine("/// <returns>Converted array.</returns>");
-            isw.WriteLine("private static T[] ConvertArray<T>(float[] data)");
+            isw.WriteLine("private static T[] ConvertArray<T>({0}[] data)", primTypeName);
             isw.IndentLevel++;
             isw.WriteLine("where T : struct");
             isw.IndentLevel--;
             isw.WriteLine("{");
             isw.IndentLevel++;
 
-            isw.WriteLine("var dstData = new T[data.Length / (Marshal.SizeOf<T>() / sizeof(float))];");
+            isw.WriteLine("var dstData = new T[data.Length / (Marshal.SizeOf<T>() / sizeof({0}))];", primTypeName);
             isw.WriteLine("var gch = GCHandle.Alloc(dstData, GCHandleType.Pinned);");
             isw.WriteLine("Marshal.Copy(data, 0, gch.AddrOfPinnedObject(), data.Length);");
             isw.WriteLine("gch.Free();");
