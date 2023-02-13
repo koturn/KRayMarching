@@ -182,18 +182,18 @@ namespace Koturn.KRayMarching
         public static void WriteMeshCreateMethod(Mesh mesh, string filePath, string indentString, string nsName, string className)
         {
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-            using (var itw = new IndentStreamWriter(fs, indentString))
+            using (var isw = new IndentStreamWriter(fs, indentString))
             {
-                itw.WriteLine("using UnityEngine;");
-                itw.WriteLine("using System.Collections.Generic;");
+                isw.WriteLine("using UnityEngine;");
+                isw.WriteLine("using System.Collections.Generic;");
 
-                itw.WriteEmptyLines(2);
+                isw.WriteEmptyLines(2);
 
                 if (!string.IsNullOrEmpty(nsName))
                 {
-                    itw.WriteLine("namespace {0}", nsName);
-                    itw.WriteLine("{");
-                    itw.IndentLevel++;
+                    isw.WriteLine("namespace {0}", nsName);
+                    isw.WriteLine("{");
+                    isw.IndentLevel++;
                 }
 
                 if (string.IsNullOrEmpty(className))
@@ -201,89 +201,89 @@ namespace Koturn.KRayMarching
                     className = "MeshCreator";
                 }
 
-                itw.WriteLine("/// <summary>");
-                itw.WriteLine("/// Exported mesh data class.");
-                itw.WriteLine("/// </summary>");
-                itw.WriteLine("public static class {0}", className);
-                itw.WriteLine("{");
-                itw.IndentLevel++;
+                isw.WriteLine("/// <summary>");
+                isw.WriteLine("/// Exported mesh data class.");
+                isw.WriteLine("/// </summary>");
+                isw.WriteLine("public static class {0}", className);
+                isw.WriteLine("{");
+                isw.IndentLevel++;
 
                 var vertices = mesh.vertices;
                 var triangles = mesh.triangles;
 
-                itw.WriteLine("/// <summary>");
-                itw.WriteLine("/// Create cube mesh with {0} vertices, {1} polygons (triangles).");
-                itw.WriteLine("/// </summary>");
-                itw.WriteLine("/// <param name=\"doOptimize\">A flag whether optimize mesh or not.</param>");
-                itw.WriteLine("/// <param name=\"doRecalcNormals\">A flag whether recalculate normals or not.</param>");
-                itw.WriteLine("/// <param name=\"doRecalcTangents\">A flag whether recalculate tangents or not.</param>");
-                itw.WriteLine("/// <returns>Created mesh.</returns>");
-                itw.WriteLine("public static Mesh CreateMesh(bool doOptimize = true, bool doRecalcNormals = false, bool doRecalcTangents = false)");
-                itw.WriteLine("{");
-                itw.IndentLevel++;
+                isw.WriteLine("/// <summary>");
+                isw.WriteLine("/// Create cube mesh with {0} vertices, {1} polygons (triangles).");
+                isw.WriteLine("/// </summary>");
+                isw.WriteLine("/// <param name=\"doOptimize\">A flag whether optimize mesh or not.</param>");
+                isw.WriteLine("/// <param name=\"doRecalcNormals\">A flag whether recalculate normals or not.</param>");
+                isw.WriteLine("/// <param name=\"doRecalcTangents\">A flag whether recalculate tangents or not.</param>");
+                isw.WriteLine("/// <returns>Created mesh.</returns>");
+                isw.WriteLine("public static Mesh CreateMesh(bool doOptimize = true, bool doRecalcNormals = false, bool doRecalcTangents = false)");
+                isw.WriteLine("{");
+                isw.IndentLevel++;
 
-                itw.WriteLine("var mesh = new Mesh();");
+                isw.WriteLine("var mesh = new Mesh();");
 
-                itw.WriteLine();
+                isw.WriteLine();
                 if (vertices.Length == 0)
                 {
-                    itw.WriteLine("// Has no Vertices.");
+                    isw.WriteLine("// Has no Vertices.");
                 }
                 else
                 {
-                    itw.WriteLine("mesh.SetVertices(LoadVertices());");
+                    isw.WriteLine("mesh.SetVertices(LoadVertices());");
                 }
 
-                itw.WriteLine();
+                isw.WriteLine();
                 if (triangles.Length == 0)
                 {
-                    itw.WriteLine("// Has no Triangles.");
+                    isw.WriteLine("// Has no Triangles.");
                 }
                 else
                 {
-                    itw.WriteLine("mesh.SetTriangles(LoadTriangles(), 0);");
+                    isw.WriteLine("mesh.SetTriangles(LoadTriangles(), 0);");
                 }
 
-                itw.WriteLine();
+                isw.WriteLine();
                 if (mesh.HasVertexAttribute(VertexAttribute.Normal))
                 {
-                    itw.WriteLine("if (!doRecalcNormals)");
-                    itw.WriteLine("{");
+                    isw.WriteLine("if (!doRecalcNormals)");
+                    isw.WriteLine("{");
 
-                    itw.IndentLevel++;
+                    isw.IndentLevel++;
 
-                    itw.WriteLine("mesh.SetNormals(LoadNormals());");
+                    isw.WriteLine("mesh.SetNormals(LoadNormals());");
 
-                    itw.IndentLevel--;
-                    itw.WriteLine("}");
+                    isw.IndentLevel--;
+                    isw.WriteLine("}");
                 }
                 else
                 {
-                    itw.WriteLine("// Has no Normals.");
+                    isw.WriteLine("// Has no Normals.");
                 }
 
-                itw.WriteLine();
+                isw.WriteLine();
                 if (mesh.HasVertexAttribute(VertexAttribute.Tangent))
                 {
-                    itw.WriteLine("if (!doRecalcTangents)");
-                    itw.WriteLine("{");
-                    itw.IndentLevel++;
+                    isw.WriteLine("if (!doRecalcTangents)");
+                    isw.WriteLine("{");
+                    isw.IndentLevel++;
 
-                    itw.WriteLine("mesh.SetTangents(LoadTangents());");
+                    isw.WriteLine("mesh.SetTangents(LoadTangents());");
 
-                    itw.IndentLevel--;
-                    itw.WriteLine("}");
+                    isw.IndentLevel--;
+                    isw.WriteLine("}");
                 }
                 else
                 {
-                    itw.WriteLine("// Has no Tangents.");
+                    isw.WriteLine("// Has no Tangents.");
                 }
-                itw.WriteLine();
+                isw.WriteLine();
 
-                itw.WriteLine(mesh.HasVertexAttribute(VertexAttribute.Color)
+                isw.WriteLine(mesh.HasVertexAttribute(VertexAttribute.Color)
                     ? "mesh.SetColors(LoadColors());"
                     : "// Has no Colors.");
-                itw.WriteLine();
+                isw.WriteLine();
 
                 var hasUVFlags = new bool[8];
                 for (int i = 0; i < hasUVFlags.Length; i++)
@@ -292,79 +292,79 @@ namespace Koturn.KRayMarching
 
                     if (hasUVFlags[i])
                     {
-                        itw.WriteLine("mesh.SetUVs({0}, LoadUV{1}s());", i, i == 0 ? "" : i.ToString());
+                        isw.WriteLine("mesh.SetUVs({0}, LoadUV{1}s());", i, i == 0 ? "" : i.ToString());
                     }
                     else
                     {
-                        itw.Write("// Has no UV");
-                        itw.Write(i == 0 ? "" : i.ToString());
-                        itw.WriteLine(".");
+                        isw.Write("// Has no UV");
+                        isw.Write(i == 0 ? "" : i.ToString());
+                        isw.WriteLine(".");
                     }
-                    itw.WriteLine();
+                    isw.WriteLine();
                 }
 
-                itw.WriteLine("if (doOptimize)");
-                itw.WriteLine("{");
-                itw.IndentLevel++;
-                itw.WriteLine("mesh.Optimize();");
-                itw.IndentLevel--;
-                itw.WriteLine("}");
+                isw.WriteLine("if (doOptimize)");
+                isw.WriteLine("{");
+                isw.IndentLevel++;
+                isw.WriteLine("mesh.Optimize();");
+                isw.IndentLevel--;
+                isw.WriteLine("}");
 
-                itw.WriteLine();
+                isw.WriteLine();
 
-                itw.WriteLine("mesh.RecalculateBounds();");
+                isw.WriteLine("mesh.RecalculateBounds();");
 
-                itw.WriteLine("if (doRecalcNormals)");
-                itw.WriteLine("{");
-                itw.IndentLevel++;
-                itw.WriteLine("mesh.RecalculateNormals();");
-                itw.IndentLevel--;
-                itw.WriteLine("}");
+                isw.WriteLine("if (doRecalcNormals)");
+                isw.WriteLine("{");
+                isw.IndentLevel++;
+                isw.WriteLine("mesh.RecalculateNormals();");
+                isw.IndentLevel--;
+                isw.WriteLine("}");
 
-                itw.WriteLine("if (doRecalcTangents)");
-                itw.WriteLine("{");
-                itw.IndentLevel++;
-                itw.WriteLine("mesh.RecalculateTangents();");
-                itw.IndentLevel--;
-                itw.WriteLine("}");
+                isw.WriteLine("if (doRecalcTangents)");
+                isw.WriteLine("{");
+                isw.IndentLevel++;
+                isw.WriteLine("mesh.RecalculateTangents();");
+                isw.IndentLevel--;
+                isw.WriteLine("}");
 
-                itw.WriteLine();
+                isw.WriteLine();
 
-                itw.WriteLine("return mesh;");
+                isw.WriteLine("return mesh;");
 
-                itw.IndentLevel--;
-                itw.WriteLine("}");  // End of method
+                isw.IndentLevel--;
+                isw.WriteLine("}");  // End of method
 
                 // Emit each loading methods, LoadXXXs().
                 int mlv2Cnt = 0;
                 int mlv3Cnt = 0;
                 if (vertices.Length != 0)
                 {
-                    itw.WriteLine();
-                    EmitMethodLoadVector3Array(itw, "LoadVertices", "Vertex", vertices);
+                    isw.WriteLine();
+                    EmitMethodLoadVector3Array(isw, "LoadVertices", "Vertex", vertices);
                     mlv3Cnt++;
                 }
                 if (triangles.Length != 0)
                 {
-                    itw.WriteLine();
-                    EmitMethodLoadIntArray(itw, "LoadTriangles", "Triangle", triangles, 3);
+                    isw.WriteLine();
+                    EmitMethodLoadIntArray(isw, "LoadTriangles", "Triangle", triangles, 3);
                     triangles = null;  // for GC.
                 }
                 if (mesh.HasVertexAttribute(VertexAttribute.Normal))
                 {
-                    itw.WriteLine();
-                    EmitMethodLoadVector3Array(itw, "LoadNormals", "Normal", mesh.normals);
+                    isw.WriteLine();
+                    EmitMethodLoadVector3Array(isw, "LoadNormals", "Normal", mesh.normals);
                     mlv3Cnt++;
                 }
                 if (mesh.HasVertexAttribute(VertexAttribute.Tangent))
                 {
-                    itw.WriteLine();
-                    EmitMethodLoadVector4Array(itw, "LoadTangents", "tangent", mesh.tangents);
+                    isw.WriteLine();
+                    EmitMethodLoadVector4Array(isw, "LoadTangents", "tangent", mesh.tangents);
                 }
                 if (mesh.HasVertexAttribute(VertexAttribute.Color))
                 {
-                    itw.WriteLine();
-                    EmitMethodLoadColorArray(itw, "LoadColors", "Color", mesh.colors);
+                    isw.WriteLine();
+                    EmitMethodLoadColorArray(isw, "LoadColors", "Color", mesh.colors);
                 }
 
                 for (int i = 0; i < hasUVFlags.Length; i++)
@@ -374,8 +374,8 @@ namespace Koturn.KRayMarching
                     {
                         mesh.GetUVs(i, uvList);
                         var itemName = string.Format("UV{0}", i == 0 ? "" : i.ToString());
-                        itw.WriteLine();
-                        EmitMethodLoadVector2List(itw, "Load" + itemName + "s", itemName, uvList);
+                        isw.WriteLine();
+                        EmitMethodLoadVector2List(isw, "Load" + itemName + "s", itemName, uvList);
                         mlv2Cnt++;
                     }
                 }
@@ -384,32 +384,32 @@ namespace Koturn.KRayMarching
                 // Emit conversion methods, AsXXX().
                 if (mlv2Cnt > 0)
                 {
-                    itw.WriteLine();
-                    EmitMethodAsVectorNList(itw, 2);
+                    isw.WriteLine();
+                    EmitMethodAsVectorNList(isw, 2);
                 }
                 if (mlv3Cnt > 0)
                 {
-                    itw.WriteLine();
-                    EmitMethodAsVectorNArray(itw, 3);
+                    isw.WriteLine();
+                    EmitMethodAsVectorNArray(isw, 3);
                 }
                 if (mesh.HasVertexAttribute(VertexAttribute.Tangent))
                 {
-                    itw.WriteLine();
-                    EmitMethodAsVectorNArray(itw, 4);
+                    isw.WriteLine();
+                    EmitMethodAsVectorNArray(isw, 4);
                 }
                 if (mesh.HasVertexAttribute(VertexAttribute.Color))
                 {
-                    itw.WriteLine();
-                    EmitMethodAsColorArray(itw);
+                    isw.WriteLine();
+                    EmitMethodAsColorArray(isw);
                 }
 
-                itw.IndentLevel--;
-                itw.WriteLine("}");  // End of class
+                isw.IndentLevel--;
+                isw.WriteLine("}");  // End of class
 
                 if (!string.IsNullOrEmpty(nsName))
                 {
-                    itw.IndentLevel--;
-                    itw.WriteLine("}");  // End of namespace
+                    isw.IndentLevel--;
+                    isw.WriteLine("}");  // End of namespace
                 }
             }
         }
