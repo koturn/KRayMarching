@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 
@@ -58,10 +59,9 @@ namespace Koturn.KRayMarching
         /// <param name="hasNormal">A flag whether adding Normal coordinate to mesh or not.</param>
         /// <param name="hasTangent">A flag whether adding Tangent coordinate to mesh or not.</param>
         /// <param name="hasVertexColor">A flag whether adding color to mesh or not.</param>
+        /// <returns>Created cube Mesh.</returns>
         public static Mesh CreateCubeMeshLow(Vector3 size, bool hasUV = false, bool hasNormal = false, bool hasTangent = false, bool hasVertexColor = false)
         {
-            var p = size * 0.5f;
-
             var mesh = new Mesh();
 
             //      3:(-++)   2:(+++)
@@ -71,18 +71,18 @@ namespace Koturn.KRayMarching
             //      1:(--+)   0:(+-+)
             //
             //  7:(---)   6:(+--)
-            var vertices = new []
+            var vertexData = new[]
             {
-                new Vector3(p.x, -p.y, p.z),
-                new Vector3(-p.x, -p.y, p.z),
-                new Vector3(p.x, p.y, p.z),
-                new Vector3(-p.x, p.y, p.z),
-                new Vector3(p.x, p.y, -p.z),
-                new Vector3(-p.x, p.y, -p.z),
-                new Vector3(p.x, -p.y, -p.z),
-                new Vector3(-p.x, -p.y, -p.z)
+                1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f,
+                -1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, -1.0f,
+                -1.0f, 1.0f, -1.0f,
+                1.0f, -1.0f, -1.0f,
+                -1.0f, -1.0f, -1.0f
             };
-            mesh.SetVertices(vertices);
+            mesh.SetVertices(ScaleVectorArray(ConvertArray<Vector3>(vertexData), size * 0.5f));
 
             mesh.SetTriangles(new []
             {
@@ -119,22 +119,22 @@ namespace Koturn.KRayMarching
                 //
                 //
                 // 7:(0,0)          6:(1,0)
-                mesh.SetUVs(0, new []
+                mesh.SetUVs(0, ConvertArray<Vector2>(new []
                 {
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(1.0f, 0.0f),
-                    new Vector2(0.0f, 0.0f)
-                });
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
+                    0.0f, 1.0f,
+                    1.0f, 1.0f,
+                    1.0f, 1.0f,
+                    0.0f, 1.0f,
+                    1.0f, 0.0f,
+                    0.0f, 0.0f
+                }));
             }
 
             if (hasVertexColor)
             {
-                mesh.SetColors(CreateColorsFromVertices(vertices, Rcp(p)));
+                mesh.SetColors(CreateColorsFromVertexData(vertexData));
             }
 
             mesh.Optimize();
@@ -159,11 +159,10 @@ namespace Koturn.KRayMarching
         /// <param name="hasNormal">A flag whether adding Normal coordinate to mesh or not.</param>
         /// <param name="hasTangent">A flag whether adding Tangent coordinate to mesh or not.</param>
         /// <param name="hasVertexColor">A flag whether adding color to mesh or not.</param>
+        /// <returns>Created cube Mesh.</returns>
         public static Mesh CreateCubeMeshMiddle(Vector3 size, bool hasUV = false, bool hasNormal = false, bool hasTangent = false, bool hasVertexColor = false)
         {
             var mesh = new Mesh();
-            var p = size * 0.5f;
-
             //      4/8:(-++)  5/9:(+++)
             //
             //  3:(-+-)    2:(++-)
@@ -171,25 +170,25 @@ namespace Koturn.KRayMarching
             //      7/11:(--+) 6/10:(+-+)
             //
             //  0:(---)    1:(+--)
-            var vertices = new []
+            var vertexData = new[]
             {
                 // front
-                new Vector3(-p.x, -p.y, -p.z),
-                new Vector3(p.x, -p.y, -p.z),
-                new Vector3(p.x, p.y, -p.z),
-                new Vector3(-p.x, p.y, -p.z),
+                -1.0f, -1.0f, -1.0f,
+                1.0f, -1.0f, -1.0f,
+                1.0f, 1.0f, -1.0f,
+                -1.0f, 1.0f, -1.0f,
                 // back
-                new Vector3(-p.x, p.y, p.z),
-                new Vector3(p.x, p.y, p.z),
-                new Vector3(p.x, -p.y, p.z),
-                new Vector3(-p.x, -p.y, p.z),
+                -1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f, 1.0f,
                 // Same as 4 ~ 7, but for UVs for top and bottom.
-                new Vector3(-p.x, p.y, p.z),
-                new Vector3(p.x, p.y, p.z),
-                new Vector3(p.x, -p.y, p.z),
-                new Vector3(-p.x, -p.y, p.z),
+                -1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f, 1.0f
             };
-            mesh.SetVertices(vertices);
+            mesh.SetVertices(ScaleVectorArray(ConvertArray<Vector3>(vertexData), size * 0.5f));
 
             mesh.SetTriangles(new []
             {
@@ -226,26 +225,26 @@ namespace Koturn.KRayMarching
                 //
                 //
                 // 0:(0,0)          1:(1,0)
-                mesh.SetUVs(0, new []
+                mesh.SetUVs(0, ConvertArray<Vector2>(new []
                 {
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(0.0f, 1.0f)
-                });
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
+                    1.0f, 1.0f,
+                    0.0f, 1.0f,
+                    1.0f, 1.0f,
+                    0.0f, 1.0f,
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
+                    1.0f, 1.0f,
+                    0.0f, 1.0f
+                }));
             }
 
             if (hasVertexColor)
             {
-                mesh.SetColors(CreateColorsFromVertices(vertices, Rcp(p)));
+                mesh.SetColors(CreateColorsFromVertexData(vertexData));
             }
 
             mesh.Optimize();
@@ -275,8 +274,6 @@ namespace Koturn.KRayMarching
         public static Mesh CreateCubeMeshHigh(Vector3 size, bool hasUV = false, bool hasNormal = false, bool hasTangent = false, bool hasVertexColor = false)
         {
             var mesh = new Mesh();
-            var p = size * 0.5f;
-
             //            3:(-++)          2:(+++)
             //            9                8
             //           17               22
@@ -291,40 +288,40 @@ namespace Koturn.KRayMarching
             //  7:(---)          6:(+--)
             // 15               12
             // 19               20
-            var vertices = new []
+            var vertexData = new []
             {
                 // Face back
-                new Vector3(p.x, -p.y, p.z),
-                new Vector3(-p.x, -p.y, p.z),
-                new Vector3(p.x, p.y, p.z),
-                new Vector3(-p.x, p.y, p.z),
+                1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f,
+                -1.0f, 1.0f, 1.0f,
                 // Face front
-                new Vector3(p.x, p.y, -p.z),
-                new Vector3(-p.x, p.y, -p.z),
-                new Vector3(p.x, -p.y, -p.z),
-                new Vector3(-p.x, -p.y, -p.z),
+                1.0f, 1.0f, -1.0f,
+                -1.0f, 1.0f, -1.0f,
+                1.0f, -1.0f, -1.0f,
+                -1.0f, -1.0f, -1.0f,
                 // Face top
-                new Vector3(p.x, p.y, p.z),
-                new Vector3(-p.x, p.y, p.z),
-                new Vector3(p.x, p.y, -p.z),
-                new Vector3(-p.x, p.y, -p.z),
+                1.0f, 1.0f, 1.0f,
+                -1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, -1.0f,
+                -1.0f, 1.0f, -1.0f,
                 // Face bottom
-                new Vector3(p.x, -p.y, -p.z),
-                new Vector3(p.x, -p.y, p.z),
-                new Vector3(-p.x, -p.y, p.z),
-                new Vector3(-p.x, -p.y, -p.z),
+                1.0f, -1.0f, -1.0f,
+                1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f, -1.0f,
                 // Face left
-                new Vector3(-p.x, -p.y, p.z),
-                new Vector3(-p.x, p.y, p.z),
-                new Vector3(-p.x, p.y, -p.z),
-                new Vector3(-p.x, -p.y, -p.z),
+                -1.0f, -1.0f, 1.0f,
+                -1.0f, 1.0f, 1.0f,
+                -1.0f, 1.0f, -1.0f,
+                -1.0f, -1.0f, -1.0f,
                 // Face right
-                new Vector3(p.x, -p.y, -p.z),
-                new Vector3(p.x, p.y, -p.z),
-                new Vector3(p.x, p.y, p.z),
-                new Vector3(p.x, -p.y, p.z)
+                1.0f, -1.0f, -1.0f,
+                1.0f, 1.0f, -1.0f,
+                1.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, 1.0f
             };
-            mesh.SetVertices(vertices);
+            mesh.SetVertices(ScaleVectorArray(ConvertArray<Vector3>(vertexData), size * 0.5f));
 
             mesh.SetTriangles(new []
             {
@@ -350,44 +347,58 @@ namespace Koturn.KRayMarching
 
             if (hasUV)
             {
-                mesh.SetUVs(0, new []
+                //            3:(1,1)          2:(0,1)
+                //            9:(1,0)          8:(0,0)
+                //           17:(0,0)         22:(1,1)
+                //
+                //  5:(1,1)          4:(0,1)
+                // 11:(1,0)         10:(0,0)
+                // 18:(0,1)         21:(0,1)
+                //            1:(1,0)          0:(0,0)
+                //           14:(1,1)         13:(0,1)
+                //           16:(1,1)         23:(1,0)
+                //
+                //  7:(1,1)          6:(0,1)
+                // 15:(1,0)         12:(0,0)
+                // 19:(1,1)         20:(0,0)
+                mesh.SetUVs(0, ConvertArray<Vector2>(new []
                 {
                     // Face back
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(1.0f, 1.0f),
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
+                    0.0f, 1.0f,
+                    1.0f, 1.0f,
                     // Face front
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(1.0f, 1.0f),
+                    0.0f, 1.0f,
+                    1.0f, 1.0f,
+                    0.0f, 1.0f,
+                    1.0f, 1.0f,
                     // Face top
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
                     // Face bottom
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(1.0f, 0.0f),
+                    0.0f, 0.0f,
+                    0.0f, 1.0f,
+                    1.0f, 1.0f,
+                    1.0f, 0.0f,
                     // Face left
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(1.0f, 0.0f),
+                    0.0f, 0.0f,
+                    0.0f, 1.0f,
+                    1.0f, 1.0f,
+                    1.0f, 0.0f,
                     // Face right
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(1.0f, 0.0f)
-                });
+                    0.0f, 0.0f,
+                    0.0f, 1.0f,
+                    1.0f, 1.0f,
+                    1.0f, 0.0f
+                }));
             }
 
             if (hasVertexColor)
             {
-                mesh.SetColors(CreateColorsFromVertices(vertices, Rcp(p)));
+                mesh.SetColors(CreateColorsFromVertexData(vertexData));
             }
 
             mesh.Optimize();
@@ -405,42 +416,61 @@ namespace Koturn.KRayMarching
         }
 
         /// <summary>
+        /// Adapt scale vector to all array elements.
+        /// </summary>
+        /// <param name="data">Target vector array.</param>
+        /// <param name="scale">Scale vector.</param>
+        /// <returns><paramref name="data"/> (but overwrote by the scaled results).</returns>
+        private static Vector3[] ScaleVectorArray(Vector3[] data, Vector3 scale)
+        {
+            for (int i = 0; i < data.Length; i++)
+            {
+                data[i].Scale(scale);
+            }
+            return data;
+        }
+
+        /// <summary>
+        /// Convert <see cref="float"/> array to desired type array.
+        /// </summary>
+        /// <typeparam name="T">Blittable type.</typeparam>
+        /// <param name="srcArray">Source <see cref="float"/> array.</param>
+        /// <returns>Converted array.</returns>
+        private static T[] ConvertArray<T>(float[] srcArray)
+            where T : struct
+        {
+            var dstArray = new T[srcArray.Length / (Marshal.SizeOf<T>() / sizeof(float))];
+            var gch = GCHandle.Alloc(dstArray, GCHandleType.Pinned);
+            try
+            {
+                Marshal.Copy(srcArray, 0, gch.AddrOfPinnedObject(), srcArray.Length);
+            }
+            finally
+            {
+                gch.Free();
+            }
+
+            return dstArray;
+        }
+
+        /// <summary>
         /// Convert vertex coordinates to RGB colors.
         /// </summary>
-        /// <param name="vertices">Vertex coordinates.</param>
-        /// <param name="sNormTerms">Normalize term to convert vertex coordinates to [-1.0f, 1.0f].</param>
-        /// <returns><see cref="Color"/> array created from <paramref name="vertices"/>.</returns>
-        private static Color[] CreateColorsFromVertices(Vector3[] vertices, Vector3 sNormTerms)
+        /// <param name="vertexData">Vertex coordinates.</param>
+        /// <returns><see cref="Color"/> array created from <paramref name="vertexData"/>.</returns>
+        private static Color[] CreateColorsFromVertexData(float[] vertexData)
         {
-            var colors = new Color[vertices.Length];
+            var colors = new Color[vertexData.Length / 3];
             for (int i = 0; i < colors.Length; i++)
             {
-                var q = (Mul(vertices[i], sNormTerms) + Vector3.one) * 0.5f;
-                colors[i] = new Color(q.x, q.y, q.z);
+                var j = i * 3;
+                colors[i] = new Color(
+                    vertexData[j] * 0.5f + 0.5f,
+                    vertexData[j + 1] * 0.5f + 0.5f,
+                    vertexData[j + 2] * 0.5f + 0.5f);
             }
 
             return colors;
-        }
-
-        /// <summary>
-        /// Calculate reciprocal vector.
-        /// </summary>
-        /// <param name="v">Source vector.</param>
-        /// <returns>Reciprocal vector of <paramref name="v"/>.</returns>
-        private static Vector3 Rcp(Vector3 v)
-        {
-            return new Vector3(1.0f / v.x, 1.0f / v.y, 1.0f / v.z);
-        }
-
-        /// <summary>
-        /// Calculate Hadamard product of two vectors.
-        /// </summary>
-        /// <param name="a">First <see cref="Vector3"/>.</param>
-        /// <param name="b">Second <see cref="Vector3"/>.</param>
-        /// <returns>Hadamard product of <paramref name="a"/> and <see cref="b"/>.</returns>
-        private static Vector3 Mul(Vector3 a, Vector3 b)
-        {
-            return new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
         }
     }
 }
