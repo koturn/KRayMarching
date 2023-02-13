@@ -186,6 +186,7 @@ namespace Koturn.KRayMarching
             {
                 isw.WriteLine("using UnityEngine;");
                 isw.WriteLine("using System.Collections.Generic;");
+                isw.WriteLine("using System.Runtime.InteropServices;");
 
                 isw.WriteEmptyLines(2);
 
@@ -336,13 +337,10 @@ namespace Koturn.KRayMarching
                 isw.WriteLine("}");  // End of method
 
                 // Emit each loading methods, LoadXXXs().
-                int mlv2Cnt = 0;
-                int mlv3Cnt = 0;
                 if (vertices.Length != 0)
                 {
                     isw.WriteLine();
                     EmitMethodLoadVector3Array(isw, "LoadVertices", "Vertex", vertices);
-                    mlv3Cnt++;
                 }
                 if (triangles.Length != 0)
                 {
@@ -354,7 +352,6 @@ namespace Koturn.KRayMarching
                 {
                     isw.WriteLine();
                     EmitMethodLoadVector3Array(isw, "LoadNormals", "Normal", mesh.normals);
-                    mlv3Cnt++;
                 }
                 if (mesh.HasVertexAttribute(VertexAttribute.Tangent))
                 {
@@ -375,33 +372,13 @@ namespace Koturn.KRayMarching
                         mesh.GetUVs(i, uvList);
                         var itemName = string.Format("UV{0}", i == 0 ? "" : i.ToString());
                         isw.WriteLine();
-                        EmitMethodLoadVector2List(isw, "Load" + itemName + "s", itemName, uvList);
-                        mlv2Cnt++;
+                        EmitMethodLoadVector2Array(isw, "Load" + itemName + "s", itemName, uvList);
                     }
                 }
                 vertices = null;  // for GC.
 
-                // Emit conversion methods, AsXXX().
-                if (mlv2Cnt > 0)
-                {
-                    isw.WriteLine();
-                    EmitMethodAsVectorNList(isw, 2);
-                }
-                if (mlv3Cnt > 0)
-                {
-                    isw.WriteLine();
-                    EmitMethodAsVectorNArray(isw, 3);
-                }
-                if (mesh.HasVertexAttribute(VertexAttribute.Tangent))
-                {
-                    isw.WriteLine();
-                    EmitMethodAsVectorNArray(isw, 4);
-                }
-                if (mesh.HasVertexAttribute(VertexAttribute.Color))
-                {
-                    isw.WriteLine();
-                    EmitMethodAsColorArray(isw);
-                }
+                isw.WriteLine();
+                EmitMethodConvertArray(isw);
 
                 isw.IndentLevel--;
                 isw.WriteLine("}");  // End of class
@@ -557,11 +534,11 @@ namespace Koturn.KRayMarching
         {
             if (uvs.Count == 0)
             {
-                isw.WriteLine("/// Has no UV" + channel + ".");
+                isw.WriteLine("// Has no UV" + channel + ".");
                 return;
             }
 
-            isw.WriteLine("mesh.SetUVs({0}, new List<Vector2>()", channel);
+            isw.WriteLine("mesh.SetUVs({0}, new []", channel);
             isw.WriteLine("{");
             isw.IndentLevel++;
 
@@ -574,7 +551,7 @@ namespace Koturn.KRayMarching
             }
 
             isw.IndentLevel--;
-            isw.WriteLine("});");  // End of list and method call
+            isw.WriteLine("});");  // End of array and method call
         }
 
         /// <summary>
@@ -586,7 +563,7 @@ namespace Koturn.KRayMarching
         {
             if (colors.Length == 0)
             {
-                isw.WriteLine("/// Has no Vertex Colors.");
+                isw.WriteLine("// Has no Vertex Colors.");
                 return;
             }
 
@@ -638,19 +615,18 @@ namespace Koturn.KRayMarching
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
         /// <param name="methodName">Name of method.</param>
         /// <param name="itemName">Item name to write in doc. comment.</param>
-        /// <param name="vectors"><see cref="Vector2"/> list to embedded in C# code.</param>
-        private static void EmitMethodLoadVector2List(IndentStreamWriter isw, string methodName, string itemName, IList<Vector2> vectors)
+        /// <param name="vectors"><see cref="Vector2"/> array to embedded in C# code.</param>
+        private static void EmitMethodLoadVector2Array(IndentStreamWriter isw, string methodName, string itemName, IList<Vector2> vectors)
         {
             isw.WriteLine("/// <summary>");
             isw.WriteLine("/// Load {0} data.", itemName);
             isw.WriteLine("/// </summary>");
             isw.WriteLine("/// <returns><see cref=\"Vector2\"/> array of {0}.</returns>", itemName);
-
-            isw.WriteLine("private static List<Vector2> {0}()", methodName);
+            isw.WriteLine("private static Vector2[] {0}()", methodName);
             isw.WriteLine("{");
             isw.IndentLevel++;
 
-            isw.WriteLine("return AsVector2List(new []");
+            isw.WriteLine("return ConvertArray<Vector2>(new []");
             isw.WriteLine("{");
             isw.IndentLevel++;
 
@@ -686,7 +662,7 @@ namespace Koturn.KRayMarching
             isw.WriteLine("{");
             isw.IndentLevel++;
 
-            isw.WriteLine("return AsVector3Array(new []");
+            isw.WriteLine("return ConvertArray<Vector3>(new []");
             isw.WriteLine("{");
             isw.IndentLevel++;
 
@@ -718,11 +694,11 @@ namespace Koturn.KRayMarching
             isw.WriteLine("/// Load {0} data.", itemName);
             isw.WriteLine("/// </summary>");
             isw.WriteLine("/// <returns><see cref=\"Vector3\"/> array of {0}.</returns>", itemName);
-            isw.WriteLine("private static Vector3[] {0}()", methodName);
+            isw.WriteLine("private static Vector4[] {0}()", methodName);
             isw.WriteLine("{");
             isw.IndentLevel++;
 
-            isw.WriteLine("return AsVector3Array(new []");
+            isw.WriteLine("return ConvertArray<Vector4>(new []");
             isw.WriteLine("{");
             isw.IndentLevel++;
 
@@ -810,7 +786,7 @@ namespace Koturn.KRayMarching
             isw.WriteLine("{");
             isw.IndentLevel++;
 
-            isw.WriteLine("return AsColorArray(new []");
+            isw.WriteLine("return ConvertArray<Color>(new []");
             isw.WriteLine("{");
             isw.IndentLevel++;
 
@@ -830,120 +806,29 @@ namespace Koturn.KRayMarching
         }
 
         /// <summary>
-        /// Emit AsVectorNArray method which converts <see cref="float"/> array
-        /// to <see cref="Vector2"/>, <see cref="Vector3"/> or <see cref="Vector4"/> array.
+        /// Emit ConvertArray method which converts <see cref="float"/> array to specified type array.
         /// </summary>
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
-        /// <param name="dim">Dimension of vector.</param>
-        private static void EmitMethodAsVectorNArray(IndentStreamWriter isw, int dim)
-        {
-            if (dim < 2 || dim > 4)
-            {
-                throw new ArgumentException("dim must be 2, 3 or 4");
-            }
-
-            isw.WriteLine("/// <summary>");
-            isw.WriteLine("/// Load float array as a <see cref=\"Vector{0}\"/> array.", dim);
-            isw.WriteLine("/// </summary>");
-            isw.WriteLine("/// <param name=\"data\">Data array for <see cref=\"Vector{0}\"/></param>", dim);
-            isw.WriteLine("/// <returns><see cref=\"Vector{0}\"/> array.</returns>", dim);
-            isw.WriteLine("private static Vector{0}[] AsVector{0}Array(float[] data)", dim);
-            isw.WriteLine("{");
-            isw.IndentLevel++;
-
-            isw.WriteLine("var vectors = new Vector{0}[data.Length / {0}];", dim);
-            isw.WriteLine("for (int i = 0; i < vectors.Length; i++)");
-            isw.WriteLine("{");
-            isw.IndentLevel++;
-
-            isw.WriteLine("var j = i * {0};", dim);
-            isw.Write("vectors[i] = new Vector{0}(data[j]", dim);
-            for (int i = 1; i < dim; i++)
-            {
-                isw.Write(", data[j + {0}]", i);
-            }
-            isw.WriteLine(");");
-
-            isw.IndentLevel--;
-            isw.WriteLine("}");  // End of for
-
-            isw.WriteLine("return vectors;");
-
-            isw.IndentLevel--;
-            isw.WriteLine("}");  // End of method
-        }
-
-        /// <summary>
-        /// Emit AsVectorNList method which converts <see cref="float"/> array
-        /// to <see cref=\"List{T}\"/> of <see cref="Vector2"/>, <see cref="Vector3"/> or <see cref="Vector4"/>.
-        /// </summary>
-        /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
-        /// <param name="dim">Dimension of vector.</param>
-        private static void EmitMethodAsVectorNList(IndentStreamWriter isw, int dim)
-        {
-            if (dim < 2 || dim > 4)
-            {
-                throw new ArgumentException("dim must be 2, 3 or 4");
-            }
-
-            isw.WriteLine("/// <summary>");
-            isw.WriteLine("/// Load float array as a <see cref=\"List{{T}}\"/> of <see cref=\"Vector{0}\"/>.", dim);
-            isw.WriteLine("/// </summary>");
-            isw.WriteLine("/// <param name=\"data\">Data array for <see cref=\"Vector{0}\"/></param>", dim);
-            isw.WriteLine("/// <returns><see cref=\"List{{T}}\"/> of <see cref=\"Vector{0}\"/>.</returns>", dim);
-            isw.WriteLine("private static List<Vector{0}> AsVector{0}List(float[] data)", dim);
-            isw.WriteLine("{");
-            isw.IndentLevel++;
-
-            isw.WriteLine("var vectors = new List<Vector{0}>(data.Length / {0});", dim);
-            isw.WriteLine("for (int i = 0; i < vectors.Capacity; i++)");
-            isw.WriteLine("{");
-            isw.IndentLevel++;
-
-            isw.WriteLine("var j = i * {0};", dim);
-            isw.Write("vectors.Add(new Vector{0}(data[j]", dim);
-            for (int i = 1; i < dim; i++)
-            {
-                isw.Write(", data[j + {0}]", i);
-            }
-            isw.WriteLine("));");
-
-            isw.IndentLevel--;
-            isw.WriteLine("}");  // End of for
-
-            isw.WriteLine("return vectors;");
-
-            isw.IndentLevel--;
-            isw.WriteLine("}");  // End of method
-        }
-
-        /// <summary>
-        /// Emit AsColorArray method which converts <see cref="float"/> array to <see cref="Color"/> array.
-        /// </summary>
-        /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
-        private static void EmitMethodAsColorArray(IndentStreamWriter isw)
+        private static void EmitMethodConvertArray(IndentStreamWriter isw)
         {
             isw.WriteLine("/// <summary>");
-            isw.WriteLine("/// Load <see cref=\"float\"/>array as a <see cref=\"Color\"/> array.");
+            isw.WriteLine("/// Convert float array to a specified type array.");
             isw.WriteLine("/// </summary>");
-            isw.WriteLine("/// <param name=\"data\">Data array for <see cref=\"Color\"/></param>");
-            isw.WriteLine("/// <returns><see cref=\"Color\"/> array.</returns>");
-            isw.WriteLine("private static Color[] AsColorArray(float[] data)");
-            isw.WriteLine("{");
+            isw.WriteLine("/// <typeparam name=\"T\">Destination type of array.</param>");
+            isw.WriteLine("/// <param name=\"data\">Source data array.</param>");
+            isw.WriteLine("/// <returns>Converted array.</returns>");
+            isw.WriteLine("private static T[] ConvertArray<T>(float[] data)");
             isw.IndentLevel++;
-
-            isw.WriteLine("var colors = new Color[data.Length / 4];");
-            isw.WriteLine("for (int i = 0; i < colors.Length; i++)");
-            isw.WriteLine("{");
-            isw.IndentLevel++;
-
-            isw.WriteLine("var j = i * 4;");
-            isw.WriteLine("colors[i] = new Color(data[j], data[j + 1], data[j + 2], data[j + 3]);");
-
+            isw.WriteLine("where T : struct");
             isw.IndentLevel--;
-            isw.WriteLine("}");  // End of for
+            isw.WriteLine("{");
+            isw.IndentLevel++;
 
-            isw.WriteLine("return colors;");
+            isw.WriteLine("var dstData = new T[data.Length / (Marshal.SizeOf<T>() / sizeof(float))];");
+            isw.WriteLine("var gch = GCHandle.Alloc(dstData, GCHandleType.Pinned);");
+            isw.WriteLine("Marshal.Copy(data, 0, gch.AddrOfPinnedObject(), data.Length);");
+            isw.WriteLine("gch.Free();");
+            isw.WriteLine("return dstData;");
 
             isw.IndentLevel--;
             isw.WriteLine("}");  // End of method
