@@ -328,60 +328,60 @@ namespace Koturn.KRayMarching
 
             mesh.SetTriangles(new []
             {
-                // Face front
-                0, 2, 1,
-                0, 3, 2,
-                // Face top
-                4, 5, 6,
-                4, 6, 7,
-                // Face right
-                8, 9, 10,
-                8, 10, 11,
-                // Face left
-                12, 15, 14,
-                12, 14, 13,
                 // Face back
-                17, 16, 19,
-                17, 19, 18,
+                0, 2, 3,
+                0, 3, 1,
+                // Face top
+                8, 4, 5,
+                8, 5, 9,
+                // Face front
+                10, 6, 7,
+                10, 7, 11,
                 // Face bottom
+                12, 13, 14,
+                12, 14, 15,
+                // Face left
+                16, 17, 18,
+                16, 18, 19,
+                // Face right
+                20, 21, 22,
                 20, 22, 23,
-                20, 21, 22
             }, 0);
 
             if (hasUV)
             {
                 mesh.SetUVs(0, new []
                 {
-                    // front (0 ~ 3)
+                    // Face back
                     new Vector2(0.0f, 0.0f),
                     new Vector2(1.0f, 0.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(0.0f, 1.0f),
-                    // top (4 ~ 7)
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
-                    // right (8 ~ 11)
-                    new Vector2(1.0f, 0.0f),
-                    new Vector2(1.0f, 1.0f),
-                    new Vector2(0.0f, 1.0f),
-                    new Vector2(0.0f, 0.0f),
-                    // left (12 ~ 15)
-                    new Vector2(0.0f, 0.0f),
                     new Vector2(0.0f, 1.0f),
                     new Vector2(1.0f, 1.0f),
-                    new Vector2(1.0f, 0.0f),
-                    // back (16 ~ 19)
+                    // Face front
+                    new Vector2(0.0f, 1.0f),
                     new Vector2(1.0f, 1.0f),
                     new Vector2(0.0f, 1.0f),
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
-                    // bottom (20 ~ 23)
-                    new Vector2(0.0f, 0.0f),
-                    new Vector2(1.0f, 0.0f),
                     new Vector2(1.0f, 1.0f),
-                    new Vector2(0.0f, 1.0f)
+                    // Face top
+                    new Vector2(0.0f, 0.0f),
+                    new Vector2(1.0f, 0.0f),
+                    new Vector2(0.0f, 0.0f),
+                    new Vector2(1.0f, 0.0f),
+                    // Face bottom
+                    new Vector2(0.0f, 0.0f),
+                    new Vector2(0.0f, 1.0f),
+                    new Vector2(1.0f, 1.0f),
+                    new Vector2(1.0f, 0.0f),
+                    // Face left
+                    new Vector2(0.0f, 0.0f),
+                    new Vector2(0.0f, 1.0f),
+                    new Vector2(1.0f, 1.0f),
+                    new Vector2(1.0f, 0.0f),
+                    // Face right
+                    new Vector2(0.0f, 0.0f),
+                    new Vector2(0.0f, 1.0f),
+                    new Vector2(1.0f, 1.0f),
+                    new Vector2(1.0f, 0.0f)
                 });
             }
 
