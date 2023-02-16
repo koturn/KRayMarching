@@ -120,8 +120,14 @@ namespace Koturn.KRayMarching
 
                 switch (colorFormat)
                 {
+                    case ColorFormat.RGB24:
+                        EmitSetColors(isw, mesh.colors32, false);
+                        break;
                     case ColorFormat.RGBA32:
                         EmitSetColors(isw, mesh.colors32);
+                        break;
+                    case ColorFormat.RGBFloat:
+                        EmitSetColors(isw, mesh.colors, false);
                         break;
                     case ColorFormat.RGBAFloat:
                         EmitSetColors(isw, mesh.colors);
@@ -374,8 +380,14 @@ namespace Koturn.KRayMarching
                     isw.WriteLine();
                     switch (colorFormat)
                     {
+                        case ColorFormat.RGB24:
+                            EmitMethodLoadColorArray(isw, "LoadColors", "Color", mesh.colors32, false);
+                            break;
                         case ColorFormat.RGBA32:
                             EmitMethodLoadColorArray(isw, "LoadColors", "Color", mesh.colors32);
+                            break;
+                        case ColorFormat.RGBFloat:
+                            EmitMethodLoadColorArray(isw, "LoadColors", "Color", mesh.colors, false);
                             break;
                         case ColorFormat.RGBAFloat:
                             EmitMethodLoadColorArray(isw, "LoadColors", "Color", mesh.colors);
@@ -401,10 +413,21 @@ namespace Koturn.KRayMarching
                 // Emit conversion methods.
                 isw.WriteLine();
                 EmitMethodConvertArray(isw, "float");
-                if (mesh.HasVertexAttribute(VertexAttribute.Color) && colorFormat == ColorFormat.RGBA32)
+                if (mesh.HasVertexAttribute(VertexAttribute.Color))
                 {
                     isw.WriteLine();
-                    EmitMethodConvertArray(isw, "byte");
+                    switch (colorFormat)
+                    {
+                        case ColorFormat.RGB24:
+                            EmitMethodConvertRGBArray(isw, "byte", "Color32");
+                            break;
+                        case ColorFormat.RGBA32:
+                            EmitMethodConvertArray(isw, "byte");
+                            break;
+                        case ColorFormat.RGBFloat:
+                            EmitMethodConvertRGBArray(isw, "float", "Color");
+                            break;
+                    }
                 }
 
                 isw.IndentLevel--;
@@ -586,7 +609,8 @@ namespace Koturn.KRayMarching
         /// </summary>
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
         /// <param name="colors">Vertex colors.</param>
-        private static void EmitSetColors(IndentStreamWriter isw, Color[] colors)
+        /// <param name="isIncludeAlpha">True to embed alpha component into C# code.</param>
+        private static void EmitSetColors(IndentStreamWriter isw, Color[] colors, bool isIncludeAlpha = true)
         {
             if (colors.Length == 0)
             {
@@ -598,12 +622,25 @@ namespace Koturn.KRayMarching
             isw.WriteLine("{");
             isw.IndentLevel++;
 
-            int itemCnt = 1;
-            foreach (var color in colors)
+            if (isIncludeAlpha)
             {
-                isw.Write("new Color({0}, {1}, {2}, {3})", color.r, color.g, color.b, color.a);
-                isw.WriteLine(itemCnt < colors.Length ? "," : "");
-                itemCnt++;
+                int itemCnt = 1;
+                foreach (var color in colors)
+                {
+                    isw.Write("new Color({0}, {1}, {2}, {3})", color.r, color.g, color.b, color.a);
+                    isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                    itemCnt++;
+                }
+            }
+            else
+            {
+                int itemCnt = 1;
+                foreach (var color in colors)
+                {
+                    isw.Write("new Color({0}, {1}, {2})", color.r, color.g, color.b);
+                    isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                    itemCnt++;
+                }
             }
 
             isw.IndentLevel--;
@@ -615,7 +652,8 @@ namespace Koturn.KRayMarching
         /// </summary>
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
         /// <param name="colors">Vertex colors.</param>
-        private static void EmitSetColors(IndentStreamWriter isw, Color32[] colors)
+        /// <param name="isIncludeAlpha">True to embed alpha component into C# code.</param>
+        private static void EmitSetColors(IndentStreamWriter isw, Color32[] colors, bool isIncludeAlpha = true)
         {
             if (colors.Length == 0)
             {
@@ -627,12 +665,25 @@ namespace Koturn.KRayMarching
             isw.WriteLine("{");
             isw.IndentLevel++;
 
-            int itemCnt = 1;
-            foreach (var color in colors)
+            if (isIncludeAlpha)
             {
-                isw.Write("new Color32({0}, {1}, {2}, {3})", color.r, color.g, color.b, color.a);
-                isw.WriteLine(itemCnt < colors.Length ? "," : "");
-                itemCnt++;
+                int itemCnt = 1;
+                foreach (var color in colors)
+                {
+                    isw.Write("new Color32({0}, {1}, {2}, {3})", color.r, color.g, color.b, color.a);
+                    isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                    itemCnt++;
+                }
+            }
+            else
+            {
+                int itemCnt = 1;
+                foreach (var color in colors)
+                {
+                    isw.Write("new Color32({0}, {1}, {2})", color.r, color.g, color.b);
+                    isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                    itemCnt++;
+                }
             }
 
             isw.IndentLevel--;
@@ -834,7 +885,8 @@ namespace Koturn.KRayMarching
         /// <param name="methodName">Name of method.</param>
         /// <param name="itemName">Item name to write in doc. comment.</param>
         /// <param name="colors"><see cref="Color"/> array to embed in C# code.</param>
-        private static void EmitMethodLoadColorArray(IndentStreamWriter isw, string methodName, string itemName, Color[] colors)
+        /// <param name="isIncludeAlpha">True to embed alpha component into C# code.</param>
+        private static void EmitMethodLoadColorArray(IndentStreamWriter isw, string methodName, string itemName, Color[] colors, bool isIncludeAlpha = true)
         {
             isw.WriteLine("/// <summary>");
             isw.WriteLine("/// Load {0} data.", itemName);
@@ -844,18 +896,34 @@ namespace Koturn.KRayMarching
             isw.WriteLine("{");
             isw.IndentLevel++;
 
-            isw.WriteLine("return ConvertArray<Color>(new []");
-            isw.WriteLine("{");
-            isw.IndentLevel++;
-
-            var itemCnt = 1;
-            foreach (var c in colors)
+            if (isIncludeAlpha)
             {
-                isw.Write("{0}f, {1}f, {2}f, {3}f", c.r, c.g, c.b, c.a);
-                isw.WriteLine(itemCnt < colors.Length ? "," : "");
-                itemCnt++;
-            }
+                isw.WriteLine("return ConvertArray<Color>(new []");
+                isw.WriteLine("{");
+                isw.IndentLevel++;
 
+                var itemCnt = 1;
+                foreach (var c in colors)
+                {
+                    isw.Write("{0}f, {1}f, {2}f, {3}f", c.r, c.g, c.b, c.a);
+                    isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                    itemCnt++;
+                }
+            }
+            else
+            {
+                isw.WriteLine("return ConvertRGBArray(new []");
+                isw.WriteLine("{");
+                isw.IndentLevel++;
+
+                var itemCnt = 1;
+                foreach (var c in colors)
+                {
+                    isw.Write("{0}f, {1}f, {2}f", c.r, c.g, c.b);
+                    isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                    itemCnt++;
+                }
+            }
             isw.IndentLevel--;
             isw.WriteLine("});");  // End of method call
 
@@ -870,7 +938,8 @@ namespace Koturn.KRayMarching
         /// <param name="methodName">Name of method.</param>
         /// <param name="itemName">Item name to write in doc. comment.</param>
         /// <param name="colors"><see cref="Color32"/> array to embed in C# code.</param>
-        private static void EmitMethodLoadColorArray(IndentStreamWriter isw, string methodName, string itemName, Color32[] colors)
+        /// <param name="isIncludeAlpha">True to embed alpha component into C# code.</param>
+        private static void EmitMethodLoadColorArray(IndentStreamWriter isw, string methodName, string itemName, Color32[] colors, bool isIncludeAlpha = true)
         {
             isw.WriteLine("/// <summary>");
             isw.WriteLine("/// Load {0} data.", itemName);
@@ -880,18 +949,34 @@ namespace Koturn.KRayMarching
             isw.WriteLine("{");
             isw.IndentLevel++;
 
-            isw.WriteLine("return ConvertArray<Color32>(new byte[]");
-            isw.WriteLine("{");
-            isw.IndentLevel++;
-
-            var itemCnt = 1;
-            foreach (var c in colors)
+            if (isIncludeAlpha)
             {
-                isw.Write("{0}, {1}, {2}, {3}", c.r, c.g, c.b, c.a);
-                isw.WriteLine(itemCnt < colors.Length ? "," : "");
-                itemCnt++;
-            }
+                isw.WriteLine("return ConvertArray<Color32>(new byte[]");
+                isw.WriteLine("{");
+                isw.IndentLevel++;
 
+                var itemCnt = 1;
+                foreach (var c in colors)
+                {
+                    isw.Write("{0}, {1}, {2}, {3}", c.r, c.g, c.b, c.a);
+                    isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                    itemCnt++;
+                }
+            }
+            else
+            {
+                isw.WriteLine("return ConvertRGBArray(new byte[]");
+                isw.WriteLine("{");
+                isw.IndentLevel++;
+
+                var itemCnt = 1;
+                foreach (var c in colors)
+                {
+                    isw.Write("{0}, {1}, {2}", c.r, c.g, c.b);
+                    isw.WriteLine(itemCnt < colors.Length ? "," : "");
+                    itemCnt++;
+                }
+            }
             isw.IndentLevel--;
             isw.WriteLine("});");  // End of method call
 
@@ -903,6 +988,7 @@ namespace Koturn.KRayMarching
         /// Emit ConvertArray method which converts <see cref="float"/> array to specified type array.
         /// </summary>
         /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
+        /// <param name="primTypeName">Type name of source array.</param>
         private static void EmitMethodConvertArray(IndentStreamWriter isw, string primTypeName)
         {
             isw.WriteLine("/// <summary>");
@@ -920,9 +1006,52 @@ namespace Koturn.KRayMarching
 
             isw.WriteLine("var dstData = new T[data.Length / (Marshal.SizeOf<T>() / sizeof({0}))];", primTypeName);
             isw.WriteLine("var gch = GCHandle.Alloc(dstData, GCHandleType.Pinned);");
+            isw.WriteLine("try");
+            isw.WriteLine("{");
+            isw.IndentLevel++;
             isw.WriteLine("Marshal.Copy(data, 0, gch.AddrOfPinnedObject(), data.Length);");
+            isw.IndentLevel--;
+            isw.WriteLine("}");
+            isw.WriteLine("finally");
+            isw.WriteLine("{");
+            isw.IndentLevel++;
             isw.WriteLine("gch.Free();");
+            isw.IndentLevel--;
+            isw.WriteLine("}");
             isw.WriteLine("return dstData;");
+
+            isw.IndentLevel--;
+            isw.WriteLine("}");  // End of method
+        }
+
+        /// <summary>
+        /// Emit ConvertArray method which converts array of RGB components to <see cref="Color"/> or <see cref="Color32"/> array.
+        /// </summary>
+        /// <param name="isw">Destination <see cref="IndentStreamWriter"/>.</param>
+        /// <param name="srcTypeName">Type name of source array.</param>
+        /// <param name="dstTypeName">Type name of destination array.</param>
+        private static void EmitMethodConvertRGBArray(IndentStreamWriter isw, string srcTypeName, string dstTypeName)
+        {
+            isw.WriteLine("/// <summary>");
+            isw.WriteLine("/// Convert <see cref=\"{0}\"/> array of RGB components to a <see cref=\"{1}\"/> array.", srcTypeName, dstTypeName);
+            isw.WriteLine("/// </summary>");
+            isw.WriteLine("/// <param name=\"data\">Source data array.</param>");
+            isw.WriteLine("/// <returns>Converted array.</returns>");
+            isw.WriteLine("private static {0}[] ConvertRGBArray({1}[] data)", dstTypeName, srcTypeName);
+            isw.WriteLine("{");
+            isw.IndentLevel++;
+
+            isw.WriteLine("var colors = new {0}[data.Length / 3];", dstTypeName);
+            isw.WriteLine("for (int i = 0; i < colors.Length; i++)");
+            isw.WriteLine("{");
+            isw.IndentLevel++;
+
+            isw.WriteLine("var j = i * 3;");
+            isw.WriteLine("colors[i] = new {1}(data[j], data[j + 1], data[j + 2]);", srcTypeName);
+
+            isw.IndentLevel--;
+            isw.WriteLine("}");
+            isw.WriteLine("return colors;");
 
             isw.IndentLevel--;
             isw.WriteLine("}");  // End of method
