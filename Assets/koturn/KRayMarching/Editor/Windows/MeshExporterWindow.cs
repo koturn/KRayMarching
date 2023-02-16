@@ -59,6 +59,7 @@ namespace Koturn.KRayMarching.Windows
                         _filePath = (target == null ? string.Empty : ReplaceInvalidFileNameChars(target.name, "_")) + "MeshCreator";
                     }
                 }
+                _colorFormat = (ColorFormat)EditorGUILayout.EnumPopup("Color Format", _colorFormat);
 
                 var mesh = _target == null ? null : _target.GetComponent<MeshFilter>().sharedMesh;
 
@@ -76,7 +77,6 @@ namespace Koturn.KRayMarching.Windows
                     EditorGUILayout.LabelField("C#", EditorStyles.boldLabel);
                     using (new EditorGUI.IndentLevelScope())
                     {
-                        _colorFormat = (ColorFormat)EditorGUILayout.EnumPopup("Color Format", _colorFormat);
                         if (GUILayout.Button("Export mesh as C# (Inplace)"))
                         {
                             OnExportMeshAsCSharpInplaceButtonClicked();
@@ -113,7 +113,7 @@ namespace Koturn.KRayMarching.Windows
                 return;
             }
             _filePath = filePath;
-            MeshExporter.WriteMeshInfo(mesh, filePath);
+            MeshExporter.WriteMeshInfo(mesh, filePath, _colorFormat);
         }
 
         /// <summary>

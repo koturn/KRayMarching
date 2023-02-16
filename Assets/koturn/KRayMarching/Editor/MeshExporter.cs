@@ -18,7 +18,7 @@ namespace Koturn.KRayMarching
         /// </summary>
         /// <param name="mesh">Target mesh.</param>
         /// <param name="filePath">A file path to write.</param>
-        public static void WriteMeshInfo(Mesh mesh, string filePath)
+        public static void WriteMeshInfo(Mesh mesh, string filePath, ColorFormat colorFormat = ColorFormat.RGBAFloat)
         {
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
             using (var sw = new StreamWriter(fs))
@@ -27,7 +27,23 @@ namespace Koturn.KRayMarching
                 WriteTriangleItem(sw, "Triangles", mesh.triangles);
                 WriteVectorItem(sw, "Normals", mesh.normals);
                 WriteVectorItem(sw, "Tangents", mesh.tangents);
-                WriteColorItem(sw, "Colors", mesh.colors);
+                switch (colorFormat)
+                {
+                    case ColorFormat.RGB24:
+                        WriteColorItem(sw, "Colors", mesh.colors32, false);
+                        break;
+                    case ColorFormat.RGBA32:
+                        WriteColorItem(sw, "Colors", mesh.colors32);
+                        break;
+                    case ColorFormat.RGBFloat:
+                        WriteColorItem(sw, "Colors", mesh.colors, false);
+                        break;
+                    case ColorFormat.RGBAFloat:
+                        WriteColorItem(sw, "Colors", mesh.colors);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(colorFormat), colorFormat, $"Invalid value for {nameof(ColorFormat)}");
+                }
                 WriteVectorItem(sw, "UVs", mesh.uv);
                 WriteVectorItem(sw, "UV1s", mesh.uv2);
                 WriteVectorItem(sw, "UV2s", mesh.uv2);
@@ -507,12 +523,49 @@ namespace Koturn.KRayMarching
         /// <param name="tw">Destination <see cref="TextWriter"/>.</param>
         /// <param name="itemName">Name of item.</param>
         /// <param name="colors">Vertex colors.</param>
-        private static void WriteColorItem(TextWriter tw, string itemName, Color[] colors)
+        /// <param name="isIncludeAlpha">True to embed alpha component into C# code.</param>
+        private static void WriteColorItem(TextWriter tw, string itemName, Color[] colors, bool isIncludeAlpha = true)
         {
             tw.WriteLine("{0},{1}", itemName, colors.Length);
-            foreach (var c in colors)
+            if (isIncludeAlpha)
             {
-                tw.WriteLine("{0},{1},{2},{3}", c.r, c.g, c.b, c.a);
+                foreach (var c in colors)
+                {
+                    tw.WriteLine("{0},{1},{2},{3}", c.r, c.g, c.b, c.a);
+                }
+            }
+            else
+            {
+                foreach (var c in colors)
+                {
+                    tw.WriteLine("{0},{1},{2}", c.r, c.g, c.b);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Write vertex color data as a CSV.
+        /// </summary>
+        /// <param name="tw">Destination <see cref="TextWriter"/>.</param>
+        /// <param name="itemName">Name of item.</param>
+        /// <param name="colors">Vertex colors.</param>
+        /// <param name="isIncludeAlpha">True to embed alpha component into C# code.</param>
+        private static void WriteColorItem(TextWriter tw, string itemName, Color32[] colors, bool isIncludeAlpha = true)
+        {
+            tw.WriteLine("{0},{1}", itemName, colors.Length);
+            if (isIncludeAlpha)
+            {
+                foreach (var c in colors)
+                {
+                    tw.WriteLine("{0},{1},{2},{3}", c.r, c.g, c.b, c.a);
+                }
+            }
+            else
+            {
+                foreach (var c in colors)
+                {
+                    tw.WriteLine("{0},{1},{2}", c.r, c.g, c.b);
+                }
             }
         }
 
