@@ -102,7 +102,7 @@ namespace Koturn.KRayMarching.Windows
                 return;
             }
 
-            var fileName = Path.GetFileName(_filePath);
+            var fileName = Path.GetFileNameWithoutExtension(_filePath);
             var filePath = EditorUtility.SaveFilePanel(
                 "Save mesh",
                 Path.GetDirectoryName(_filePath),
@@ -128,7 +128,7 @@ namespace Koturn.KRayMarching.Windows
                 return;
             }
 
-            var fileName = Path.GetFileName(_filePath);
+            var fileName = Path.GetFileNameWithoutExtension(_filePath);
             var filePath = EditorUtility.SaveFilePanel(
                 "Save mesh",
                 Path.GetDirectoryName(_filePath),
@@ -160,7 +160,7 @@ namespace Koturn.KRayMarching.Windows
                 return;
             }
 
-            var fileName = Path.GetFileName(_filePath);
+            var fileName = Path.GetFileNameWithoutExtension(_filePath);
             var filePath = EditorUtility.SaveFilePanel(
                 "Save mesh",
                 Path.GetDirectoryName(_filePath),
