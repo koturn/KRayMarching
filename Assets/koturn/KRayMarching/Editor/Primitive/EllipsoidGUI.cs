@@ -7,14 +7,14 @@ using Koturn.KRayMarching;
 namespace Koturn.KRayMarching.Primitive
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitive/Sphere",
+    /// Custom editor for "koturn/KRayMarching/Primitive/Ellipsoid".
     /// </summary>
-    public class SphereGUI : KRayMarchingBaseGUI
+    public class EllipsoidGUI : KRayMarchingBaseGUI
     {
         /// <summary>
-        /// Property name of "_Radius".
+        /// Property name of "_Radiuses".
         /// </summary>
-        private const string PropNameRadius = "_Radius";
+        private const string PropNameRadiuses = "_Radiuses";
 
         /// <summary>
         /// Draw custom properties.
@@ -28,7 +28,7 @@ namespace Koturn.KRayMarching.Primitive
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
-                ShaderProperty(me, mps, PropNameRadius);
+                ShaderProperty(me, mps, PropNameRadiuses);
             }
         }
     }

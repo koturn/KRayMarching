@@ -7,14 +7,23 @@ using Koturn.KRayMarching;
 namespace Koturn.KRayMarching.Primitive
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitive/Sphere",
+    /// Custom editor for "koturn/KRayMarching/Primitive/Cone"
+    /// and "koturn/KRayMarching/Primitive/InfiniteCone".
     /// </summary>
-    public class SphereGUI : KRayMarchingBaseGUI
+    public class ConeGUI : KRayMarchingBaseGUI
     {
         /// <summary>
-        /// Property name of "_Radius".
+        /// Property name of "_Angle".
         /// </summary>
-        private const string PropNameRadius = "_Radius";
+        private const string PropNameAngle = "_Angle";
+        /// <summary>
+        /// Property name of "_Height".
+        /// </summary>
+        private const string PropNameHeight = "_Height";
+        /// <summary>
+        /// Property name of "_NotExact".
+        /// </summary>
+        private const string PropNameNotExact = "_NotExact";
 
         /// <summary>
         /// Draw custom properties.
@@ -28,7 +37,9 @@ namespace Koturn.KRayMarching.Primitive
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
-                ShaderProperty(me, mps, PropNameRadius);
+                ShaderProperty(me, mps, PropNameAngle);
+                ShaderProperty(me, mps, PropNameHeight, false);
+                ShaderProperty(me, mps, PropNameNotExact, false);
             }
         }
     }

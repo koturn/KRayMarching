@@ -7,14 +7,18 @@ using Koturn.KRayMarching;
 namespace Koturn.KRayMarching.Primitive
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitive/Sphere",
+    /// Custom editor for "koturn/KRayMarching/Primitive/Octahedron".
     /// </summary>
-    public class SphereGUI : KRayMarchingBaseGUI
+    public class OctahedronGUI : KRayMarchingBaseGUI
     {
         /// <summary>
-        /// Property name of "_Radius".
+        /// Property name of "_Size".
         /// </summary>
-        private const string PropNameRadius = "_Radius";
+        private const string PropNameSize = "_Size";
+        /// <summary>
+        /// Property name of "_OctahedronScales".
+        /// </summary>
+        private const string PropNameOctahedronScales = "_OctahedronScales";
 
         /// <summary>
         /// Draw custom properties.
@@ -28,7 +32,8 @@ namespace Koturn.KRayMarching.Primitive
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
-                ShaderProperty(me, mps, PropNameRadius);
+                ShaderProperty(me, mps, PropNameSize);
+                ShaderProperty(me, mps, PropNameOctahedronScales, false);
             }
         }
     }

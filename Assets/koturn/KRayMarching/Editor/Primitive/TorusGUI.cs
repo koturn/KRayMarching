@@ -7,14 +7,18 @@ using Koturn.KRayMarching;
 namespace Koturn.KRayMarching.Primitive
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitive/Sphere",
+    /// Custom editor for "koturn/KRayMarching/Primitive/Torus",
     /// </summary>
-    public class SphereGUI : KRayMarchingBaseGUI
+    public class TorusGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Radius".
         /// </summary>
         private const string PropNameRadius = "_Radius";
+        /// <summary>
+        /// Property name of "_Thickness".
+        /// </summary>
+        private const string PropNameThickness = "_Thickness";
 
         /// <summary>
         /// Draw custom properties.
@@ -29,6 +33,7 @@ namespace Koturn.KRayMarching.Primitive
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
                 ShaderProperty(me, mps, PropNameRadius);
+                ShaderProperty(me, mps, PropNameThickness);
             }
         }
     }

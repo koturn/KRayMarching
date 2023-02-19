@@ -7,7 +7,8 @@ using Koturn.KRayMarching;
 namespace Koturn.KRayMarching.Primitive
 {
     /// <summary>
-    /// Custom editor of RAyMarching shaders.
+    /// Custom editor for "koturn/KRayMarching/Primitive/Box",
+    /// "koturn/KRayMarching/Primitive/RoundBox" and "koturn/KRayMarching/Primitive/BoxFrame"
     /// </summary>
     public class BoxGUI : KRayMarchingBaseGUI
     {
