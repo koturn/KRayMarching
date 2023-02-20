@@ -7,22 +7,19 @@ using Koturn.KRayMarching;
 namespace Koturn.KRayMarching.Primitive
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitive/Octahedron".
+    /// Custom editor for "koturn/KRayMarching/Primitive/HexPrism"
+    /// and "koturn/KRayMarching/Primitive/TriPrism".
     /// </summary>
-    public class OctahedronGUI : KRayMarchingBaseGUI
+    public class PrismGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Size".
         /// </summary>
         private const string PropNameSize = "_Size";
         /// <summary>
-        /// Property name of "_OctahedronScales".
+        /// Property name of "_Height".
         /// </summary>
-        private const string PropNameOctahedronScales = "_OctahedronScales";
-        /// <summary>
-        /// Property name of "_NotExact".
-        /// </summary>
-        private const string PropNameNotExact = "_NotExact";
+        private const string PropNameHeight = "_Height";
 
         /// <summary>
         /// Draw custom properties.
@@ -37,8 +34,7 @@ namespace Koturn.KRayMarching.Primitive
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
                 ShaderProperty(me, mps, PropNameSize);
-                ShaderProperty(me, mps, PropNameOctahedronScales);
-                ShaderProperty(me, mps, PropNameNotExact);
+                ShaderProperty(me, mps, PropNameHeight);
             }
         }
     }

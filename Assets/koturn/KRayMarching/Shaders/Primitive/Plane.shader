@@ -1,4 +1,4 @@
-Shader "koturn/KRayMarching/Primitive/Octahedron"
+Shader "koturn/KRayMarching/Primitive/Plane"
 {
     Properties
     {
@@ -32,10 +32,8 @@ Shader "koturn/KRayMarching/Primitive/Octahedron"
 
         _Color ("Color of the sphere", Color) = (0.5, 0.5, 0.5, 1.0)
 
-        _Size ("Size of the Octahedron", Float) = 0.5
-
-        [Vector3]
-        _OctahedronScales ("Scales of the Octahedron", Vector) = (1.0, 1.0, 1.0, 0.0)
+        _Normal ("Normal of the Plane", Vector) = (0.0, 1.0, 0.0, 0.0)
+        _Height ("Height of the Plane", Float) = 0.5
 
         [Toggle(_NOT_EXACT_ON)]
         _NotExact ("Not exact", Int) = 1
@@ -140,10 +138,10 @@ Shader "koturn/KRayMarching/Primitive/Octahedron"
 
         #include "PrimitiveTemplate.cginc"
 
-        //! Size of the Octahedron.
-        uniform float _Size;
-        //! Scales of the Octahedron.
-        uniform float3 _OctahedronScales;
+        //! Normal of the Plane.
+        uniform float3 _Normal;
+        //! Height of the Plane.
+        uniform float _Height;
 
 
         /*!
@@ -153,11 +151,7 @@ Shader "koturn/KRayMarching/Primitive/Octahedron"
          */
         float map(float3 p)
         {
-#ifdef _NOT_EXACT_ON
-            return sdOctahedron(p, _Size, _OctahedronScales);
-#else
-            return sdOctahedronExact(p, _Size, _OctahedronScales);
-#endif
+            return sdPlane(p, normalize(_Normal), _Height);
         }
         ENDCG
 
@@ -226,5 +220,5 @@ Shader "koturn/KRayMarching/Primitive/Octahedron"
         }  // ShadowCaster
     }
 
-    CustomEditor "Koturn.KRayMarching.Primitive.OctahedronGUI"
+    CustomEditor "Koturn.KRayMarching.Primitive.PlaneGUI"
 }

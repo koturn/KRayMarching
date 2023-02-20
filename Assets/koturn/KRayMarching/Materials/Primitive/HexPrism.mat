@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Octahedron
-  m_Shader: {fileID: 4800000, guid: c5d088d82d4b1784ba1b13ce5adb9d6d, type: 3}
+  m_Name: koHexPrism
+  m_Shader: {fileID: 4800000, guid: 92de6fb843106eb4dbc7578786e098df, type: 3}
   m_ShaderKeywords: _LIGHTINGMETHOD_UNITY_STANDARD _NOT_EXACT_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -28,6 +28,7 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _Glossiness: 0.5
+    - _Height: 0.5
     - _LightingMethod: 2
     - _MarchingFactor: 0.65
     - _MaxLoop: 128
@@ -55,6 +56,5 @@ Material:
     - __RenderingMode: 1
     m_Colors:
     - _Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _OctahedronScales: {r: 1, g: 1, b: 1, a: 0}
-    - _Scales: {r: 1, g: 1, b: 1, a: 0}
+    - _Scales: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
