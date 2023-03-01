@@ -160,8 +160,8 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma shader_feature_local_fragment _NORMALCALCOPTIMIZE_UNROLL _NORMALCALCOPTIMIZE_LOOP _NORMALCALCOPTIMIZE_LOOP_WITHOUT_LUT
         #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
 
-        #include "UnityCG.cginc"
-        #include "UnityStandardUtils.cginc"
+        #include "include/alt/AltUnityCG.cginc"
+        #include "include/alt/AltUnityStandardUtils.cginc"
         #include "AutoLight.cginc"
         #include "include/Math.cginc"
         #include "include/RefProbe.cginc"

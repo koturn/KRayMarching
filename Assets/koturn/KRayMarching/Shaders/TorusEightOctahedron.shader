@@ -102,8 +102,8 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
         #pragma shader_feature_local_fragment _LIGHTINGMETHOD_UNITY_LAMBERT _LIGHTINGMETHOD_UNITY_BLINN_PHONG _LIGHTINGMETHOD_UNITY_STANDARD _LIGHTINGMETHOD_UNITY_STANDARD_SPECULAR _LIGHTINGMETHOD_CUSTOM
 
-        #include "UnityCG.cginc"
-        #include "UnityStandardUtils.cginc"
+        #include "include/alt/AltUnityCG.cginc"
+        #include "include/alt/AltUnityStandardUtils.cginc"
         #include "AutoLight.cginc"
 
 #ifdef _USE_FAST_INVTRIFUNC_ON
