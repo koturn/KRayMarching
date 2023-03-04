@@ -229,7 +229,7 @@ namespace Koturn.KRayMarching.Windows
         /// <summary>
         /// Open window.
         /// </summary>
-        [MenuItem("GameObject/KRayMarching/Mesh Analyzer", false, 21)]
+        [MenuItem("GameObject/KRayMarching/Mesh Analyzer", false, 22)]
         public static void OpenWindow()
         {
             var window = GetWindow<MeshExporterWindow>("Mesh Analyzer");
