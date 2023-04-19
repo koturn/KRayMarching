@@ -239,6 +239,9 @@ Shader "koturn/KRayMarching/Sphere"
          */
         fout frag(v2f_raymarching_forward fi)
         {
+            UNITY_SETUP_INSTANCE_ID(fi);
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
+
             const float3 localRayDir = normalize(fi.localRayDirVector);
 
             const rmout ro = rayMarch(fi.localRayOrigin, localRayDir);
@@ -629,6 +632,9 @@ Shader "koturn/KRayMarching/Sphere"
              */
             fout fragShadowCaster(v2f_raymarching_shadowcaster fi)
             {
+                UNITY_SETUP_INSTANCE_ID(fi);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
+
                 const float3 localRayDir = normalize(fi.localRayDirVector);
 
                 const rmout ro = rayMarch(fi.localRayOrigin, localRayDir);

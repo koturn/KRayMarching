@@ -23,6 +23,8 @@ struct appdata_raymarching_forward
     //! Dynamic Lightmap coordinate.
     float2 texcoord2 : TEXCOORD2;
 #endif  // DYNAMICLIGHTMAP_ON
+    //! instanceID for single pass instanced rendering.
+    UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 
@@ -33,6 +35,8 @@ struct appdata_raymarching_shadowcaster
 {
     //! Local position of the vertex.
     float4 vertex : POSITION;
+    //! instanceID for single pass instanced rendering.
+    UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 
@@ -54,6 +58,10 @@ struct v2f_raymarching_forward
     //! Light map UV coordinates.
     float4 lmap : TEXCOORD4;
 #endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+    //! instanceID for single pass instanced rendering.
+    UNITY_VERTEX_INPUT_INSTANCE_ID
+    //! stereoTargetEyeIndex for single pass instanced rendering.
+    UNITY_VERTEX_OUTPUT_STEREO
 };
 
 
@@ -69,6 +77,10 @@ struct v2f_raymarching_shadowcaster
     float3 localRayOrigin : TEXCOORD1;
     //! Unnormalized ray direction in object space.
     float3 localRayDirVector : TEXCOORD2;
+    //! instanceID for single pass instanced rendering.
+    UNITY_VERTEX_INPUT_INSTANCE_ID
+    //! stereoTargetEyeIndex for single pass instanced rendering.
+    UNITY_VERTEX_OUTPUT_STEREO
 };
 
 
@@ -83,6 +95,10 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
 {
     v2f_raymarching_forward o;
     UNITY_INITIALIZE_OUTPUT(v2f_raymarching_forward, o);
+
+    UNITY_SETUP_INSTANCE_ID(v);
+    UNITY_TRANSFER_INSTANCE_ID(v, o);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
     o.localRayOrigin = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
     o.localRayDirVector = v.vertex - o.localRayOrigin;
@@ -112,6 +128,10 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 {
     v2f_raymarching_shadowcaster o;
     UNITY_INITIALIZE_OUTPUT(v2f_raymarching_shadowcaster, o);
+
+    UNITY_SETUP_INSTANCE_ID(v);
+    UNITY_TRANSFER_INSTANCE_ID(v, o);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
     TRANSFER_SHADOW_CASTER(o)
 
