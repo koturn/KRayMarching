@@ -73,13 +73,14 @@ float asinFast(float x)
 
 
 /*
- * @brief Calculate positive value of atan().
- * @param [in] x  The first argument of atan().
+ * @brief Tune for input [-infinity, infinity] and provide output [0, PI/2].
+ * @param [in] x  Input [-infinity, infinity].
  * @return Approximate positive value of atan().
  */
 float atanPos(float x)
 {
-    const float t0 = x < 1.0 ? x : rcp(x);
+    const float absX = abs(x);
+    const float t0 = absX < 1.0 ? absX : rcp(absX);
 #if 1
     const float poly = (-0.269408 * t0 + 1.05863) * t0;
 #else
@@ -90,7 +91,7 @@ float atanPos(float x)
     poly *= t0;
 #endif
 
-    return x < 1.0 ? poly : (UNITY_HALF_PI - poly);
+    return absX < 1.0 ? poly : (UNITY_HALF_PI - poly);
 }
 
 
@@ -102,7 +103,7 @@ float atanPos(float x)
  */
 float atanFast(float x)
 {
-    const float t0 = atanPos(abs(x));
+    const float t0 = atanPos(x);
     return x < 0.0 ? -t0 : t0;
 }
 
