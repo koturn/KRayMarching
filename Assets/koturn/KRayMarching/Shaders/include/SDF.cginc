@@ -4,6 +4,7 @@
 
 float sdSphere(float3 p, float r);
 float sdTorus(float3 p, float2 t);
+float sdTorus(float3 p, float radius, float thickness);
 float sdCappedCylinder(float3 p, float h, float r);
 float sdOctahedron(float3 p, float s);
 float sdOctahedron(float3 p, float s, float3 scales);
@@ -28,8 +29,21 @@ float sdSphere(float3 p, float r)
  */
 float sdTorus(float3 p, float2 t)
 {
-    const float2 q = float2(length(p.xz) - t.x, p.y);
-    return length(q) - t.y;
+    return sdTorus(p, t.x, t.y);
+}
+
+
+/*!
+ * @brief SDF of Torus.
+ * @param [in] p  Position.
+ * @param [in] radius  Radius of the Torus
+ * @param [in] thickness  Thickness of the Torus.
+ * @return Signed Distance to the Torus.
+ */
+float sdTorus(float3 p, float radius, float thickness)
+{
+    const float2 q = float2(length(p.xz) - radius, p.y);
+    return length(q) - thickness;
 }
 
 

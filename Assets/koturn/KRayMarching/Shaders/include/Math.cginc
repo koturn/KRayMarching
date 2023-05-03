@@ -231,7 +231,7 @@ float2x2 invRotate2DMat(float angle)
  */
 float2 pmod(float2 p, float r)
 {
-    return pmod(p, atan2(p.x, p.y), r);
+    return pmod(p, atan2(p.y, p.x), r);
 }
 
 
@@ -247,7 +247,7 @@ float2 pmod(float2 p, float angle, float r)
 {
     const float a = angle + UNITY_PI / r;
     const float n = UNITY_TWO_PI / r;
-    return rotate2D(p, floor(a / n) * n);
+    return rotate2D(p, -floor(a / n) * n);
 }
 
 
@@ -265,7 +265,7 @@ float2 pmod(float2 p, float angle, float r, out float pIndex)
     const float a = angle + UNITY_PI / r;
     const float n = UNITY_TWO_PI / r;
     pIndex = floor(a / n);
-    return rotate2D(p, pIndex * n);
+    return rotate2D(p, -pIndex * n);
 }
 
 
