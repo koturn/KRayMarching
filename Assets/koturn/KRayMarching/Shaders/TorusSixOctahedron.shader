@@ -3,6 +3,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
     Properties
     {
         // Common Ray Marching Parameters.
+        [Toggle(_DISABLE_FORWARDADD_ON)]
+        _DisableForwardAdd ("Disable ForwardAdd", Int) = 0
+
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
 
@@ -99,6 +102,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         CGINCLUDE
         #pragma multi_compile_fog
+        #pragma shader_feature_local _ _DISABLE_FORWARDADD_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
         #pragma shader_feature_local_fragment _LIGHTINGMETHOD_UNITY_LAMBERT _LIGHTINGMETHOD_UNITY_BLINN_PHONG _LIGHTINGMETHOD_UNITY_STANDARD _LIGHTINGMETHOD_UNITY_STANDARD_SPECULAR _LIGHTINGMETHOD_CUSTOM
 
@@ -178,6 +182,11 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
          */
         fout frag(v2f_raymarching_forward fi)
         {
+#if defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+            fout fo;
+            UNITY_INITIALIZE_OUTPUT(fout, fo);
+            return fo;
+#else
             UNITY_SETUP_INSTANCE_ID(fi);
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
 
@@ -211,6 +220,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             fo.depth = getDepth(projPos);
 
             return fo;
+#endif
         }
 
 

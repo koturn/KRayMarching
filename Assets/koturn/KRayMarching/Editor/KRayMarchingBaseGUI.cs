@@ -31,6 +31,10 @@ namespace Koturn.KRayMarching
         /// </summary>
         private const string PropNameMaxLoopShadowCaster = "_MaxLoopShadowCaster";
         /// <summary>
+        /// Property name of "_DisableForwardAdd".
+        /// </summary>
+        private const string PropNameDisableForwardAdd = "_DisableForwardAdd";
+        /// <summary>
         /// Property name of "_MinRayLength".
         /// </summary>
         private const string PropNameMinRayLength = "_MinRayLength";
@@ -216,8 +220,13 @@ namespace Koturn.KRayMarching
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
+                var mpDisableForwardAdd = FindAndDrawProperty(me, mps, PropNameDisableForwardAdd, false);
+
                 ShaderProperty(me, mps, PropNameMaxLoop, false);
-                ShaderProperty(me, mps, PropNameMaxLoopForwardAdd, false);
+                using (new EditorGUI.DisabledScope(mpDisableForwardAdd != null && mpDisableForwardAdd.floatValue < 0.5f))
+                {
+                    ShaderProperty(me, mps, PropNameMaxLoopForwardAdd, false);
+                }
                 ShaderProperty(me, mps, PropNameMaxLoopShadowCaster, false);
                 ShaderProperty(me, mps, PropNameMinRayLength, false);
                 ShaderProperty(me, mps, PropNameMaxRayLength, false);

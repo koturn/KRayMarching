@@ -48,20 +48,22 @@ struct v2f_raymarching_forward
 {
     //! Clip space position of the vertex.
     float4 pos : SV_POSITION;
+#if !defined(_DISABLE_FORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
     //! Ray origin in object space (Local space position of the camera).
     nointerpolation float3 localRayOrigin : TEXCOORD0;
     //! Unnormalized ray direction in object space.
     float3 localRayDirVector : TEXCOORD1;
     //! Lighting and shadowing parameters.
     UNITY_LIGHTING_COORDS(2, 3)
-#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#    if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
     //! Light map UV coordinates.
     float4 lmap : TEXCOORD4;
-#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#    endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
     //! instanceID for single pass instanced rendering.
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
     UNITY_VERTEX_OUTPUT_STEREO
+#endif  // !defined(_DISABLE_FORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
 };
 
 
@@ -86,6 +88,38 @@ struct v2f_raymarching_shadowcaster
 
 
 
+#if defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+/*!
+ * @brief Vertex shader function for disabling ForwardAdd Pass.
+ * @return Output for fragment shader (v2f).
+ */
+v2f_raymarching_forward vertRayMarchingForward()
+{
+    v2f_raymarching_forward o;
+
+    // Temporarily disable WARN_FLOAT_DIVISION_BY_ZERO.
+#if defined(UNITY_COMPILER_HLSL) \
+    || defined(SHADER_API_GLCORE) \
+    || defined(SHADER_API_GLES3) \
+    || defined(SHADER_API_METAL) \
+    || defined(SHADER_API_VULKAN) \
+    || defined(SHADER_API_GLES) \
+    || defined(SHADER_API_D3D11)
+#    pragma warning (disable : 4008)
+#endif
+    o.pos = 0.0 / 0.0;  // NaN
+#if defined(UNITY_COMPILER_HLSL) \
+    || defined(SHADER_API_GLCORE) \
+    || defined(SHADER_API_GLES3) \
+    || defined(SHADER_API_METAL) \
+    || defined(SHADER_API_VULKAN) \
+    || defined(SHADER_API_GLES) \
+    || defined(SHADER_API_D3D11)
+#    pragma warning (default : 4008)
+#endif
+    return o;
+}
+#else
 /*!
  * @brief Vertex shader function for ForwardBase and ForwardAdd Pass.
  * @param [in] v  Input data
@@ -117,6 +151,7 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
 
     return o;
 }
+#endif  // defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
 
 
 /*!

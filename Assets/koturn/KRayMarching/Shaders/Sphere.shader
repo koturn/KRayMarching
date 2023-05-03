@@ -3,6 +3,9 @@ Shader "koturn/KRayMarching/Sphere"
     Properties
     {
         // Common Ray Marching Parameters.
+        [Toggle(_DISABLE_FORWARDADD_ON)]
+        _DisableForwardAdd ("Disable ForwardAdd", Int) = 0
+
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
 
@@ -152,6 +155,7 @@ Shader "koturn/KRayMarching/Sphere"
         //   FOG_EXP2
         #pragma multi_compile_fog
 
+        #pragma shader_feature_local _ _DISABLE_FORWARDADD_ON
         #pragma shader_feature_local_fragment _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT _DIFFUSEMODE_DISABLE
         #pragma shader_feature_local_fragment _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR _SPECULARMODE_DISABLE
         #pragma shader_feature_local_fragment _AMBIENTMODE_LEGACY _AMBIENTMODE_SH _AMBIENTMODE_DISABLE
@@ -239,6 +243,11 @@ Shader "koturn/KRayMarching/Sphere"
          */
         fout frag(v2f_raymarching_forward fi)
         {
+#if defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+            fout fo;
+            UNITY_INITIALIZE_OUTPUT(fout, fo);
+            return fo;
+#else
             UNITY_SETUP_INSTANCE_ID(fi);
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
 
@@ -252,11 +261,11 @@ Shader "koturn/KRayMarching/Sphere"
             const float3 localFinalPos = fi.localRayOrigin + localRayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
 
-#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#    if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
             const float4 lmap = fi.lmap;
-#else
+#    else
             const float4 lmap = float4(0.0, 0.0, 0.0, 0.0);
-#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#    endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
 
             const half4 color = calcLighting(
                 _Color,
@@ -273,6 +282,7 @@ Shader "koturn/KRayMarching/Sphere"
             fo.depth = getDepth(projPos);
 
             return fo;
+#endif  // defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
         }
 
 

@@ -3,6 +3,9 @@ Shader "koturn/KRayMarching/RecursiveRings"
     Properties
     {
         // Common Ray Marching Parameters.
+        [Toggle(_DISABLE_FORWARDADD_ON)]
+        _DisableForwardAdd ("Disable ForwardAdd", Int) = 0
+
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
 
@@ -107,6 +110,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
         CGINCLUDE
         #pragma multi_compile_fog
+        #pragma shader_feature_local _ _DISABLE_FORWARDADD_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
         #pragma shader_feature_local_fragment _LIGHTINGMETHOD_UNITY_LAMBERT _LIGHTINGMETHOD_UNITY_BLINN_PHONG _LIGHTINGMETHOD_UNITY_STANDARD _LIGHTINGMETHOD_UNITY_STANDARD_SPECULAR _LIGHTINGMETHOD_CUSTOM
 
@@ -196,6 +200,11 @@ Shader "koturn/KRayMarching/RecursiveRings"
          */
         fout frag(v2f_raymarching_forward fi)
         {
+#if defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+            fout fo;
+            UNITY_INITIALIZE_OUTPUT(fout, fo);
+            return fo;
+#else
             UNITY_SETUP_INSTANCE_ID(fi);
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
 
@@ -209,11 +218,11 @@ Shader "koturn/KRayMarching/RecursiveRings"
             const float3 localFinalPos = fi.localRayOrigin + localRayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
 
-#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#    if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
             const float4 lmap = fi.lmap;
-#else
+#    else
             const float4 lmap = float4(0.0, 0.0, 0.0, 0.0);
-#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#    endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
 
             const half4 color = calcLighting(
                 half4(ro.color, 1.0),
@@ -229,6 +238,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
             fo.depth = getDepth(projPos);
 
             return fo;
+#endif  // defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
         }
 
 
