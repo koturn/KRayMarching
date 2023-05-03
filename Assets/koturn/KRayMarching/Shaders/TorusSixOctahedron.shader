@@ -146,7 +146,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
 
         rmout rayMarch(float3 rayOrigin, float3 rayDir);
-        float map(float3 p, out half3 color);
+        float map(float3 p, out float colorIndex);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float3 getNormal(float3 p);
         fixed getLightAttenuation(v2f_raymarching_forward fi, float3 worldPos);
@@ -233,6 +233,15 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
          */
         rmout rayMarch(float3 rayOrigin, float3 rayDir)
         {
+            static const half3 kColors[6] = {
+                half3(0.8, 0.4, 0.4),  // R
+                half3(0.8, 0.8, 0.4),  // Y
+                half3(0.4, 0.8, 0.4),  // G
+                half3(0.4, 0.8, 0.8),  // C
+                half3(0.4, 0.4, 0.8),  // B
+                half3(0.8, 0.4, 0.8)   // M
+            };
+
 #if defined(UNITY_PASS_FORWARDBASE)
             const int maxLoop = _MaxLoop;
 #elif defined(UNITY_PASS_FORWARDADD)
@@ -244,14 +253,24 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             rmout ro;
             ro.rayLength = 0.0;
             ro.isHit = false;
-            ro.color = half3(0.0, 0.0, 0.0);
+
+            float colorIndex;
 
             // Loop of Ray Marching.
             for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > _MaxRayLength) ? 0x7fffffff : i + 1) {
-                const float d = map(rayOrigin + rayDir * ro.rayLength, ro.color);
+                const float d = map(rayOrigin + rayDir * ro.rayLength, /* out */ colorIndex);
                 ro.rayLength += d * _MarchingFactor;
                 ro.isHit = d < _MinRayLength;
             }
+
+            int idx = (int)colorIndex;
+            ro.color = idx == 3 ? half3(0.8, 0.8, 0.8)
+                : idx == 0 ? kColors[0]
+                : idx == 1 ? kColors[1]
+                : idx == 2 ? kColors[2]
+                : idx == -3 ? kColors[3]
+                : idx == -2 ? kColors[4]
+                : kColors[5];
 
             return ro;
         }
@@ -259,18 +278,11 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         /*!
          * @brief SDF (Signed Distance Function) of objects.
          * @param [in] p  Position of the tip of the ray.
+         * @param [out] colorIndex  Color index, [-3, 3].
          * @return Signed Distance to the objects.
          */
-        float map(float3 p, out half3 color)
+        float map(float3 p, out float colorIndex)
         {
-            static const half3 kColors[6] = {
-                half3(0.8, 0.4, 0.4),  // R
-                half3(0.8, 0.8, 0.4),  // Y
-                half3(0.4, 0.8, 0.4),  // G
-                half3(0.4, 0.8, 0.8),  // C
-                half3(0.4, 0.4, 0.8),  // B
-                half3(0.8, 0.4, 0.8)   // M
-            };
             static const float kOneThirdPi = UNITY_PI / 3.0;
             static const float kInvOneThirdPi = 1.0 / kOneThirdPi;
 
@@ -281,7 +293,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             const float radius = _TorusRadius + _SinTime.w * _TorusRadiusAmp;
 
             float minDist = sdTorus(p.xzy, float2(radius, _TorusWidth));
-            color = half3(0.8, 0.8, 0.8);
+            colorIndex = 3.0;
 
             p.xy = rotate2D(p.xy, _Time.y);
             const float rotUnit = floor(-atan2(p.y, p.x) * kInvOneThirdPi);
@@ -290,13 +302,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             const float d = sdOctahedron(p - float3(radius, 0.0, 0.0), _OctahedronSize, float3(0.5, 2.0, 2.0));
             if (minDist > d) {
                 minDist = d;
-                const int idx = (int)rotUnit;
-                color = idx == 0 ? kColors[0]
-                    : idx == 1 ? kColors[1]
-                    : idx == 2 ? kColors[2]
-                    : idx == -3 ? kColors[3]
-                    : idx == -2 ? kColors[4]
-                    : kColors[5];
+                colorIndex = rotUnit;
             }
 
             return minDist;
@@ -339,7 +345,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             static const float h = 0.0001;
 
             float3 normal = float3(0.0, 0.0, 0.0);
-            half3 _ = half3(0.0, 0.0, 0.0);
+            float _;
 
             for (int i = 0; i < 4; i++) {
                 normal += ks[i] * map(p + ks[i] * h, /* out */ _);
