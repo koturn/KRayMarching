@@ -116,7 +116,30 @@ float atanFast(float x)
  */
 float atan2Fast(float x, float y)
 {
-    return atanFast(x / y) + UNITY_PI * (y < 0.0) * (x < 0.0 ? -1.0 : 1.0);
+#if 1
+    const float2 p = float2(x, y);
+    const float2 d = p.xy / p.yx;
+
+    //
+    // Tune for positive input [0, infinity] and provide output [0, PI/2]
+    //
+    const float2 absD = abs(d);
+    const float t0 = absD.x < 1.0 ? absD.x : absD.y;
+#if 1
+    const float poly = (-0.269408 * t0 + 1.05863) * t0;
+#else
+    const float t1 = t0 * t0;
+    float poly = 0.0872929;
+    poly = -0.301895 + poly * t1;
+    poly = 1.0 + poly * t1;
+    poly *= t0;
+#endif
+    const float u0 = absD < 1.0 ? poly : (UNITY_HALF_PI - poly);
+
+    return (d >= 0.0 ? u0 : -u0) + (y >= 0.0 ? 0.0 : x >= 0.0 ? UNITY_PI : -UNITY_PI);
+#else
+    return atanFast(x / y) + UNITY_PI * (y < 0.0 ? 1.0 : 0.0) * (x < 0.0 ? -1.0 : 1.0);
+#endif
 }
 
 
