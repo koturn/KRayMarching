@@ -217,7 +217,6 @@ Shader "koturn/KRayMarching/Sphere"
         float map(float3 p);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float3 getNormal(float3 p);
-        fixed getLightAttenuation(v2f_raymarching_forward fi, float3 worldPos);
 
 
         //! Color of the objects.
@@ -271,7 +270,7 @@ Shader "koturn/KRayMarching/Sphere"
                 _Color,
                 worldFinalPos,
                 UnityObjectToWorldNormal(getNormal(localFinalPos)),
-                getLightAttenuation(fi, worldFinalPos),
+                getLightAttenRayMarching(fi, worldFinalPos),
                 lmap);
 
             const float4 projPos = UnityWorldToClipPos(worldFinalPos);
@@ -526,30 +525,6 @@ Shader "koturn/KRayMarching/Sphere"
             return normalize(normal);
 #    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
 #endif  // defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
-        }
-
-        /*!
-         * @brief Get Light Attenuation.
-         *
-         * @param [in] fi  Input data for fragment shader.
-         * @param [in] worldPos  World coordinate.
-         * @return Light Attenuation Value.
-         */
-        fixed getLightAttenuation(v2f_raymarching_forward fi, float3 worldPos)
-        {
-            // v must be declared in this scope.
-            // v must include following.
-            //   vertex : POSITION
-            // a._ShadowCoord = mul( unity_WorldToShadow[0], mul( unity_ObjectToWorld, v.vertex ) );
-            // UNITY_TRANSFER_SHADOW(fi, texcoord2);
-
-            // a._LightCoord = mul(unity_WorldToLight, mul(unity_ObjectToWorld, v.vertex)).xyz;
-            // UNITY_TRANSFER_LIGHTING(fi, texcoord2);
-
-            // v2f must include following.
-            //   pos : SV_POSITION
-            UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
-            return atten;
         }
         ENDCG
 

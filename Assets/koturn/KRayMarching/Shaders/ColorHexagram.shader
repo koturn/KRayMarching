@@ -152,7 +152,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
         float map(float3 p, out half4 color);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float3 getNormal(float3 p);
-        fixed getLightAttenuation(v2f_raymarching_forward fi, float3 worldPos);
 
 
         //! Maximum loop count for ForwardBase.
@@ -216,7 +215,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
                 half4(ro.color.xyz, 1.0),
                 worldFinalPos,
                 UnityObjectToWorldNormal(getNormal(localFinalPos)),
-                getLightAttenuation(fi, worldFinalPos),
+                getLightAttenRayMarching(fi, worldFinalPos),
                 lmap);
 
             const float4 projPos = UnityWorldToClipPos(worldFinalPos);
@@ -385,19 +384,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
             }
 
             return normalize(normal);
-        }
-
-        /*!
-         * @brief Get Light Attenuation.
-         *
-         * @param [in] fi  Input data for fragment shader.
-         * @param [in] worldPos  World coordinate.
-         * @return Light Attenuation Value.
-         */
-        fixed getLightAttenuation(v2f_raymarching_forward fi, float3 worldPos)
-        {
-            UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
-            return atten;
         }
         ENDCG
 

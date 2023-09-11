@@ -186,4 +186,20 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 }
 
 
+#if !defined(_DISABLE_FORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
+/*!
+ * @brief Get light attenuation.
+ *
+ * @param [in] fi  Input data of fragment shader function.
+ * @param [in] worldPos  Coordinate of the world.
+ * @return light attenuation.
+ */
+fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos)
+{
+    UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
+    return atten;
+}
+#endif  // !defined(_DISABLE_FORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
+
+
 #endif  // VERT_COMMON_INCLUDED

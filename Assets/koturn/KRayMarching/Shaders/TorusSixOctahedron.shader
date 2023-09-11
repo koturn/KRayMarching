@@ -149,7 +149,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         float map(float3 p, out float colorIndex);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float3 getNormal(float3 p);
-        fixed getLightAttenuation(v2f_raymarching_forward fi, float3 worldPos);
 
 
         //! Maximum loop count for ForwardBase.
@@ -210,7 +209,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
                 half4(ro.color, 1.0),
                 worldFinalPos,
                 UnityObjectToWorldNormal(getNormal(localFinalPos)),
-                getLightAttenuation(fi, worldFinalPos),
+                getLightAttenRayMarching(fi, worldFinalPos),
                 lmap);
 
             const float4 projPos = UnityWorldToClipPos(worldFinalPos);
@@ -352,19 +351,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             }
 
             return normalize(normal);
-        }
-
-        /*!
-         * @brief Get light attenuation.
-         *
-         * @param [in] fi  Input data of fragment shader function.
-         * @param [in] worldPos  Coordinate of the world.
-         * @return light attenuation.
-         */
-        fixed getLightAttenuation(v2f_raymarching_forward fi, float3 worldPos)
-        {
-            UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
-            return atten;
         }
         ENDCG
 
