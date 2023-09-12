@@ -231,10 +231,25 @@ half3 rgb2hsv(half3 rgb)
     static const half4 k = half4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
     static const half e = 1.0e-5;
 
+#if 1
+    // Optimized version.
+    const bool b1 = rgb.g < rgb.b;
+    half4 p = half4(b1 ? rgb.bg : rgb.gb, b1 ? k.wz : k.xy);
+
+    const bool b2 = rgb.r < p.x;
+    p.xyz = b2 ? p.xyw : p.yzx;
+    const half4 q = b2 ? half4(p.xyz, rgb.r) : half4(rgb.r, p.xyz);
+
+    const half d = q.x - min(q.w, q.y);
+    const half2 hs = half2(q.w - q.y, d) / half2(6.0 * d + e, q.x + e);
+
+    return half3(abs(q.z + hs.x), hs.y, q.x);
+#else
     const half4 p = rgb.g < rgb.b ? half4(rgb.bg, k.wz) : half4(rgb.gb, k.xy);
     const half4 q = rgb.r < p.x ? half4(p.xyw, rgb.r) : half4(rgb.r, p.yzx);
     const half d = q.x - min(q.w, q.y);
     return half3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+#endif
 }
 
 
