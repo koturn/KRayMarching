@@ -223,7 +223,7 @@ namespace Koturn.KRayMarching
                 var mpDisableForwardAdd = FindAndDrawProperty(me, mps, PropNameDisableForwardAdd, false);
 
                 ShaderProperty(me, mps, PropNameMaxLoop, false);
-                using (new EditorGUI.DisabledScope(mpDisableForwardAdd != null && mpDisableForwardAdd.floatValue < 0.5f))
+                using (new EditorGUI.DisabledScope(mpDisableForwardAdd != null && ToBool(mpDisableForwardAdd.floatValue)))
                 {
                     ShaderProperty(me, mps, PropNameMaxLoopForwardAdd, false);
                 }
@@ -248,7 +248,7 @@ namespace Koturn.KRayMarching
                 var mpEnableReflectionProbe = FindAndDrawProperty(me, mps, PropNameEnableReflectionProbe, false);
                 if (mpEnableReflectionProbe != null)
                 {
-                    isNeedGM = (mpEnableReflectionProbe.floatValue >= 0.5f);
+                    isNeedGM = ToBool(mpEnableReflectionProbe.floatValue);
                 }
 
                 using (new EditorGUI.DisabledScope(!isNeedGM))
@@ -428,7 +428,7 @@ namespace Koturn.KRayMarching
                     if (mpAlphaTest != null)
                     {
                         using (new EditorGUI.IndentLevelScope())
-                        using (new EditorGUI.DisabledScope(mpAlphaTest.floatValue < 0.5f))
+                        using (new EditorGUI.DisabledScope(!ToBool(mpAlphaTest.floatValue)))
                         {
                             ShaderProperty(me, mps, PropNameCutoff);
                         }
@@ -667,6 +667,16 @@ namespace Koturn.KRayMarching
                 me.DoubleSidedGIField();
 #endif  // UNITY_5_6_OR_NEWER
             }
+        }
+
+        /// <summary>
+        /// Convert a <see cref="float"/> value to <see cref="bool"/> value.
+        /// </summary>
+        /// <param name="floatValue">Source <see cref="float"/> value.</param>
+        /// <returns>True if <paramref name="floatValue"/> is greater than 0.5, otherwise false.</returns>
+        private static bool ToBool(float floatValue)
+        {
+            return floatValue >= 0.5f;
         }
     }
 }
