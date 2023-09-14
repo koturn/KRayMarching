@@ -460,7 +460,7 @@ namespace Koturn.KRayMarching
 
             foreach (var material in me.targets.Cast<Material>())
             {
-                // material.SetOverrideTag(TagRenderType, config.RenderType.ToString());
+                // SetRenderTypeTag(material, config.RenderType);
                 SetRenderQueue(material, config.RenderQueue);
             }
 
@@ -591,6 +591,25 @@ namespace Koturn.KRayMarching
                 me.EnableInstancingField();
                 me.DoubleSidedGIField();
 #endif  // UNITY_5_6_OR_NEWER
+            }
+        }
+
+        /// <summary>
+        /// Set render queue value if the value is differ from the default.
+        /// </summary>
+        /// <param name="material">Target material.</param>
+        /// <param name="renderQueue"><see cref="RenderQueue"/> to set.</param>
+        private static void SetRenderTypeTag(Material material, RenderType renderType)
+        {
+            // Set to default and get the default.
+            material.SetOverrideTag(TagRenderType, string.Empty);
+            var defaultTagval = material.GetTag(TagRenderType, false, "Transparent");
+
+            // Set specified render type value if the value differs from the default.
+            var renderTypeValue = renderType.ToString();
+            if (renderTypeValue != defaultTagval)
+            {
+                material.SetOverrideTag(TagRenderType, renderTypeValue);
             }
         }
 
