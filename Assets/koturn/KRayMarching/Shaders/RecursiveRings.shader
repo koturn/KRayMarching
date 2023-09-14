@@ -53,6 +53,9 @@ Shader "koturn/KRayMarching/RecursiveRings"
         [Enum(UnityEngine.Rendering.CullMode)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front
 
+        [HideInInspector]
+        __RenderingMode ("Rendering Mode", Int) = 0
+
         [ColorMask]
         _ColorMask ("Color Mask", Int) = 15
 

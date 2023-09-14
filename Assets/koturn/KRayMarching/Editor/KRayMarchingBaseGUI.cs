@@ -404,41 +404,43 @@ namespace Koturn.KRayMarching
         /// <param name="mps"><see cref="MaterialProperty"/> array</param>
         private void DrawRenderingMode(MaterialEditor me, MaterialProperty[] mps)
         {
-            using (var ccScope = new EditorGUI.ChangeCheckScope())
+            var mpRenderingMode = FindProperty(PropNameRenderingMode, mps, false);
+            var mode = RenderingMode.Custom;
+            if (mpRenderingMode != null)
             {
-                var mpRenderingMode = FindProperty(PropNameRenderingMode, mps, false);
-                if (mpRenderingMode == null)
+                using (var ccScope = new EditorGUI.ChangeCheckScope())
                 {
-                    return;
-                }
-                var mode = (RenderingMode)EditorGUILayout.EnumPopup(mpRenderingMode.displayName, (RenderingMode)mpRenderingMode.floatValue);
-                mpRenderingMode.floatValue = (float)mode;
-
-                if (ccScope.changed && mode != RenderingMode.Custom)
-                {
-                    foreach (var material in mpRenderingMode.targets.Cast<Material>())
+                    mode = (RenderingMode)EditorGUILayout.EnumPopup(mpRenderingMode.displayName, (RenderingMode)mpRenderingMode.floatValue);
+                    mpRenderingMode.floatValue = (float)mode;
+                    if (ccScope.changed)
                     {
-                        ApplyRenderingMode(material, mode);
-                    }
-                }
-
-                using (new EditorGUI.DisabledScope(mode != RenderingMode.Cutout && mode != RenderingMode.Custom))
-                {
-                    var mpAlphaTest = FindAndDrawProperty(me, mps, PropNameAlphaTest, false);
-                    if (mpAlphaTest != null)
-                    {
-                        using (new EditorGUI.IndentLevelScope())
-                        using (new EditorGUI.DisabledScope(!ToBool(mpAlphaTest.floatValue)))
+                        if (mode != RenderingMode.Custom)
                         {
-                            ShaderProperty(me, mps, PropNameCutoff);
+                            foreach (var material in mpRenderingMode.targets.Cast<Material>())
+                            {
+                                ApplyRenderingMode(material, mode);
+                            }
                         }
                     }
                 }
+            }
 
-                using (new EditorGUI.DisabledScope(mode != RenderingMode.Custom))
+            using (new EditorGUI.DisabledScope(mode != RenderingMode.Cutout && mode != RenderingMode.Custom))
+            {
+                var mpAlphaTest = FindAndDrawProperty(me, mps, PropNameAlphaTest, false);
+                if (mpAlphaTest != null)
                 {
-                    ShaderProperty(me, mps, PropNameZWrite);
+                    using (new EditorGUI.IndentLevelScope())
+                    using (new EditorGUI.DisabledScope(!ToBool(mpAlphaTest.floatValue)))
+                    {
+                        ShaderProperty(me, mps, PropNameCutoff);
+                    }
                 }
+            }
+
+            using (new EditorGUI.DisabledScope(mode != RenderingMode.Custom))
+            {
+                ShaderProperty(me, mps, PropNameZWrite, false);
             }
         }
 
