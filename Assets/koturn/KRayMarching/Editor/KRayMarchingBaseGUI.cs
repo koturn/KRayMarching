@@ -416,10 +416,7 @@ namespace Koturn.KRayMarching
                     {
                         if (mode != RenderingMode.Custom)
                         {
-                            foreach (var material in mpRenderingMode.targets.Cast<Material>())
-                            {
-                                ApplyRenderingMode(material, mode);
-                            }
+                            ApplyRenderingMode(me, mps, mode);
                         }
                     }
                 }
@@ -445,89 +442,51 @@ namespace Koturn.KRayMarching
         }
 
         /// <summary>
-        /// Change blend of <paramref name="material"/>.
+        /// <para>Change rendeing mode.</para>
+        /// <para>In other words, change following values.
+        /// <list type="bullet">
+        ///   <item>Value of material tag, "RenderType".</item>
+        ///   <item>Value of render queue.</item>
+        ///   <item>Shader property, "_AlphaTest" and related tag, "_ALPHATEST_ON".</item>
+        ///   <item>Shader property, "_ZWrite".</item>
+        ///   <item>Shader property, "_SrcBlend".</item>
+        ///   <item>Shader property, "_DstBlend".</item>
+        ///   <item>Shader property, "_SrcBlendAlpha".</item>
+        ///   <item>Shader property, "_DstBlendAlpha".</item>
+        ///   <item>Shader property, "_BlendOp".</item>
+        ///   <item>Shader property, "_BlendOpAlpha".</item>
+        /// </list>
+        /// </para>
         /// </summary>
-        /// <param name="material">Target material</param>
-        /// <param name="renderingMode">Rendering mode</param>
-        private static void ApplyRenderingMode(Material material, RenderingMode renderingMode)
+        /// <param name="me">A <see cref="MaterialEditor"/>.</param>
+        /// <param name="mps"><see cref="MaterialProperty"/> array.</param>
+        /// <param name="renderingMode">Rendering mode.</param>
+        private static void ApplyRenderingMode(MaterialEditor me, MaterialProperty[] mps, RenderingMode renderingMode)
         {
-            switch (renderingMode)
+            var config = new RenderingModeConfig(renderingMode);
+
+            foreach (var material in me.targets.Cast<Material>())
             {
-                case RenderingMode.Opaque:
-                    // material.SetOverrideTag(TagRenderType, "");
-                    SetAlphaTest(material, false);
-                    material.SetInt(PropNameZWrite, 1);
-                    material.SetInt(PropNameSrcBlend, (int)BlendMode.One);
-                    material.SetInt(PropNameDstBlend, (int)BlendMode.Zero);
-                    material.SetInt(PropNameSrcBlendAlpha, (int)BlendMode.One);
-                    material.SetInt(PropNameDstBlendAlpha, (int)BlendMode.Zero);
-                    material.SetInt(PropNameBlendOp, (int)BlendOp.Add);
-                    material.SetInt(PropNameBlendOpAlpha, (int)BlendOp.Add);
-                    material.renderQueue = -1;
-                    break;
-                case RenderingMode.Cutout:
-                    // material.SetOverrideTag(TagRenderType, "TransparentCutout");
-                    SetAlphaTest(material, true);
-                    material.SetInt(PropNameZWrite, 1);
-                    material.SetInt(PropNameSrcBlend, (int)BlendMode.One);
-                    material.SetInt(PropNameDstBlend, (int)BlendMode.Zero);
-                    material.SetInt(PropNameSrcBlendAlpha, (int)BlendMode.One);
-                    material.SetInt(PropNameDstBlendAlpha, (int)BlendMode.Zero);
-                    material.SetInt(PropNameBlendOp, (int)BlendOp.Add);
-                    material.SetInt(PropNameBlendOpAlpha, (int)BlendOp.Add);
-                    material.renderQueue = (int)RenderQueue.AlphaTest;
-                    break;
-                case RenderingMode.Fade:
-                    // material.SetOverrideTag(TagRenderType, "Transparent");
-                    SetAlphaTest(material, false);
-                    material.SetInt(PropNameZWrite, 0);
-                    material.SetInt(PropNameSrcBlend, (int)BlendMode.SrcAlpha);
-                    material.SetInt(PropNameDstBlend, (int)BlendMode.OneMinusSrcAlpha);
-                    material.SetInt(PropNameSrcBlendAlpha, (int)BlendMode.SrcAlpha);
-                    material.SetInt(PropNameDstBlendAlpha, (int)BlendMode.OneMinusSrcAlpha);
-                    material.SetInt(PropNameBlendOp, (int)BlendOp.Add);
-                    material.SetInt(PropNameBlendOpAlpha, (int)BlendOp.Add);
-                    material.renderQueue = (int)RenderQueue.Transparent;
-                    break;
-                case RenderingMode.Transparent:
-                    // material.SetOverrideTag(TagRenderType, "Transparent");
-                    SetAlphaTest(material, false);
-                    material.SetInt(PropNameZWrite, 0);
-                    material.SetInt(PropNameSrcBlend, (int)BlendMode.One);
-                    material.SetInt(PropNameDstBlend, (int)BlendMode.OneMinusSrcAlpha);
-                    material.SetInt(PropNameSrcBlendAlpha, (int)BlendMode.One);
-                    material.SetInt(PropNameDstBlendAlpha, (int)BlendMode.OneMinusSrcAlpha);
-                    material.SetInt(PropNameBlendOp, (int)BlendOp.Add);
-                    material.SetInt(PropNameBlendOpAlpha, (int)BlendOp.Add);
-                    material.renderQueue = (int)RenderQueue.Transparent;
-                    break;
-                case RenderingMode.Additive:
-                    // material.SetOverrideTag(TagRenderType, "Transparent");
-                    SetAlphaTest(material, false);
-                    material.SetInt(PropNameZWrite, 0);
-                    material.SetInt(PropNameSrcBlend, (int)BlendMode.SrcAlpha);
-                    material.SetInt(PropNameDstBlend, (int)BlendMode.One);
-                    material.SetInt(PropNameSrcBlendAlpha, (int)BlendMode.SrcAlpha);
-                    material.SetInt(PropNameDstBlendAlpha, (int)BlendMode.One);
-                    material.SetInt(PropNameBlendOp, (int)BlendOp.Add);
-                    material.SetInt(PropNameBlendOpAlpha, (int)BlendOp.Add);
-                    material.renderQueue = (int)RenderQueue.Transparent;
-                    break;
-                case RenderingMode.Multiply:
-                    // material.SetOverrideTag(TagRenderType, "Transparent");
-                    SetAlphaTest(material, false);
-                    material.SetInt(PropNameZWrite, 0);
-                    material.SetInt(PropNameSrcBlend, (int)BlendMode.DstColor);
-                    material.SetInt(PropNameDstBlend, (int)BlendMode.Zero);
-                    material.SetInt(PropNameSrcBlendAlpha, (int)BlendMode.DstColor);
-                    material.SetInt(PropNameDstBlendAlpha, (int)BlendMode.Zero);
-                    material.SetInt(PropNameBlendOp, (int)BlendOp.Add);
-                    material.SetInt(PropNameBlendOpAlpha, (int)BlendOp.Add);
-                    material.renderQueue = (int)RenderQueue.Transparent;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(renderingMode), renderingMode, null);
+                // material.SetOverrideTag(TagRenderType, config.RenderType.ToString());
+                material.renderQueue = (int)config.RenderQueue;
             }
+
+            var mpAlphaTest = FindProperty(PropNameAlphaTest, mps, false);
+            if (mpAlphaTest != null)
+            {
+                foreach (var material in mpAlphaTest.targets.Cast<Material>())
+                {
+                    SetAlphaTest(material, config.IsAlphaTestEnabled);
+                }
+            }
+
+            SetPropertyValue(PropNameZWrite, mps, config.IsZWriteEnabled, false);
+            SetPropertyValue(PropNameSrcBlend, mps, config.SrcBlend, false);
+            SetPropertyValue(PropNameDstBlend, mps, config.DstBlend, false);
+            SetPropertyValue(PropNameSrcBlendAlpha, mps, config.SrcBlendAlpha, false);
+            SetPropertyValue(PropNameDstBlendAlpha, mps, config.DstBlendAlpha, false);
+            SetPropertyValue(PropNameBlendOp, mps, config.BlendOp, false);
+            SetPropertyValue(PropNameBlendOp, mps, config.BlendOpAlpha, false);
         }
 
         /// <summary>
@@ -672,6 +631,48 @@ namespace Koturn.KRayMarching
         }
 
         /// <summary>
+        /// Set property value.
+        /// </summary>
+        /// <param name="propName">Names of shader property.</param>
+        /// <param name="mps"><see cref="MaterialProperty"/> array.</param>
+        /// <param name="val">Value to set. (true: 1.0f, false 0.0f).</param>
+        /// <param name="isMandatory">
+        /// If true then this method will throw an exception if property <paramref name="propName"/> is not found.
+        /// Otherwise do nothing if property with <paramref name="propName"/> is not found.
+        /// </param>
+        private static void SetPropertyValue(string propName, MaterialProperty[] mps, bool val, bool isMandatory = true)
+        {
+            var prop = FindProperty(propName, mps, isMandatory);
+            if (prop != null)
+            {
+                prop.floatValue = ToFloat(val);
+            }
+        }
+
+        /// <summary>
+        /// Set property value.
+        /// </summary>
+        /// <param name="propName">Names of shader property.</param>
+        /// <param name="mps"><see cref="MaterialProperty"/> array.</param>
+        /// <param name="val">Value to set, which is cast to <see cref="float"/>.</param>
+        /// <param name="isMandatory">
+        /// If true then this method will throw an exception if property <paramref name="propName"/> was not found.
+        /// Otherwise do nothing if property with <paramref name="propName"/> was not found.
+        /// </param>
+        private static void SetPropertyValue<T>(string propName, MaterialProperty[] mps, T val, bool isMandatory = true)
+            where T : unmanaged, Enum
+        {
+            var prop = FindProperty(propName, mps, isMandatory);
+            if (prop != null)
+            {
+                unsafe
+                {
+                    prop.floatValue = *(int *)&val;
+                }
+            }
+        }
+
+        /// <summary>
         /// Convert a <see cref="float"/> value to <see cref="bool"/> value.
         /// </summary>
         /// <param name="floatValue">Source <see cref="float"/> value.</param>
@@ -679,6 +680,16 @@ namespace Koturn.KRayMarching
         private static bool ToBool(float floatValue)
         {
             return floatValue >= 0.5f;
+        }
+
+        /// <summary>
+        /// Convert a <see cref="bool"/> value to <see cref="float"/> value.
+        /// </summary>
+        /// <param name="boolValue">Source <see cref="bool"/> value.</param>
+        /// <returns>1.0f if <paramref name="boolValue"/> is true, otherwise 0.0f.</returns>
+        private static float ToFloat(bool boolValue)
+        {
+            return boolValue ? 1.0f : 0.0f;
         }
     }
 }
