@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Koturn.KRayMarching.Enums;
 
 
@@ -460,7 +461,7 @@ namespace Koturn.KRayMarching
             foreach (var material in me.targets.Cast<Material>())
             {
                 // material.SetOverrideTag(TagRenderType, config.RenderType.ToString());
-                material.renderQueue = (int)config.RenderQueue;
+                SetRenderQueue(material, config.RenderQueue);
             }
 
             var mpAlphaTest = FindProperty(PropNameAlphaTest, mps, false);
@@ -590,6 +591,25 @@ namespace Koturn.KRayMarching
                 me.EnableInstancingField();
                 me.DoubleSidedGIField();
 #endif  // UNITY_5_6_OR_NEWER
+            }
+        }
+
+        /// <summary>
+        /// Set render queue value if the value is differ from the default.
+        /// </summary>
+        /// <param name="material">Target material.</param>
+        /// <param name="renderQueue"><see cref="RenderQueue"/> to set.</param>
+        private static void SetRenderQueue(Material material, RenderQueue renderQueue)
+        {
+            // Set to default and get the default.
+            material.renderQueue = -1;
+            var defaultRenderQueue = material.renderQueue;
+
+            // Set specified render queue value if the value differs from the default.
+            var renderQueueValue = (int)renderQueue;
+            if (defaultRenderQueue != renderQueueValue)
+            {
+                material.renderQueue = renderQueueValue;
             }
         }
 
