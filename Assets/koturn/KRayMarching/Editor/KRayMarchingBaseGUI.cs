@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Koturn.KRayMarching.Enums;
 
 
@@ -193,20 +194,11 @@ namespace Koturn.KRayMarching
         /// </summary>
         private const string TagRenderType = "RenderType";
 
-
         /// <summary>
-        /// Keyword of "_AlphaTest" which is enabled.
+        /// Cache of reflection result of following lambda.
         /// </summary>
-        private static readonly string KeywordAlphaTestOn;
-
-
-        /// <summary>
-        /// Initialize static members.
-        /// </summary>
-        static KRayMarchingBaseGUI()
-        {
-            KeywordAlphaTestOn = PropNameAlphaTest.ToUpper() + "_ON";
-        }
+        /// <remarks><seealso cref="CreateToggleKeywordDelegate"/></remarks>
+        private static Action<Shader, MaterialProperty, bool> _toggleKeyword;
 
 
         /// <summary>
@@ -474,10 +466,8 @@ namespace Koturn.KRayMarching
             var mpAlphaTest = FindProperty(PropNameAlphaTest, mps, false);
             if (mpAlphaTest != null)
             {
-                foreach (var material in mpAlphaTest.targets.Cast<Material>())
-                {
-                    SetAlphaTest(material, config.IsAlphaTestEnabled);
-                }
+                mpAlphaTest.floatValue = ToFloat(config.IsAlphaTestEnabled);
+                ToggleKeyword(((Material)me.target).shader, mpAlphaTest);
             }
 
             SetPropertyValue(PropNameZWrite, mps, config.IsZWriteEnabled, false);
@@ -487,33 +477,6 @@ namespace Koturn.KRayMarching
             SetPropertyValue(PropNameDstBlendAlpha, mps, config.DstBlendAlpha, false);
             SetPropertyValue(PropNameBlendOp, mps, config.BlendOp, false);
             SetPropertyValue(PropNameBlendOp, mps, config.BlendOpAlpha, false);
-        }
-
-        /// <summary>
-        /// Draw inspector items of "Blend".
-        /// </summary>
-        /// <param name="material">Target material</param>
-        /// <param name="isEnabled"><para>Toggle switch value.</para>
-        /// <para>If this value is true, _AlphaTest is set to 1 and define a keyword "_ALPHATEST_ON".</para>
-        /// <para>Otherwise _AlphaTest is set to 0 and undefine a keyword "_ALPHATEST_ON".</para>
-        /// </param>
-        private static void SetAlphaTest(Material material, bool isEnabled)
-        {
-            if (!material.HasProperty(PropNameAlphaTest))
-            {
-                return;
-            }
-
-            if (isEnabled)
-            {
-                material.SetInt(PropNameAlphaTest, 1);
-                material.EnableKeyword(KeywordAlphaTestOn);
-            }
-            else
-            {
-                material.SetInt(PropNameAlphaTest, 0);
-                material.DisableKeyword(KeywordAlphaTestOn);
-            }
         }
 
         /// <summary>
@@ -670,6 +633,143 @@ namespace Koturn.KRayMarching
                     prop.floatValue = *(int *)&val;
                 }
             }
+        }
+
+        /// <summary>
+        /// Enable or disable keyword of <see cref="MaterialProperty"/> which has MaterialToggleUIDrawer.
+        /// </summary>
+        /// <param name="shader">Target <see cref="Shader"/>.</param>
+        /// <param name="prop">Target <see cref="MaterialProperty"/>.</param>
+        private static void ToggleKeyword(Shader shader, MaterialProperty prop)
+        {
+            ToggleKeyword(shader, prop, ToBool(prop.floatValue));
+        }
+
+        /// <summary>
+        /// Enable or disable keyword of <see cref="MaterialProperty"/> which has MaterialToggleUIDrawer.
+        /// </summary>
+        /// <param name="shader">Target <see cref="Shader"/>.</param>
+        /// <param name="prop">Target <see cref="MaterialProperty"/>.</param>
+        /// <param name="isOn">True to enable (define) keyword, false to disable (undefine) keyword.</param>
+        private static void ToggleKeyword(Shader shader, MaterialProperty prop, bool isOn)
+        {
+            try
+            {
+                (_toggleKeyword ?? (_toggleKeyword = CreateSetKeywordDelegate()))(shader, prop, isOn);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError(ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// <para>Create delegate of reflection results about UnityEditor.MaterialToggleUIDrawer.</para>
+        /// <code>
+        /// (Shader shader, MaterialProperty prop, bool isOn) =>
+        /// {
+        ///     MaterialPropertyHandler mph = UnityEditor.MaterialPropertyHandler.GetHandler(shader, name);
+        ///     if (mph is null)
+        ///     {
+        ///         throw new ArgumentException("Specified MaterialProperty does not have UnityEditor.MaterialPropertyHandler");
+        ///     }
+        ///     MaterialToggleUIDrawer mpud = mph.propertyDrawer as MaterialToggleUIDrawer;
+        ///     if (mpud is null)
+        ///     {
+        ///         throw new ArgumentException("Specified MaterialProperty does not have UnityEditor.MaterialToggleUIDrawer");
+        ///     }
+        ///     mpud.SetKeyword(prop, isOn);
+        /// }
+        /// </code>
+        /// </summary>
+        private static Action<Shader, MaterialProperty, bool> CreateSetKeywordDelegate()
+        {
+            // Get assembly from public class.
+            var asm = Assembly.GetAssembly(typeof(UnityEditor.MaterialPropertyDrawer));
+
+            // Get type of UnityEditor.MaterialPropertyHandler which is the internal class.
+            var typeMph = asm.GetType("UnityEditor.MaterialPropertyHandler")
+                ?? throw new InvalidOperationException("Type not found: UnityEditor.MaterialPropertyHandler");
+            var typeMtud = asm.GetType("UnityEditor.MaterialToggleUIDrawer")
+                ?? throw new InvalidOperationException("Type not found: UnityEditor.MaterialToggleUIDrawer");
+
+            var ciArgumentException = typeof(ArgumentException).GetConstructor(new[] {typeof(string)});
+
+            var pShader = Expression.Parameter(typeof(Shader), "shader");
+            var pMaterialPropertyHandler = Expression.Parameter(typeMph, "mph");
+            var pMaterialToggleUIDrawer = Expression.Parameter(typeMtud, "mtud");
+            var pMaterialProperty = Expression.Parameter(typeof(MaterialProperty), "mp");
+            var pIsOn = Expression.Parameter(typeof(bool), "isOn");
+
+            var cNull = Expression.Constant(null);
+
+            return Expression.Lambda<Action<Shader, MaterialProperty, bool>>(
+                Expression.Block(
+                    new[]
+                    {
+                        pMaterialPropertyHandler,
+                        pMaterialToggleUIDrawer
+                    },
+                    Expression.Assign(
+                        pMaterialPropertyHandler,
+                        Expression.Call(
+                            typeMph.GetMethod(
+                                "GetHandler",
+                                BindingFlags.NonPublic
+                                    | BindingFlags.Static)
+                                ?? throw new InvalidOperationException("MethodInfo not found: UnityEditor.MaterialPropertyHandler.GetHandler"),
+                            pShader,
+                            Expression.Property(
+                                pMaterialProperty,
+                                typeof(MaterialProperty).GetProperty(
+                                    "name",
+                                    BindingFlags.GetProperty
+                                        | BindingFlags.Public
+                                        | BindingFlags.Instance)))),
+                    Expression.IfThen(
+                        Expression.Equal(
+                            pMaterialPropertyHandler,
+                            cNull),
+                        Expression.Throw(
+                            Expression.New(
+                                ciArgumentException,
+                                Expression.Constant("Specified MaterialProperty does not have UnityEditor.MaterialPropertyHandler")))),
+                    Expression.Assign(
+                        pMaterialToggleUIDrawer,
+                        Expression.TypeAs(
+                            Expression.Property(
+                                pMaterialPropertyHandler,
+                                typeMph.GetProperty(
+                                    "propertyDrawer",
+                                    BindingFlags.GetProperty
+                                        | BindingFlags.Public
+                                        | BindingFlags.Instance)
+                                    ?? throw new InvalidOperationException("PropertyInfo not found: UnityEditor.MaterialPropertyHandler.propertyDrawer")),
+                            typeMtud)),
+                    Expression.IfThen(
+                        Expression.Equal(
+                            pMaterialToggleUIDrawer,
+                            cNull),
+                        Expression.Throw(
+                            Expression.New(
+                                ciArgumentException,
+                                Expression.Constant("Specified MaterialProperty does not have UnityEditor.MaterialToggleUIDrawer")))),
+                    Expression.Call(
+                        pMaterialToggleUIDrawer,
+                        typeMtud.GetMethod(
+                            "SetKeyword",
+                            BindingFlags.NonPublic
+                                | BindingFlags.Instance)
+                            ?? throw new InvalidOperationException("MethodInfo not found: UnityEditor.MaterialToggleUIDrawer.SetKeyword"),
+                        pMaterialProperty,
+                        pIsOn)),
+                "ToggleKeyword",
+                new []
+                {
+                    pShader,
+                    pMaterialProperty,
+                    pIsOn
+                }).Compile();
         }
 
         /// <summary>
