@@ -243,20 +243,18 @@ namespace Koturn.KRayMarching
         /// <param name="srcArray">Source <see cref="float"/> array.</param>
         /// <returns>Converted array.</returns>
         private static T[] ConvertArray<T>(float[] srcArray)
-            where T : struct
+            where T : unmanaged
         {
-            var dstArray = new T[srcArray.Length / (Marshal.SizeOf<T>() / sizeof(float))];
-            var gch = GCHandle.Alloc(dstArray, GCHandleType.Pinned);
-            try
+            unsafe
             {
-                Marshal.Copy(srcArray, 0, gch.AddrOfPinnedObject(), srcArray.Length);
-            }
-            finally
-            {
-                gch.Free();
-            }
+                var dstArray = new T[srcArray.Length / (sizeof(T) / sizeof(float))];
+                fixed (T *pDstArray = &dstArray[0])
+                {
+                    Marshal.Copy(srcArray, 0, (IntPtr)pDstArray, srcArray.Length);
+                }
 
-            return dstArray;
+                return dstArray;
+            }
         }
 
         /// <summary>
