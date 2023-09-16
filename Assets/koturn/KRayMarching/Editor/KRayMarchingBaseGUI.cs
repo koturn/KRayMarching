@@ -654,6 +654,7 @@ namespace Koturn.KRayMarching
         /// <summary>
         /// Set property value.
         /// </summary>
+        /// <typeparam name="T">Type of enum.</typeparam>
         /// <param name="propName">Names of shader property.</param>
         /// <param name="mps"><see cref="MaterialProperty"/> array.</param>
         /// <param name="val">Value to set, which is cast to <see cref="float"/>.</param>
@@ -667,10 +668,7 @@ namespace Koturn.KRayMarching
             var prop = FindProperty(propName, mps, isMandatory);
             if (prop != null)
             {
-                unsafe
-                {
-                    prop.floatValue = *(int *)&val;
-                }
+                prop.floatValue = ToInt(val);
             }
         }
 
@@ -829,6 +827,24 @@ namespace Koturn.KRayMarching
         private static float ToFloat(bool boolValue)
         {
             return boolValue ? 1.0f : 0.0f;
+        }
+
+        /// <summary>
+        /// Cast generic enum to <see cref="int"/>.
+        /// </summary>
+        /// <typeparam name="T">Type of enum.</typeparam>
+        /// <param name="val">Enum value.</param>
+        /// <returns><see cref="int"/> value converted from <typeparamref name="T"/>.</returns>
+        private static int ToInt<T>(T val)
+            where T : unmanaged, Enum
+        {
+            unsafe
+            {
+                return sizeof(T) == 8 ? (int)*(long*)&val
+                    : sizeof(T) == 4 ? *(int*)&val
+                    : sizeof(T) == 2 ? (int)*(short*)&val
+                    : (int)*(byte*)&val;
+            }
         }
     }
 }
