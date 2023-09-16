@@ -83,6 +83,9 @@ Shader "koturn/KRayMarching/Sphere"
         [Enum(UnityEngine.Rendering.CompareFunction)]
         _ZTest ("ZTest", Int) = 4  // Default: LEqual
 
+        [Enum(False, 0, True, 1)]
+        _ZClip ("ZClip", Int) = 1  // Default: True
+
         [Enum(2D, 0, 3D, 1)]
         _OffsetFact ("Offset Factor", Int) = 0
 
@@ -130,6 +133,7 @@ Shader "koturn/KRayMarching/Sphere"
 
         Cull [_Cull]
         BlendOp [_BlendOp], [_BlendOpAlpha]
+        ZClip [_ZClip]
         Offset [_OffsetFact], [_OffsetUnit]
         ColorMask [_ColorMask]
         AlphaToMask [_AlphaToMask]

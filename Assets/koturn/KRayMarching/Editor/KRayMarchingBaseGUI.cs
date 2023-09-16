@@ -143,6 +143,10 @@ namespace Koturn.KRayMarching
         /// </summary>
         private const string PropNameZTest = "_ZTest";
         /// <summary>
+        /// Property name of "_ZClip".
+        /// </summary>
+        private const string PropNameZClip = "_ZClip";
+        /// <summary>
         /// Property name of "_ZWrite".
         /// </summary>
         private const string PropNameZWrite = "_ZWrite";
@@ -294,6 +298,7 @@ namespace Koturn.KRayMarching
                 ShaderProperty(me, mps, PropNameCull, false);
                 DrawRenderingMode(me, mps);
                 ShaderProperty(me, mps, PropNameZTest, false);
+                ShaderProperty(me, mps, PropNameZClip, false);
                 DrawOffsetProperties(me, mps, PropNameOffsetFact, PropNameOffsetUnit);
                 ShaderProperty(me, mps, PropNameColorMask, false);
                 ShaderProperty(me, mps, PropNameAlphaToMask, false);
