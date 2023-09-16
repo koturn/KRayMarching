@@ -89,6 +89,18 @@ struct v2f_raymarching_shadowcaster
 
 
 #if defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+
+#    if defined(UNITY_COMPILER_HLSL) \
+        || defined(SHADER_API_GLCORE) \
+        || defined(SHADER_API_GLES3) \
+        || defined(SHADER_API_METAL) \
+        || defined(SHADER_API_VULKAN) \
+        || defined(SHADER_API_GLES) \
+        || defined(SHADER_API_D3D11)
+// Disable WARN_FLOAT_DIVISION_BY_ZERO.
+#        pragma warning (disable : 4008)
+#    endif
+
 /*!
  * @brief Vertex shader function for disabling ForwardAdd Pass.
  * @return Output for fragment shader (v2f).
@@ -97,26 +109,14 @@ v2f_raymarching_forward vertRayMarchingForward()
 {
     v2f_raymarching_forward o;
 
-    // Temporarily disable WARN_FLOAT_DIVISION_BY_ZERO.
-#if defined(UNITY_COMPILER_HLSL) \
-    || defined(SHADER_API_GLCORE) \
-    || defined(SHADER_API_GLES3) \
-    || defined(SHADER_API_METAL) \
-    || defined(SHADER_API_VULKAN) \
-    || defined(SHADER_API_GLES) \
-    || defined(SHADER_API_D3D11)
-#    pragma warning (disable : 4008)
-#endif
-    o.pos = 0.0 / 0.0;  // NaN
-#if defined(UNITY_COMPILER_HLSL) \
-    || defined(SHADER_API_GLCORE) \
-    || defined(SHADER_API_GLES3) \
-    || defined(SHADER_API_METAL) \
-    || defined(SHADER_API_VULKAN) \
-    || defined(SHADER_API_GLES) \
-    || defined(SHADER_API_D3D11)
-#    pragma warning (default : 4008)
-#endif
+    o.pos = (0.0 / 0.0).xxxx;  // NaN (-qNaN)
+
+    // Following code does not generate WARN_FLOAT_DIVISION_BY_ZERO.
+    // o.pos = asfloat(0x7fc00000).xxxx;  // qNaN
+    // o.pos = asfloat(0xffc00000).xxxx;  // -qNaN
+    // o.pos = asfloat(0x7fa00000).xxxx;  // sNaN
+    // o.pos = asfloat(0xffa00000).xxxx;  // -sNaN
+
     return o;
 }
 #else
