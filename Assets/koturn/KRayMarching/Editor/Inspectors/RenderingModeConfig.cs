@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 using Koturn.KRayMarching.Enums;
 
 
-namespace Koturn.KRayMarching
+namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
     /// Configuration structure of Rendering Mode.

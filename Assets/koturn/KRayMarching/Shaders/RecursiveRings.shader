@@ -458,5 +458,5 @@ Shader "koturn/KRayMarching/RecursiveRings"
         }  // ShadowCaster
     }
 
-    CustomEditor "Koturn.KRayMarching.RecursiveRingsGUI"
+    CustomEditor "Koturn.KRayMarching.Inspectors.RecursiveRingsGUI"
 }

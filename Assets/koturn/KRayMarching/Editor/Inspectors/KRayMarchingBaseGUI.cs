@@ -9,7 +9,7 @@ using UnityEngine.Rendering;
 using Koturn.KRayMarching.Enums;
 
 
-namespace Koturn.KRayMarching
+namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
     /// Custom editor of RAyMarching shaders.

@@ -647,5 +647,5 @@ Shader "koturn/KRayMarching/Sphere"
         }  // ShadowCaster
     }
 
-    CustomEditor "Koturn.KRayMarching.KRayMarchingBaseGUI"
+    CustomEditor "Koturn.KRayMarching.Inspectors.KRayMarchingBaseGUI"
 }

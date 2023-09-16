@@ -1,9 +1,8 @@
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 
-namespace Koturn.KRayMarching
+namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
     /// Custom editor of RAyMarching shaders.

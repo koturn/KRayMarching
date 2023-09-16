@@ -448,5 +448,5 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         }  // ShadowCaster
     }
 
-    CustomEditor "Koturn.KRayMarching.TorusOctahedronGUI"
+    CustomEditor "Koturn.KRayMarching.Inspectors.TorusOctahedronGUI"
 }

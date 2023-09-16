@@ -480,5 +480,5 @@ Shader "koturn/KRayMarching/ColorHexagram"
         }  // ShadowCaster
     }
 
-    CustomEditor "Koturn.KRayMarching.ColorHexagramGUI"
+    CustomEditor "Koturn.KRayMarching.Inspectors.ColorHexagramGUI"
 }
