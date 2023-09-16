@@ -54,9 +54,9 @@ namespace Koturn.KRayMarching
         private const string PropNameMarchingFactor = "_MarchingFactor";
 
         /// <summary>
-        /// Property name of "_LightingMethod".
+        /// Property name of "_Lighting".
         /// </summary>
-        private const string PropNameLightingMethod = "_LightingMethod";
+        private const string PropNameLighting = "_Lighting";
         /// <summary>
         /// Property name of "_SpecColor".
         /// </summary>
@@ -103,9 +103,9 @@ namespace Koturn.KRayMarching
         /// </summary>
         private const string PropNameCull = "_Cull";
         /// <summary>
-        /// Property name of "__RenderingMode".
+        /// Property name of "_Mode".
         /// </summary>
-        private const string PropNameRenderingMode = "__RenderingMode";
+        private const string PropNameMode = "_Mode";
         /// <summary>
         /// Property name of "_AlphaTest".
         /// </summary>
@@ -175,9 +175,9 @@ namespace Koturn.KRayMarching
         /// </summary>
         private const string PropNameStencilWriteMask = "_StencilWriteMask";
         /// <summary>
-        /// Property name of "_StencilCompFunc".
+        /// Property name of "_StencilComp".
         /// </summary>
-        private const string PropNameStencilCompFunc = "_StencilCompFunc";
+        private const string PropNameStencilComp = "_StencilComp";
         /// <summary>
         /// Property name of "_StencilPass".
         /// </summary>
@@ -233,8 +233,8 @@ namespace Koturn.KRayMarching
             {
                 ShaderProperty(me, mps, PropNameColor, false);
 
-                var mpLightingMethod = FindAndDrawProperty(me, mps, PropNameLightingMethod, false);
-                var lightingMethod = (LightingMethod)(mpLightingMethod == null ? -1 : (int)mpLightingMethod.floatValue);
+                var mpLighting = FindAndDrawProperty(me, mps, PropNameLighting, false);
+                var lightingMethod = (LightingMethod)(mpLighting == null ? -1 : (int)mpLighting.floatValue);
 
 
                 var isNeedGM = true;
@@ -397,14 +397,14 @@ namespace Koturn.KRayMarching
         /// <param name="mps"><see cref="MaterialProperty"/> array</param>
         private void DrawRenderingMode(MaterialEditor me, MaterialProperty[] mps)
         {
-            var mpRenderingMode = FindProperty(PropNameRenderingMode, mps, false);
+            var mpMMode = FindProperty(PropNameMode, mps, false);
             var mode = RenderingMode.Custom;
-            if (mpRenderingMode != null)
+            if (mpMMode != null)
             {
                 using (var ccScope = new EditorGUI.ChangeCheckScope())
                 {
-                    mode = (RenderingMode)EditorGUILayout.EnumPopup(mpRenderingMode.displayName, (RenderingMode)mpRenderingMode.floatValue);
-                    mpRenderingMode.floatValue = (float)mode;
+                    mode = (RenderingMode)EditorGUILayout.EnumPopup(mpMMode.displayName, (RenderingMode)mpMMode.floatValue);
+                    mpMMode.floatValue = (float)mode;
                     if (ccScope.changed)
                     {
                         if (mode != RenderingMode.Custom)
@@ -487,8 +487,8 @@ namespace Koturn.KRayMarching
         /// <param name="mps"><see cref="MaterialProperty"/> array</param>
         private void DrawBlendProperties(MaterialEditor me, MaterialProperty[] mps)
         {
-            var mpRenderingMode = FindProperty(PropNameRenderingMode, mps, false);
-            using (new EditorGUI.DisabledScope(mpRenderingMode != null && (RenderingMode)mpRenderingMode.floatValue != RenderingMode.Custom))
+            var mpMode = FindProperty(PropNameMode, mps, false);
+            using (new EditorGUI.DisabledScope(mpMode != null && (RenderingMode)mpMode.floatValue != RenderingMode.Custom))
             {
                 var propSrcBlend = FindProperty(PropNameSrcBlend, mps, false);
                 var propDstBlend = FindProperty(PropNameDstBlend, mps, false);
@@ -553,7 +553,7 @@ namespace Koturn.KRayMarching
                 PropNameStencilRef,
                 PropNameStencilReadMask,
                 PropNameStencilWriteMask,
-                PropNameStencilCompFunc,
+                PropNameStencilComp,
                 PropNameStencilPass,
                 PropNameStencilFail,
                 PropNameStencilZFail

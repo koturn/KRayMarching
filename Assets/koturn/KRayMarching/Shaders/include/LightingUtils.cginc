@@ -418,7 +418,7 @@ UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, f
     giInput.ambient = half3(0.0, 0.0, 0.0);
 #endif
 
-#if !defined(_LIGHTINGMETHOD_UNITY_LAMBERT) && !defined(_LIGHTINGMETHOD_UNITY_BLINN_PHONG)
+#if !defined(_LIGHTING_UNITY_LAMBERT) && !defined(_LIGHTING_UNITY_BLINN_PHONG)
     giInput.probeHDR[0] = unity_SpecCube0_HDR;
     giInput.probeHDR[1] = unity_SpecCube1_HDR;
 #    if defined(UNITY_SPECCUBE_BLENDING) || defined(UNITY_SPECCUBE_BOX_PROJECTION)
@@ -431,7 +431,7 @@ UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, f
     giInput.boxMin[1] = unity_SpecCube1_BoxMin;
     giInput.probePosition[1] = unity_SpecCube1_ProbePosition;
 #    endif  // UNITY_SPECCUBE_BOX_PROJECTION
-#endif  // !defined(_LIGHTINGMETHOD_UNITY_LAMBERT) && !defined(_LIGHTINGMETHOD_UNITY_BLINN_PHONG)
+#endif  // !defined(_LIGHTING_UNITY_LAMBERT) && !defined(_LIGHTING_UNITY_BLINN_PHONG)
 
     return giInput;
 }
