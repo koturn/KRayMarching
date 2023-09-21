@@ -3,8 +3,8 @@ Shader "koturn/KRayMarching/Sphere"
     Properties
     {
         // Common Ray Marching Parameters.
-        [Toggle(_DISABLE_FORWARDADD_ON)]
-        _DisableForwardAdd ("Disable ForwardAdd", Int) = 0
+        [Toggle(_NOFORWARDADD_ON)]
+        _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
@@ -87,7 +87,7 @@ Shader "koturn/KRayMarching/Sphere"
         _ZClip ("ZClip", Int) = 1  // Default: True
 
         [Enum(2D, 0, 3D, 1)]
-        _OffsetFact ("Offset Factor", Int) = 0
+        _OffsetFactor ("Offset Factor", Int) = 0
 
         _OffsetUnit ("Offset Units", Range(-100, 100)) = 0
 
@@ -134,7 +134,7 @@ Shader "koturn/KRayMarching/Sphere"
         Cull [_Cull]
         BlendOp [_BlendOp], [_BlendOpAlpha]
         ZClip [_ZClip]
-        Offset [_OffsetFact], [_OffsetUnit]
+        Offset [_OffsetFactor], [_OffsetUnit]
         ColorMask [_ColorMask]
         AlphaToMask [_AlphaToMask]
 
@@ -159,7 +159,7 @@ Shader "koturn/KRayMarching/Sphere"
         //   FOG_EXP2
         #pragma multi_compile_fog
 
-        #pragma shader_feature_local _ _DISABLE_FORWARDADD_ON
+        #pragma shader_feature_local _ _NOFORWARDADD_ON
         #pragma shader_feature_local_fragment _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT _DIFFUSEMODE_DISABLE
         #pragma shader_feature_local_fragment _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR _SPECULARMODE_DISABLE
         #pragma shader_feature_local_fragment _AMBIENTMODE_LEGACY _AMBIENTMODE_SH _AMBIENTMODE_DISABLE
@@ -246,7 +246,7 @@ Shader "koturn/KRayMarching/Sphere"
          */
         fout frag(v2f_raymarching_forward fi)
         {
-#if defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
             fout fo;
             UNITY_INITIALIZE_OUTPUT(fout, fo);
             return fo;
@@ -285,7 +285,7 @@ Shader "koturn/KRayMarching/Sphere"
             fo.depth = getDepth(projPos);
 
             return fo;
-#endif  // defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#endif  // defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
         }
 
 

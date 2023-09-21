@@ -48,7 +48,7 @@ struct v2f_raymarching_forward
 {
     //! Clip space position of the vertex.
     float4 pos : SV_POSITION;
-#if !defined(_DISABLE_FORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
+#if !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
     //! Ray origin in object space (Local space position of the camera).
     nointerpolation float3 localRayOrigin : TEXCOORD0;
     //! Unnormalized ray direction in object space.
@@ -63,7 +63,7 @@ struct v2f_raymarching_forward
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
     UNITY_VERTEX_OUTPUT_STEREO
-#endif  // !defined(_DISABLE_FORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
+#endif  // !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
 };
 
 
@@ -88,7 +88,7 @@ struct v2f_raymarching_shadowcaster
 
 
 
-#if defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
 
 #    if defined(UNITY_COMPILER_HLSL) \
         || defined(SHADER_API_GLCORE) \
@@ -151,8 +151,7 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
 
     return o;
 }
-#endif  // defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
-
+#endif  // defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
 
 /*!
  * @brief Vertex shader function for ShadowCaster Pass.
@@ -186,7 +185,7 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 }
 
 
-#if !defined(_DISABLE_FORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
+#if !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
 /*!
  * @brief Get light attenuation.
  *
@@ -199,7 +198,7 @@ fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos)
     UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
     return atten;
 }
-#endif  // !defined(_DISABLE_FORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
+#endif  // !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
 
 
 #endif  // VERT_COMMON_INCLUDED

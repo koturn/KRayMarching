@@ -33,9 +33,9 @@ namespace Koturn.KRayMarching.Inspectors
         /// </summary>
         private const string PropNameMaxLoopShadowCaster = "_MaxLoopShadowCaster";
         /// <summary>
-        /// Property name of "_DisableForwardAdd".
+        /// Property name of "_NoForwardAdd".
         /// </summary>
-        private const string PropNameDisableForwardAdd = "_DisableForwardAdd";
+        private const string PropNameNoForwardAdd = "_NoForwardAdd";
         /// <summary>
         /// Property name of "_MinRayLength".
         /// </summary>
@@ -151,9 +151,9 @@ namespace Koturn.KRayMarching.Inspectors
         /// </summary>
         private const string PropNameZWrite = "_ZWrite";
         /// <summary>
-        /// Property name of "_OffsetFact".
+        /// Property name of "_OffsetFactor".
         /// </summary>
-        private const string PropNameOffsetFact = "_OffsetFact";
+        private const string PropNameOffsetFactor = "_OffsetFactor";
         /// <summary>
         /// Property name of "_OffsetUnit".
         /// </summary>
@@ -217,10 +217,10 @@ namespace Koturn.KRayMarching.Inspectors
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
-                var mpDisableForwardAdd = FindAndDrawProperty(me, mps, PropNameDisableForwardAdd, false);
+                var mpNoForwardAdd = FindAndDrawProperty(me, mps, PropNameNoForwardAdd, false);
 
                 ShaderProperty(me, mps, PropNameMaxLoop, false);
-                using (new EditorGUI.DisabledScope(mpDisableForwardAdd != null && ToBool(mpDisableForwardAdd.floatValue)))
+                using (new EditorGUI.DisabledScope(mpNoForwardAdd != null && ToBool(mpNoForwardAdd.floatValue)))
                 {
                     ShaderProperty(me, mps, PropNameMaxLoopForwardAdd, false);
                 }
@@ -299,7 +299,7 @@ namespace Koturn.KRayMarching.Inspectors
                 DrawRenderingMode(me, mps);
                 ShaderProperty(me, mps, PropNameZTest, false);
                 ShaderProperty(me, mps, PropNameZClip, false);
-                DrawOffsetProperties(me, mps, PropNameOffsetFact, PropNameOffsetUnit);
+                DrawOffsetProperties(me, mps, PropNameOffsetFactor, PropNameOffsetUnit);
                 ShaderProperty(me, mps, PropNameColorMask, false);
                 ShaderProperty(me, mps, PropNameAlphaToMask, false);
 

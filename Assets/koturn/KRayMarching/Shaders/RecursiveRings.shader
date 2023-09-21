@@ -3,8 +3,8 @@ Shader "koturn/KRayMarching/RecursiveRings"
     Properties
     {
         // Common Ray Marching Parameters.
-        [Toggle(_DISABLE_FORWARDADD_ON)]
-        _DisableForwardAdd ("Disable ForwardAdd", Int) = 0
+        [Toggle(_NOFORWARDADD_ON)]
+        _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
@@ -113,7 +113,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
         CGINCLUDE
         #pragma multi_compile_fog
-        #pragma shader_feature_local _ _DISABLE_FORWARDADD_ON
+        #pragma shader_feature_local _ _NOFORWARDADD_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
         #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_CUSTOM
 
@@ -202,7 +202,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
          */
         fout frag(v2f_raymarching_forward fi)
         {
-#if defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
             fout fo;
             UNITY_INITIALIZE_OUTPUT(fout, fo);
             return fo;
@@ -240,7 +240,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
             fo.depth = getDepth(projPos);
 
             return fo;
-#endif  // defined(_DISABLE_FORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#endif  // defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
         }
 
 
