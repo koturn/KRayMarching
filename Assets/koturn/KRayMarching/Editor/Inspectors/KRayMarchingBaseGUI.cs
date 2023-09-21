@@ -52,6 +52,10 @@ namespace Koturn.KRayMarching.Inspectors
         /// Property name of "_MarchingFactor".
         /// </summary>
         private const string PropNameMarchingFactor = "_MarchingFactor";
+        /// <summary>
+        /// Property name of "_CalcSpace".
+        /// </summary>
+        private const string PropNameCalcSpace = "_CalcSpace";
 
         /// <summary>
         /// Property name of "_Lighting".
@@ -229,6 +233,7 @@ namespace Koturn.KRayMarching.Inspectors
                 ShaderProperty(me, mps, PropNameMaxRayLength, false);
                 ShaderProperty(me, mps, PropNameScales, false);
                 ShaderProperty(me, mps, PropNameMarchingFactor, false);
+                ShaderProperty(me, mps, PropNameCalcSpace, false);
             }
 
             EditorGUILayout.LabelField("Lighting Parameters", EditorStyles.boldLabel);

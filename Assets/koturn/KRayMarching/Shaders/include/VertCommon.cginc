@@ -49,10 +49,10 @@ struct v2f_raymarching_forward
     //! Clip space position of the vertex.
     float4 pos : SV_POSITION;
 #if !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
-    //! Ray origin in object space (Local space position of the camera).
-    nointerpolation float3 localRayOrigin : TEXCOORD0;
-    //! Unnormalized ray direction in object space.
-    float3 localRayDirVector : TEXCOORD1;
+    //! Ray origin in object/world space.
+    nointerpolation float3 rayOrigin : TEXCOORD0;
+    //! Unnormalized ray direction in object/world space.
+    float3 rayDirVec : TEXCOORD1;
     //! Lighting and shadowing parameters.
     UNITY_LIGHTING_COORDS(2, 3)
 #    if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
@@ -75,10 +75,10 @@ struct v2f_raymarching_shadowcaster
 {
     //! Clip space position of the vertex.
     V2F_SHADOW_CASTER;
-    //! Ray origin in object space.
-    float3 localRayOrigin : TEXCOORD1;
-    //! Unnormalized ray direction in object space.
-    float3 localRayDirVector : TEXCOORD2;
+    //! Ray origin in object/world space.
+    float3 rayOrigin : TEXCOORD1;
+    //! Unnormalized ray direction in object/world space.
+    float3 rayDirVec : TEXCOORD2;
     //! instanceID for single pass instanced rendering.
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
@@ -134,8 +134,13 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
     UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-    o.localRayOrigin = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
-    o.localRayDirVector = v.vertex - o.localRayOrigin;
+#ifdef _CALCSPACE_WORLD
+    o.rayOrigin = _WorldSpaceCameraPos * _Scales;
+    o.rayDirVec = objectToWorldPos(v.vertex.xyz) - o.rayOrigin;
+#else
+    o.rayOrigin = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
+    o.rayDirVec = v.vertex - o.rayOrigin;
+#endif  // defined(_CALCSPACE_WORLD)
 
 #ifdef LIGHTMAP_ON
     o.lmap.xy = v.texcoord1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
@@ -169,17 +174,28 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 
     TRANSFER_SHADOW_CASTER(o)
 
-    o.localRayOrigin = v.vertex.xyz;
-
     float4 projPos = ComputeNonStereoScreenPos(o.pos);
     COMPUTE_EYEDEPTH(projPos.z);
-#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-    o.localRayDirVector = mul((float3x3)unity_WorldToObject, getCameraDirectionVector(projPos));
+
+#ifdef _CALCSPACE_WORLD
+    o.rayOrigin = objectToWorldPos(v.vertex.xyz);
+#    if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+    o.rayDirVec = getCameraDirVec(projPos);
+#    else
+    o.rayDirVec = isCameraOrthographic() ? getCameraForward()
+        : abs(unity_LightShadowBias.x) < 1.0e-5 ? (o.rayOrigin - _WorldSpaceCameraPos)
+        : getCameraDirVec(projPos);
+#    endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
 #else
-    o.localRayDirVector = isCameraOrthographic() ? mul((float3x3)unity_WorldToObject, getCameraForward())
+    o.rayOrigin = v.vertex.xyz;
+#    if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+    o.rayDirVec = mul((float3x3)unity_WorldToObject, getCameraDirVec(projPos));
+#    else
+    o.rayDirVec = isCameraOrthographic() ? mul((float3x3)unity_WorldToObject, getCameraForward())
         : abs(unity_LightShadowBias.x) < 1.0e-5 ? (v.vertex.xyz - worldToObjectPos(_WorldSpaceCameraPos))
-        : mul((float3x3)unity_WorldToObject, getCameraDirectionVector(projPos));
-#endif
+        : mul((float3x3)unity_WorldToObject, getCameraDirVec(projPos));
+#    endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+#endif  // defined(_CALCSPACE_WORLD)
 
     return o;
 }

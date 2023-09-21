@@ -23,6 +23,9 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
         _MarchingFactor ("Marching Factor", Range(0.5, 1.0)) = 0.65
 
+        [KeywordEnum(Object, World)]
+        _CalcSpace ("Calculation space", Int) = 0
+
         // Lighting Parameters.
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Custom)]
         _Lighting ("Lighting method", Int) = 0
@@ -106,6 +109,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         CGINCLUDE
         #pragma multi_compile_fog
         #pragma shader_feature_local _ _NOFORWARDADD_ON
+        #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
         #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_CUSTOM
 
@@ -194,15 +198,22 @@ Shader "koturn/KRayMarching/ColorHexagram"
             UNITY_SETUP_INSTANCE_ID(fi);
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
 
-            const float3 localRayDir = normalize(fi.localRayDirVector);
+            const float3 rayOrigin = fi.rayOrigin;
+            const float3 rayDir = normalize(fi.rayDirVec);
 
-            const rmout ro = rayMarch(fi.localRayOrigin, localRayDir);
+            const rmout ro = rayMarch(rayOrigin, rayDir);
             if (!ro.isHit) {
                 discard;
             }
 
-            const float3 localFinalPos = fi.localRayOrigin + localRayDir * ro.rayLength;
+#    ifdef _CALCSPACE_WORLD
+            const float3 worldFinalPos = rayOrigin + rayDir * ro.rayLength;
+            const float3 worldNormal = getNormal(worldFinalPos);
+#    else
+            const float3 localFinalPos = rayOrigin + rayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
+            const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
+#    endif  // defined(_CALCSPACE_WORLD)
 
 #    if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
             const float4 lmap = fi.lmap;
@@ -214,7 +225,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             const half4 color = calcLighting(
                 half4(ro.color.xyz, 1.0),
                 worldFinalPos,
-                UnityObjectToWorldNormal(getNormal(localFinalPos)),
+                worldNormal,
                 getLightAttenRayMarching(fi, worldFinalPos),
                 lmap);
 
@@ -457,14 +468,20 @@ Shader "koturn/KRayMarching/ColorHexagram"
                 UNITY_SETUP_INSTANCE_ID(fi);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
 
-                const float3 localRayDir = normalize(fi.localRayDirVector);
+                const float3 rayOrigin = fi.rayOrigin;
+                const float3 rayDir = normalize(fi.rayDirVec);
 
-                const rmout ro = rayMarch(fi.localRayOrigin, localRayDir);
+                const rmout ro = rayMarch(rayOrigin, rayDir);
                 if (!ro.isHit) {
                     discard;
                 }
 
-                const float3 worldFinalPos = objectToWorldPos(fi.localRayOrigin + localRayDir * ro.rayLength);
+#ifdef _CALCSPACE_WORLD
+                const float3 worldFinalPos = rayOrigin + rayDir * ro.rayLength;
+#else
+                const float3 localFinalPos = rayOrigin + rayDir * ro.rayLength;
+                const float3 worldFinalPos = objectToWorldPos(localFinalPos);
+#endif  // defined(_CALCSPACE_WORLD)
 
 #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
                 i.vec = worldFinalPos - _LightPositionRange.xyz;

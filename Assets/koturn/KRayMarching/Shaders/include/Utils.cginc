@@ -16,8 +16,8 @@ float3 getCameraForward();
 float getCameraFocalLength();
 bool isCameraPerspective();
 bool isCameraOrthographic();
-float3 getCameraDirection(float4 projPos);
-float3 getCameraDirectionVector(float4 projPos);
+float3 getCameraDir(float4 projPos);
+float3 getCameraDirVec(float4 projPos);
 half4 applyFog(float fogFactor, half4 color);
 half3 rgb2hsv(half3 rgb);
 half3 hsv2rgb(half3 hsv);
@@ -160,9 +160,9 @@ bool isCameraOrthographic()
  * @param [in] Projected position.
  * @return Camera direction in world space.
  */
-float3 getCameraDirection(float4 projPos)
+float3 getCameraDir(float4 projPos)
 {
-    return normalize(getCameraDirectionVector(projPos));
+    return normalize(getCameraDirVec(projPos));
 }
 
 
@@ -171,7 +171,7 @@ float3 getCameraDirection(float4 projPos)
  * @param [in] Projected position.
  * @return Camera direction in world space.
  */
-float3 getCameraDirectionVector(float4 projPos)
+float3 getCameraDirVec(float4 projPos)
 {
     float2 sp = (projPos.xy / projPos.w) * 2.0 - 1.0;
 
