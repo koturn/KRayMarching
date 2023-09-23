@@ -253,22 +253,25 @@ namespace Koturn.KRayMarching.Inspectors
                     isNeedGM = ToBool(mpEnableReflectionProbe.floatValue);
                 }
 
-                using (new EditorGUI.DisabledScope(!isNeedGM))
+                using (new EditorGUI.DisabledScope(lightingMethod == LightingMethod.UnityLambert))
                 {
-                    using (new EditorGUI.DisabledScope(lightingMethod == LightingMethod.UnityLambert))
+                    var isCustomLit = lightingMethod == LightingMethod.Custom;
+                    using (new EditorGUI.DisabledScope(!isNeedGM))
                     {
                         ShaderProperty(me, mps, PropNameGlossiness, false);
                     }
-                    using (new EditorGUI.DisabledScope(lightingMethod != LightingMethod.UnityStandard))
+                    using (new EditorGUI.DisabledScope(!isNeedGM || !isCustomLit && (lightingMethod != LightingMethod.UnityStandard)))
                     {
                         ShaderProperty(me, mps, PropNameMetallic, false);
                     }
-                }
-
-                using (new EditorGUI.DisabledScope(lightingMethod == LightingMethod.UnityLambert))
-                {
-                    ShaderProperty(me, mps, PropNameSpecColor, false);
-                    ShaderProperty(me, mps, PropNameSpecPower, false);
+                    using (new EditorGUI.DisabledScope(!isCustomLit && lightingMethod != LightingMethod.UnityBlinnPhong && lightingMethod != LightingMethod.UnityStandardSpecular))
+                    {
+                        ShaderProperty(me, mps, PropNameSpecColor, false);
+                    }
+                    using (new EditorGUI.DisabledScope(!isCustomLit && lightingMethod != LightingMethod.UnityBlinnPhong))
+                    {
+                        ShaderProperty(me, mps, PropNameSpecPower, false);
+                    }
                 }
 
                 using (new EditorGUI.DisabledScope(lightingMethod != LightingMethod.Custom))
