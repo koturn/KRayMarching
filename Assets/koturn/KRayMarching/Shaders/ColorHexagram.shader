@@ -27,7 +27,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         _CalcSpace ("Calculation space", Int) = 0
 
         // Lighting Parameters.
-        [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Custom)]
+        [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
         _Lighting ("Lighting method", Int) = 0
 
         _Glossiness ("Smoothness", Range(0.0, 1.0)) = 0.5
@@ -111,7 +111,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         #pragma shader_feature_local _ _NOFORWARDADD_ON
         #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
-        #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_CUSTOM
+        #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
 
         #include "include/alt/AltUnityCG.cginc"
         #include "include/alt/AltUnityStandardUtils.cginc"
@@ -190,7 +190,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
          */
         fout frag(v2f_raymarching_forward fi)
         {
-#if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#if (defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)) && defined(UNITY_PASS_FORWARDADD)
             fout fo;
             UNITY_INITIALIZE_OUTPUT(fout, fo);
             return fo;
@@ -369,6 +369,8 @@ Shader "koturn/KRayMarching/ColorHexagram"
             return calcLightingUnityStandard(color, worldPos, worldNormal, atten, lmap);
 #elif defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
             return calcLightingUnityStandardSpecular(color, worldPos, worldNormal, atten, lmap);
+#elif defined(_LIGHTING_UNLIT)
+            return color;
 #else
             return calcLightingCustom(color, worldPos, worldNormal, atten, lmap);
 #endif  // defined(_LIGHTING_LAMBERT)

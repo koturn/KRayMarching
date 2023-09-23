@@ -22,8 +22,12 @@ namespace Koturn.KRayMarching.Enums
         /// </summary>
         UnityStandardSpecular = 3,
         /// <summary>
+        /// No lighting.
+        /// </summary>
+        Unlit = 4,
+        /// <summary>
         /// Lighting with custom method.
         /// </summary>
-        Custom = 4
+        Custom = 5
     }
 }

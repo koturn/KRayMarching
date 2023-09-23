@@ -253,7 +253,7 @@ namespace Koturn.KRayMarching.Inspectors
                     isNeedGM = ToBool(mpEnableReflectionProbe.floatValue);
                 }
 
-                using (new EditorGUI.DisabledScope(lightingMethod == LightingMethod.UnityLambert))
+                using (new EditorGUI.DisabledScope(lightingMethod == LightingMethod.UnityLambert || lightingMethod == LightingMethod.Unlit))
                 {
                     var isCustomLit = lightingMethod == LightingMethod.Custom;
                     using (new EditorGUI.DisabledScope(!isNeedGM))

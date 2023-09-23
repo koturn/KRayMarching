@@ -28,7 +28,7 @@ Shader "koturn/KRayMarching/Sphere"
 
         _Color ("Color of the objects", Color) = (1.0, 1.0, 1.0, 1.0)
 
-        [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Custom)]
+        [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
         _Lighting ("Lighting method", Int) = 0
 
         [Toggle(_ENABLE_REFLECTION_PROBE)]
@@ -167,7 +167,7 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma shader_feature_local_fragment _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT _DIFFUSEMODE_DISABLE
         #pragma shader_feature_local_fragment _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR _SPECULARMODE_DISABLE
         #pragma shader_feature_local_fragment _AMBIENTMODE_LEGACY _AMBIENTMODE_SH _AMBIENTMODE_DISABLE
-        #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_CUSTOM
+        #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
         #pragma shader_feature_local_fragment _NORMALCALCMETHOD_CENTRAL_DIFFERENCE _NORMALCALCMETHOD_FOREARD_DIFFERENCE _NORMALCALCMETHOD_TETRAHEDRON
         #pragma shader_feature_local_fragment _NORMALCALCOPTIMIZE_UNROLL _NORMALCALCOPTIMIZE_LOOP _NORMALCALCOPTIMIZE_LOOP_WITHOUT_LUT
         #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
@@ -250,7 +250,7 @@ Shader "koturn/KRayMarching/Sphere"
          */
         fout frag(v2f_raymarching_forward fi)
         {
-#if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#if (defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)) && defined(UNITY_PASS_FORWARDADD)
             fout fo;
             UNITY_INITIALIZE_OUTPUT(fout, fo);
             return fo;
@@ -364,6 +364,8 @@ Shader "koturn/KRayMarching/Sphere"
             return calcLightingUnityStandard(color, worldPos, worldNormal, atten, lmap);
 #elif defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
             return calcLightingUnityStandardSpecular(color, worldPos, worldNormal, atten, lmap);
+#elif defined(_LIGHTING_UNLIT)
+            return color;
 #else
             const float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos);
             const float3 worldLightDir = normalizedWorldSpaceLightDir(worldPos);
