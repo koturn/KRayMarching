@@ -4,10 +4,6 @@
 #include "Utils.cginc"
 
 
-//! Scale vector.
-uniform float3 _Scales;
-
-
 /*!
  * @brief Input of the vertex shader, vertRayMarchingForward().
  */
@@ -135,10 +131,10 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
 #ifdef _CALCSPACE_WORLD
-    o.rayOrigin = _WorldSpaceCameraPos * _Scales;
+    o.rayOrigin = _WorldSpaceCameraPos;
     o.rayDirVec = objectToWorldPos(v.vertex.xyz) - o.rayOrigin;
 #else
-    o.rayOrigin = worldToObjectPos(_WorldSpaceCameraPos) * _Scales;
+    o.rayOrigin = worldToObjectPos(_WorldSpaceCameraPos);
     o.rayDirVec = v.vertex - o.rayOrigin;
 #endif  // defined(_CALCSPACE_WORLD)
 
@@ -151,7 +147,6 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
 
     UNITY_TRANSFER_LIGHTING(o, v.texcoord1);
 
-    v.vertex.xyz /= _Scales;
     o.pos = UnityObjectToClipPos(v.vertex);
 
     return o;

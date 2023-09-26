@@ -239,6 +239,8 @@ Shader "koturn/KRayMarching/Sphere"
         uniform float _MinRayLength;
         //! Maximum length of the ray.
         uniform float _MaxRayLength;
+        //! Scale vector.
+        uniform float3 _Scales;
         //! Marching Factor.
         uniform float _MarchingFactor;
 
@@ -317,15 +319,18 @@ Shader "koturn/KRayMarching/Sphere"
             const int maxLoop = _MaxLoopShadowCaster;
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 
+            const float3 rayDirVec = rayDir * _Scales;
+            const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
+
             rmout ro;
             ro.rayLength = 0.0;
             ro.isHit = false;
 
             // Marching Loop.
             for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > _MaxRayLength) ? 0x7fffffff : i + 1) {
-                const float d = map(rayOrigin + rayDir * ro.rayLength);
+                const float d = map((rayOrigin + rayDir * ro.rayLength) * _Scales);
+                ro.rayLength += d * marchingFactor;
                 ro.isHit = d < _MinRayLength;
-                ro.rayLength += d * _MarchingFactor;
             }
 
             return ro;
@@ -339,9 +344,6 @@ Shader "koturn/KRayMarching/Sphere"
          */
         float map(float3 p)
         {
-#ifdef UNITY_PASS_SHADOWCASTER
-            p *= _Scales;
-#endif  // UNITY_PASS_SHADOWCASTER
             return sdSphere(p, 0.5);
         }
 
@@ -444,11 +446,13 @@ Shader "koturn/KRayMarching/Sphere"
 #    if defined(_NORMALCALCOPTIMIZE_UNROLL)
             static const float2 d = float2(h, 0.0);
 
+            p *= _Scales;
+
             return normalize(
                 float3(
-                    map(p + d.xyy) - map(p - d.xyy),
-                    map(p + d.yxy) - map(p - d.yxy),
-                    map(p + d.yyx) - map(p - d.yyx)));
+                    map(p + d.xyy * _Scales) - map(p - d.xyy * _Scales),
+                    map(p + d.yxy * _Scales) - map(p - d.yxy * _Scales),
+                    map(p + d.yyx * _Scales) - map(p - d.yyx * _Scales)));
 #    elif defined(_NORMALCALCOPTIMIZE_LOOP)
             static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
             static const float3 k[6] = {s.xzz, s.yzz, s.zxz, s.zyz, s.zzx, s.zzy};
@@ -457,7 +461,7 @@ Shader "koturn/KRayMarching/Sphere"
 
             UNITY_LOOP
             for (int i = 0; i < 6; i++) {
-                normal += k[i] * map(p + h * k[i]);
+                normal += k[i] * map((p + h * k[i]) * _Scales);
             }
 
             return normalize(normal);
@@ -469,7 +473,7 @@ Shader "koturn/KRayMarching/Sphere"
                 const int j = i >> 1;
                 const float4 v = float4(int4((int3(j + 3, i, j) >> 1), i) & 1);
                 const float3 k = v.xyz * (v.w * 2.0 - 1.0);
-                normal += k * map(p + h * k);
+                normal += k * map((p + h * k) * _Scales);
             }
 
             return normalize(normal);
@@ -478,32 +482,34 @@ Shader "koturn/KRayMarching/Sphere"
 #    if defined(_NORMALCALCOPTIMIZE_UNROLL)
             static const float2 d = float2(h, 0.0);
 
+            p *= _Scales;
+
             const float mp = map(p);
 
             return normalize(
                 float3(
-                    map(p + d.xyy) - mp,
-                    map(p + d.yxy) - mp,
-                    map(p + d.yyx) - mp));
+                    map(p + d.xyy * _Scales) - mp,
+                    map(p + d.yxy * _Scales) - mp,
+                    map(p + d.yyx * _Scales) - mp));
 #    elif defined(_NORMALCALCOPTIMIZE_LOOP)
             static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
             static const float3 k[3] = {s.xzz, s.zxz, s.zzx};
 
-            float3 normal = (-map(p)).xxx;
+            float3 normal = (-map(p * _Scales)).xxx;
 
             UNITY_LOOP
             for (int i = 0; i < 3; i++) {
-                normal += k[i] * map(p + h * k[i]);
+                normal += k[i] * map((p + h * k[i]) * _Scales);
             }
 
             return normalize(normal);
 #    else
-            float3 normal = (-map(p)).xxx;
+            float3 normal = (-map(p * _Scales)).xxx;
 
             UNITY_LOOP
             for (int i = 0; i < 3; i++) {
                 const float3 k = float3(int3((i + 3) >> 1, i, i >> 1) & 1);
-                normal += k * map(p + h * k);
+                normal += k * map((p + h * k) * _Scales);
             }
 
             return normalize(normal);
@@ -513,11 +519,13 @@ Shader "koturn/KRayMarching/Sphere"
             static const float2 s = float2(1.0, -1.0);
             static const float2 hs = h * s;
 
+            p *= _Scales;
+
             return normalize(
-                s.xyy * map(p + hs.xyy)
-                    + s.yxy * map(p + hs.yxy)
-                    + s.yyx * map(p + hs.yyx)
-                    + map(p + hs.xxx).xxx);
+                s.xyy * map(p + hs.xyy * _Scales)
+                    + s.yxy * map(p + hs.yxy * _Scales)
+                    + s.yyx * map(p + hs.yyx * _Scales)
+                    + map(p + hs.xxx * _Scales).xxx);
 #    elif defined(_NORMALCALCOPTIMIZE_LOOP)
             static const float2 s = float2(1.0, -1.0);  // used only for generating k.
             static const float3 k[4] = {s.xyy, s.yxy, s.yyx, s.xxx};
@@ -526,7 +534,7 @@ Shader "koturn/KRayMarching/Sphere"
 
             UNITY_LOOP
             for (int i = 0; i < 4; i++) {
-                normal += k[i] * map(p + h * k[i]);
+                normal += k[i] * map((p + h * k[i]) * _Scales);
             }
 
             return normalize(normal);
@@ -536,7 +544,7 @@ Shader "koturn/KRayMarching/Sphere"
             UNITY_LOOP
             for (int i = 0; i < 4; i++) {
                 const float3 k = float3(int3((i + 3) >> 1, i, i >> 1) & 1) * 2.0 - 1.0;
-                normal += k * map(p + h * k);
+                normal += k * map((p + h * k) * _Scales);
             }
 
             return normalize(normal);

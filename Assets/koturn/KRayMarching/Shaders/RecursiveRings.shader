@@ -176,6 +176,8 @@ Shader "koturn/KRayMarching/RecursiveRings"
         uniform float _MinRayLength;
         //! Maximum length of the ray.
         uniform float _MaxRayLength;
+        //! Scale vector.
+        uniform float3 _Scales;
         //! Marching Factor.
         uniform float _MarchingFactor;
 
@@ -272,6 +274,9 @@ Shader "koturn/KRayMarching/RecursiveRings"
             const int maxLoop = _MaxLoopShadowCaster;
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 
+            const float3 rayDirVec = rayDir * _Scales;
+            const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
+
             rmout ro;
             ro.rayLength = 0.0;
             ro.isHit = false;
@@ -280,8 +285,8 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
             // Loop of Ray Marching.
             for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > _MaxRayLength) ? 0x7fffffff : i + 1) {
-                const float d = map(rayOrigin + rayDir * ro.rayLength, /* out */ hueOffset);
-                ro.rayLength += d * _MarchingFactor;
+                const float d = map((rayOrigin + rayDir * ro.rayLength) * _Scales, /* out */ hueOffset);
+                ro.rayLength += d * marchingFactor;
                 ro.isHit = d < _MinRayLength;
             }
 
@@ -370,7 +375,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
             float _;
 
             for (int i = 0; i < 4; i++) {
-                normal += ks[i] * map(p + ks[i] * h, /* out */ _);
+                normal += ks[i] * map((p + ks[i] * h) * _Scales, /* out */ _);
             }
 
             return normalize(normal);

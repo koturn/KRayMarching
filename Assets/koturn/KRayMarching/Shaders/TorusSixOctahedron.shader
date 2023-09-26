@@ -161,6 +161,8 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         uniform float _MinRayLength;
         //! Maximum length of the ray.
         uniform float _MaxRayLength;
+        //! Scale vector.
+        uniform float3 _Scales;
         //! Marching Factor.
         uniform float _MarchingFactor;
 
@@ -256,6 +258,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             const int maxLoop = _MaxLoopShadowCaster;
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 
+            const float3 rayDirVec = rayDir * _Scales;
+            const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
+
             rmout ro;
             ro.rayLength = 0.0;
             ro.isHit = false;
@@ -264,8 +269,8 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
             // Loop of Ray Marching.
             for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > _MaxRayLength) ? 0x7fffffff : i + 1) {
-                const float d = map(rayOrigin + rayDir * ro.rayLength, /* out */ colorIndex);
-                ro.rayLength += d * _MarchingFactor;
+                const float d = map((rayOrigin + rayDir * ro.rayLength) * _Scales, /* out */ colorIndex);
+                ro.rayLength += d * marchingFactor;
                 ro.isHit = d < _MinRayLength;
             }
 
@@ -291,10 +296,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         {
             static const float kOneThirdPi = UNITY_PI / 3.0;
             static const float kInvOneThirdPi = 1.0 / kOneThirdPi;
-
-#ifdef UNITY_PASS_SHADOWCASTER
-            p *= _Scales;
-#endif  // UNITY_PASS_SHADOWCASTER
 
             const float radius = _TorusRadius + _SinTime.w * _TorusRadiusAmp;
 
@@ -356,7 +357,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             float _;
 
             for (int i = 0; i < 4; i++) {
-                normal += ks[i] * map(p + ks[i] * h, /* out */ _);
+                normal += ks[i] * map((p + ks[i] * h) * _Scales, /* out */ _);
             }
 
             return normalize(normal);
