@@ -23,6 +23,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         _MarchingFactor ("Marching Factor", Range(0.5, 1.0)) = 1.0
 
+        [Toggle(_NODEPTH_ON)]
+        _NoDepth ("Disable depth ouput", Int) = 0
+
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
         _Lighting ("Lighting method", Int) = 0
 
@@ -103,6 +106,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         CGINCLUDE
         #pragma multi_compile_fog
         #pragma shader_feature_local _ _NOFORWARDADD_ON
+        #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
         #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
 
@@ -127,8 +131,10 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         {
             //! Output color of the pixel.
             half4 color : SV_Target;
+#ifndef _NODEPTH_ON
             //! Depth of the pixel.
             float depth : SV_Depth;
+#endif  // !defined(_NODEPTH_ON)
         };
 
         /*!
@@ -225,7 +231,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
             fout fo;
             fo.color = applyFog(projPos.z, color);
+#    ifndef _NODEPTH_ON
             fo.depth = getDepth(projPos);
+#    endif  // !defined(_NODEPTH_ON)
 
             return fo;
 #endif
@@ -463,9 +471,13 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
                 fi.vec = worldFinalPos - _LightPositionRange.xyz;
                 SHADOW_CASTER_FRAGMENT(fi);
 #else
-                fout fo;
-                fo.color = fo.depth = getDepth(UnityWorldToClipPos(worldFinalPos));
+                const float depth = getDepth(UnityWorldToClipPos(worldFinalPos));
 
+                fout fo;
+                fo.color = depth.xxxx;
+#    ifndef _NODEPTH_ON
+                fo.depth = depth;
+#    endif  // !defined(_NODEPTH_ON)
                 return fo;
 #endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
             }

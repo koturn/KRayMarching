@@ -26,6 +26,9 @@ Shader "koturn/KRayMarching/Sphere"
         [KeywordEnum(Object, World)]
         _CalcSpace ("Calculation space", Int) = 0
 
+        [Toggle(_NODEPTH_ON)]
+        _NoDepth ("Disable depth ouput", Int) = 0
+
         _Color ("Color of the objects", Color) = (1.0, 1.0, 1.0, 1.0)
 
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
@@ -164,6 +167,7 @@ Shader "koturn/KRayMarching/Sphere"
 
         #pragma shader_feature_local _ _NOFORWARDADD_ON
         #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
+        #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT _DIFFUSEMODE_DISABLE
         #pragma shader_feature_local_fragment _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR _SPECULARMODE_DISABLE
         #pragma shader_feature_local_fragment _AMBIENTMODE_LEGACY _AMBIENTMODE_SH _AMBIENTMODE_DISABLE
@@ -205,8 +209,10 @@ Shader "koturn/KRayMarching/Sphere"
         {
             //! Output color of the pixel.
             half4 color : SV_Target;
+#ifndef _NODEPTH_ON
             //! Depth of the pixel.
             float depth : SV_Depth;
+#endif  // !defined(_NODEPTH_ON)
         };
 
         /*!
@@ -293,9 +299,10 @@ Shader "koturn/KRayMarching/Sphere"
             const float4 projPos = UnityWorldToClipPos(worldFinalPos);
 
             fout fo;
-            UNITY_INITIALIZE_OUTPUT(fout, fo);
             fo.color = applyFog(projPos.z, color);
+#    ifndef _NODEPTH_ON
             fo.depth = getDepth(projPos);
+#    endif  // !defined(_NODEPTH_ON)
 
             return fo;
 #endif  // defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
@@ -673,9 +680,13 @@ Shader "koturn/KRayMarching/Sphere"
                 fi.vec = worldFinalPos - _LightPositionRange.xyz;
                 SHADOW_CASTER_FRAGMENT(fi);
 #else
-                fout fo;
-                fo.color = fo.depth = getDepth(UnityWorldToClipPos(worldFinalPos));
+                const float depth = getDepth(UnityWorldToClipPos(worldFinalPos));
 
+                fout fo;
+                fo.color = depth.xxxx;
+#    ifndef _NODEPTH_ON
+                fo.depth = depth;
+#    endif  // !defined(_NODEPTH_ON)
                 return fo;
 #endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
             }
