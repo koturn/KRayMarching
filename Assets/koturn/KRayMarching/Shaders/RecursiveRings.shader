@@ -26,6 +26,9 @@ Shader "koturn/KRayMarching/RecursiveRings"
         [KeywordEnum(Object, World)]
         _CalcSpace ("Calculation space", Int) = 0
 
+        [Toggle(_ASSUMEINSIDE_ON)]
+        _AssumeInside ("Assume render target is inside object", Int) = 0
+
         [Toggle(_NODEPTH_ON)]
         _NoDepth ("Disable depth ouput", Int) = 0
 
@@ -121,6 +124,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
         #pragma multi_compile_fog
         #pragma shader_feature_local _ _NOFORWARDADD_ON
         #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
+        #pragma shader_feature_local _ _ASSUMEINSIDE_ON
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
         #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
@@ -166,7 +170,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
         };
 
 
-        rmout rayMarch(float3 rayOrigin, float3 rayDir);
+        rmout rayMarch(float3 rayOrigin, float3 rayDir, float initRayLength, float maxRayLength);
         float map(float3 p, out float hueOffset);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float3 getNormal(float3 p);
@@ -224,8 +228,15 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
             const float3 rayOrigin = fi.rayOrigin;
             const float3 rayDir = normalize(fi.rayDirVec);
+#    ifdef _ASSUMEINSIDE_ON
+            const float initRayLength = isFacing(fi) ? length(fi.fragPos - rayOrigin) : 0.0;
+            const float maxRayLength = isFacing(fi) ? _MaxRayLength : length(fi.rayDirVec);
+#    else
+            const float initRayLength = 0.0;
+            const float maxRayLength = _MaxRayLength;
+#    endif  // defined(_ASSUMEINSIDE_ON)
 
-            const rmout ro = rayMarch(rayOrigin, rayDir);
+            const rmout ro = rayMarch(rayOrigin, rayDir, initRayLength, maxRayLength);
             if (!ro.isHit) {
                 discard;
             }
@@ -270,9 +281,11 @@ Shader "koturn/KRayMarching/RecursiveRings"
          *
          * @param [in] rayOrigin  Origin of the ray.
          * @param [in] rayDir  Direction of the ray.
+         * @param [in] initRayLength  Initial ray length.
+         * @param [in] maxRayLength  Maximum length of the ray.
          * @return Result of the ray marching.
          */
-        rmout rayMarch(float3 rayOrigin, float3 rayDir)
+        rmout rayMarch(float3 rayOrigin, float3 rayDir, float initRayLength, float maxRayLength)
         {
 #if defined(UNITY_PASS_FORWARDBASE)
             const int maxLoop = _MaxLoop;
@@ -286,13 +299,13 @@ Shader "koturn/KRayMarching/RecursiveRings"
             const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
 
             rmout ro;
-            ro.rayLength = 0.0;
+            ro.rayLength = initRayLength;
             ro.isHit = false;
 
             float hueOffset;
 
             // Loop of Ray Marching.
-            for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > _MaxRayLength) ? 0x7fffffff : i + 1) {
+            for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > maxRayLength) ? 0x7fffffff : i + 1) {
                 const float d = map((rayOrigin + rayDir * ro.rayLength) * _Scales, /* out */ hueOffset);
                 ro.rayLength += d * marchingFactor;
                 ro.isHit = d < _MinRayLength;
@@ -441,7 +454,6 @@ Shader "koturn/KRayMarching/RecursiveRings"
                 "LightMode" = "ShadowCaster"
             }
 
-            Cull Back
             ZWrite On
 
             CGPROGRAM
@@ -471,9 +483,9 @@ Shader "koturn/KRayMarching/RecursiveRings"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
 
                 const float3 rayOrigin = fi.rayOrigin;
-                const float3 rayDir = normalize(fi.rayDirVec);
+                const float3 rayDir = normalize(isFacing(fi) ? fi.rayDirVec : -fi.rayDirVec);
 
-                const rmout ro = rayMarch(rayOrigin, rayDir);
+                const rmout ro = rayMarch(rayOrigin, rayDir, 0.0, _MaxRayLength);
                 if (!ro.isHit) {
                     discard;
                 }

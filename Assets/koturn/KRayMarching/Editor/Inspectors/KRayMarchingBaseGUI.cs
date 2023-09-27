@@ -60,7 +60,10 @@ namespace Koturn.KRayMarching.Inspectors
         /// Property name of "_NoDepth".
         /// </summary>
         private const string PropNameNoDepth = "_NoDepth";
-
+        /// <summary>
+        /// Property name of "_AssumeInside".
+        /// </summary>
+        private const string PropNameAssumeInside = "_AssumeInside";
         /// <summary>
         /// Property name of "_Lighting".
         /// </summary>
@@ -239,6 +242,7 @@ namespace Koturn.KRayMarching.Inspectors
                 ShaderProperty(me, mps, PropNameMarchingFactor, false);
                 ShaderProperty(me, mps, PropNameCalcSpace, false);
                 ShaderProperty(me, mps, PropNameNoDepth, false);
+                ShaderProperty(me, mps, PropNameAssumeInside, false);
             }
 
             EditorGUILayout.LabelField("Lighting Parameters", EditorStyles.boldLabel);

@@ -4,6 +4,21 @@
 #include "Utils.cginc"
 
 
+#if defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES) || defined(SHADER_API_D3D9)
+typedef fixed face_t;
+#    define FACE_SEMANTICS VFACE
+#else
+typedef bool face_t;
+#    define FACE_SEMANTICS SV_IsFrontFace
+#endif  // defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES) || defined(SHADER_API_D3D9)
+
+#if defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
+#    define IS_FACING(fi)  isFacing(fi.facing)
+#else
+#    define IS_FACING(fi)  true
+#endif
+
+
 /*!
  * @brief Input of the vertex shader, vertRayMarchingForward().
  */
@@ -49,16 +64,24 @@ struct v2f_raymarching_forward
     nointerpolation float3 rayOrigin : TEXCOORD0;
     //! Unnormalized ray direction in object/world space.
     float3 rayDirVec : TEXCOORD1;
+#    ifdef _ASSUMEINSIDE_ON
+    //! Fragment position in object/world space.
+    float3 fragPos : TEXCOORD2;
+#    endif  // defined(_ASSUMEINSIDE_ON)
     //! Lighting and shadowing parameters.
-    UNITY_LIGHTING_COORDS(2, 3)
+    UNITY_LIGHTING_COORDS(3, 4)
 #    if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
     //! Light map UV coordinates.
-    float4 lmap : TEXCOORD4;
+    float4 lmap : TEXCOORD5;
 #    endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
     //! instanceID for single pass instanced rendering.
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
     UNITY_VERTEX_OUTPUT_STEREO
+#    if defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
+    //! Facing variable (fixed or bool).
+    face_t facing : FACE_SEMANTICS;
+#    endif  // defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
 #endif  // !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
 };
 
@@ -79,9 +102,16 @@ struct v2f_raymarching_shadowcaster
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
     UNITY_VERTEX_OUTPUT_STEREO
+#if defined(SHADER_STAGE_FRAGMENT)
+    //! Facing variable (fixed or bool).
+    face_t facing : FACE_SEMANTICS;
+#endif  // defined(SHADER_STAGE_FRAGMENT)
 };
 
 
+bool isFacing(v2f_raymarching_forward fi);
+bool isFacing(v2f_raymarching_shadowcaster fi);
+bool isFacing(face_t facing);
 
 
 #if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
@@ -131,12 +161,18 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
 #ifdef _CALCSPACE_WORLD
+    const float3 vertPos = objectToWorldPos(v.vertex.xyz);
     o.rayOrigin = _WorldSpaceCameraPos;
-    o.rayDirVec = objectToWorldPos(v.vertex.xyz) - o.rayOrigin;
 #else
+    const float3 vertPos = v.vertex.xyz;
     o.rayOrigin = worldToObjectPos(_WorldSpaceCameraPos);
-    o.rayDirVec = v.vertex - o.rayOrigin;
 #endif  // defined(_CALCSPACE_WORLD)
+
+    o.rayDirVec = vertPos - o.rayOrigin;
+
+#ifdef _ASSUMEINSIDE_ON
+    o.fragPos = vertPos;
+#endif  // defined(_ASSUMEINSIDE_ON)
 
 #ifdef LIGHTMAP_ON
     o.lmap.xy = v.texcoord1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
@@ -210,6 +246,53 @@ fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos)
     return atten;
 }
 #endif  // !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
+
+
+/*!
+ * @brief Identify whether surface is facing the camera or facing away from the camera.
+ * @param [in] fi  Input data of fragment shader for ForwardBase/ForwardAdd pass.
+ * @return True if surface facing the camera or facing parameter is not defined, otherwise false.
+ */
+bool isFacing(v2f_raymarching_forward fi)
+{
+#if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+    return true;
+#elif defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
+    return isFacing(fi.facing);
+#else
+    return true;
+#endif  // defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+}
+
+
+/*!
+ * @brief Identify whether surface is facing the camera or facing away from the camera.
+ * @param [in] fi  Input data of fragment shader for ShadowCaster pass.
+ * @return True if surface facing the camera or facing parameter is not defined, otherwise false.
+ */
+bool isFacing(v2f_raymarching_shadowcaster fi)
+{
+#if defined(SHADER_STAGE_FRAGMENT)
+    return isFacing(fi.facing);
+#else
+    return true;
+#endif  // defined(SHADER_STAGE_FRAGMENT)
+}
+
+
+/*!
+ * @brief Identify whether surface is facing the camera or facing away from the camera.
+ * @param [in] facing  Facing variable (fixed or bool).
+ * @return True if surface facing the camera, otherwise false.
+ */
+bool isFacing(face_t facing)
+{
+#if defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES) || defined(SHADER_API_D3D9)
+    return facing >= 0.0;
+#else
+    return facing;
+#endif  // defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES) || defined(SHADER_API_D3D9)
+}
 
 
 #endif  // VERT_COMMON_INCLUDED
