@@ -461,12 +461,21 @@ Shader "koturn/KRayMarching/ColorHexagram"
             #pragma multi_compile_shadowcaster
 
 
+#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
             /*!
              * @brief Fragment shader function for ShadowCaster Pass.
              * @param [in] fi  Input data from vertex shader.
-             * @return Output of each texels (fout).
+             * @return Depth of fragment.
+             */
+            float4 fragShadowCaster(v2f_raymarching_shadowcaster fi) : SV_Target
+#else
+            /*!
+             * @brief Fragment shader function for ShadowCaster Pass.
+             * @param [in] fi  Input data from vertex shader.
+             * @return Depth of fragment.
              */
             fout fragShadowCaster(v2f_raymarching_shadowcaster fi)
+#endif
             {
                 UNITY_SETUP_INSTANCE_ID(fi);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
@@ -487,8 +496,8 @@ Shader "koturn/KRayMarching/ColorHexagram"
 #endif  // defined(_CALCSPACE_WORLD)
 
 #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-                i.vec = worldFinalPos - _LightPositionRange.xyz;
-                SHADOW_CASTER_FRAGMENT(i);
+                fi.vec = worldFinalPos - _LightPositionRange.xyz;
+                SHADOW_CASTER_FRAGMENT(fi);
 #else
                 fout fo;
                 fo.color = fo.depth = getDepth(UnityWorldToClipPos(worldFinalPos));
