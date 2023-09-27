@@ -23,6 +23,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         _MarchingFactor ("Marching Factor", Range(0.5, 1.0)) = 1.0
 
+        [KeywordEnum(Object, World)]
+        _CalcSpace ("Calculation space", Int) = 0
+
         [Toggle(_ASSUMEINSIDE_ON)]
         _AssumeInside ("Assume render target is inside object", Int) = 0
 
@@ -108,6 +111,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         CGINCLUDE
         #pragma multi_compile_fog
+        #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
         #pragma shader_feature_local _ _ASSUMEINSIDE_ON
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
