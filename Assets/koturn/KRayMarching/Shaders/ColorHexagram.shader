@@ -119,7 +119,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
         #pragma shader_feature_local _ _ASSUMEINSIDE_ON
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
-        #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
 
         #include "include/alt/AltUnityCG.cginc"
         #include "include/alt/AltUnityStandardUtils.cginc"
@@ -434,6 +433,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             #pragma fragment frag
 
             #pragma multi_compile_fwdbase
+            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
             ENDCG
         }
 
@@ -456,6 +456,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
             #pragma multi_compile_fwdadd_fullshadows
             #pragma shader_feature_local _ _NOFORWARDADD_ON
+            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
 
 
 #if defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)

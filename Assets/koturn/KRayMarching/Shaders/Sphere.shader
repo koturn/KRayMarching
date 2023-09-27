@@ -174,7 +174,6 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma shader_feature_local_fragment _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT _DIFFUSEMODE_DISABLE
         #pragma shader_feature_local_fragment _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR _SPECULARMODE_DISABLE
         #pragma shader_feature_local_fragment _AMBIENTMODE_LEGACY _AMBIENTMODE_SH _AMBIENTMODE_DISABLE
-        #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
         #pragma shader_feature_local_fragment _NORMALCALCMETHOD_CENTRAL_DIFFERENCE _NORMALCALCMETHOD_FOREARD_DIFFERENCE _NORMALCALCMETHOD_TETRAHEDRON
         #pragma shader_feature_local_fragment _NORMALCALCOPTIMIZE_UNROLL _NORMALCALCOPTIMIZE_LOOP _NORMALCALCOPTIMIZE_LOOP_WITHOUT_LUT
         #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
@@ -591,6 +590,7 @@ Shader "koturn/KRayMarching/Sphere"
             //   VERTEXLIGHT_ON
             //   LIGHTPROBE_SH
             #pragma multi_compile_fwdbase
+            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
             ENDCG
         }  // ForwardBase
 
@@ -624,6 +624,7 @@ Shader "koturn/KRayMarching/Sphere"
             //   LIGHTMAP_SHADOW_MIXING
             #pragma multi_compile_fwdadd_fullshadows
             #pragma shader_feature_local _ _NOFORWARDADD_ON
+            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
 
 
 #if defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
