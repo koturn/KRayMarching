@@ -277,7 +277,8 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
             const int maxLoop = _MaxLoopShadowCaster;
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 
-            const float3 rayDirVec = rayDir * _Scales;
+            const float3 rcpScales = rcp(_Scales);
+            const float3 rayDirVec = rayDir * rcpScales;
             const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
 
             rmout ro;
@@ -289,7 +290,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
 
             // Loop of Ray Marching.
             for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > maxRayLength) ? 0x7fffffff : i + 1) {
-                const float d = map((rayOrigin + rayDir * ro.rayLength) * _Scales, /* out */ colorIndex);
+                const float d = map((rayOrigin + rayDir * ro.rayLength) * rcpScales, /* out */ colorIndex);
                 ro.rayLength += d * marchingFactor;
                 ro.isHit = d < _MinRayLength;
             }
@@ -374,11 +375,13 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
             static const float3 ks[] = {k.xyy, k.yxy, k.yyx, k.xxx};
             static const float h = 0.0001;
 
+            const float3 rcpScales = rcp(_Scales);
+
             float3 normal = float3(0.0, 0.0, 0.0);
             float _;
 
             for (int i = 0; i < 4; i++) {
-                normal += ks[i] * map((p + ks[i] * h) * _Scales, /* out */ _);
+                normal += ks[i] * map((p + ks[i] * h) * rcpScales, /* out */ _);
             }
 
             return normalize(normal);
