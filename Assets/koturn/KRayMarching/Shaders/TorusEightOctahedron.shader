@@ -88,7 +88,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         Tags
         {
             "Queue" = "AlphaTest"
-            "RenderType" = "Transparent"
+            // "RenderType" = "Transparent"
             "DisableBatching" = "True"
             "IgnoreProjector" = "True"
             "VRCFallback" = "Hidden"

@@ -91,7 +91,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         Tags
         {
             "Queue" = "AlphaTest"
-            "RenderType" = "Transparent"
+            // "RenderType" = "Transparent"
             "DisableBatching" = "True"
             "IgnoreProjector" = "True"
             "VRCFallback" = "Hidden"
