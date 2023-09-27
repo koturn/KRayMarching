@@ -108,7 +108,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         CGINCLUDE
         #pragma multi_compile_fog
-        #pragma shader_feature_local _ _NOFORWARDADD_ON
         #pragma shader_feature_local _ _ASSUMEINSIDE_ON
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
@@ -193,37 +192,32 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
          */
         fout frag(v2f_raymarching_forward fi)
         {
-#if (defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)) && defined(UNITY_PASS_FORWARDADD)
-            fout fo;
-            UNITY_INITIALIZE_OUTPUT(fout, fo);
-            return fo;
-#else
             UNITY_SETUP_INSTANCE_ID(fi);
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
 
             const float3 rayOrigin = fi.rayOrigin;
             const float3 rayDir = normalize(fi.rayDirVec);
-#    ifdef _ASSUMEINSIDE_ON
+#ifdef _ASSUMEINSIDE_ON
             const float initRayLength = isFacing(fi) ? length(fi.fragPos - rayOrigin) : 0.0;
             const float maxRayLength = isFacing(fi) ? _MaxRayLength : length(fi.rayDirVec);
-#    else
+#else
             const float initRayLength = 0.0;
             const float maxRayLength = _MaxRayLength;
-#    endif  // defined(_ASSUMEINSIDE_ON)
+#endif  // defined(_ASSUMEINSIDE_ON)
 
             const rmout ro = rayMarch(rayOrigin, rayDir, initRayLength, maxRayLength);
             if (!ro.isHit) {
                 discard;
             }
 
-#    ifdef _CALCSPACE_WORLD
+#ifdef _CALCSPACE_WORLD
             const float3 worldFinalPos = rayOrigin + rayDir * ro.rayLength;
             const float3 worldNormal = getNormal(worldFinalPos);
-#    else
+#else
             const float3 localFinalPos = rayOrigin + rayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
             const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
-#    endif  // defined(_CALCSPACE_WORLD)
+#endif  // defined(_CALCSPACE_WORLD)
 
 #if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
             const float4 lmap = fi.lmap;
@@ -242,12 +236,11 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
             fout fo;
             fo.color = applyFog(projPos.z, color);
-#    ifndef _NODEPTH_ON
+#ifndef _NODEPTH_ON
             fo.depth = getDepth(projPos);
-#    endif  // !defined(_NODEPTH_ON)
+#endif  // !defined(_NODEPTH_ON)
 
             return fo;
-#endif
         }
 
 
@@ -422,9 +415,33 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             CGPROGRAM
             #pragma target 3.0
             #pragma vertex vertRayMarchingForward
-            #pragma fragment frag
+            #pragma fragment fragForwardAdd
 
             #pragma multi_compile_fwdadd_fullshadows
+            #pragma shader_feature_local _ _NOFORWARDADD_ON
+
+
+#if defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
+            /*!
+             * @brief Fragment shader function.
+             * @param [in] fi  Input data from vertex shader
+             * @return Output of each texels (fout).
+             */
+            half4 fragForwardAdd() : SV_Target
+            {
+                return half4(0.0, 0.0, 0.0, 0.0);
+            }
+#else
+            /*!
+             * @brief Fragment shader function.
+             * @param [in] fi  Input data from vertex shader
+             * @return Output of each texels (fout).
+             */
+            fout fragForwardAdd(v2f_raymarching_forward fi)
+            {
+                return frag(fi);
+            }
+#endif  // defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
             ENDCG
         }
 

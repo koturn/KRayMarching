@@ -59,30 +59,28 @@ struct v2f_raymarching_forward
 {
     //! Clip space position of the vertex.
     float4 pos : SV_POSITION;
-#if !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
     //! Ray origin in object/world space.
     nointerpolation float3 rayOrigin : TEXCOORD0;
     //! Unnormalized ray direction in object/world space.
     float3 rayDirVec : TEXCOORD1;
-#    ifdef _ASSUMEINSIDE_ON
+#ifdef _ASSUMEINSIDE_ON
     //! Fragment position in object/world space.
     float3 fragPos : TEXCOORD2;
-#    endif  // defined(_ASSUMEINSIDE_ON)
+#endif  // defined(_ASSUMEINSIDE_ON)
     //! Lighting and shadowing parameters.
     UNITY_LIGHTING_COORDS(3, 4)
-#    if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
     //! Light map UV coordinates.
     float4 lmap : TEXCOORD5;
-#    endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
     //! instanceID for single pass instanced rendering.
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
     UNITY_VERTEX_OUTPUT_STEREO
-#    if defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
+#if defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
     //! Facing variable (fixed or bool).
     face_t facing : FACE_SEMANTICS;
-#    endif  // defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
-#endif  // !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
+#endif  // defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
 };
 
 
@@ -115,7 +113,6 @@ bool isFacing(face_t facing);
 
 
 #if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
-
 #    if defined(UNITY_COMPILER_HLSL) \
         || defined(SHADER_API_GLCORE) \
         || defined(SHADER_API_GLES3) \
@@ -126,24 +123,13 @@ bool isFacing(face_t facing);
 // Disable WARN_FLOAT_DIVISION_BY_ZERO.
 #        pragma warning (disable : 4008)
 #    endif
-
 /*!
  * @brief Vertex shader function for disabling ForwardAdd Pass.
- * @return Output for fragment shader (v2f).
+ * @return NaN vertex.
  */
-v2f_raymarching_forward vertRayMarchingForward()
+float4 vertRayMarchingForward() : SV_POSITION
 {
-    v2f_raymarching_forward o;
-
-    o.pos = (0.0 / 0.0).xxxx;  // NaN (-qNaN)
-
-    // Following code does not generate WARN_FLOAT_DIVISION_BY_ZERO.
-    // o.pos = asfloat(0x7fc00000).xxxx;  // qNaN
-    // o.pos = asfloat(0xffc00000).xxxx;  // -qNaN
-    // o.pos = asfloat(0x7fa00000).xxxx;  // sNaN
-    // o.pos = asfloat(0xffa00000).xxxx;  // -sNaN
-
-    return o;
+    return (0.0 / 0.0).xxxx;  // NaN (-qNaN)
 }
 #else
 /*!
@@ -232,7 +218,6 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 }
 
 
-#if !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
 /*!
  * @brief Get light attenuation.
  *
@@ -245,7 +230,6 @@ fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos)
     UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
     return atten;
 }
-#endif  // !defined(_NOFORWARDADD_ON) || !defined(UNITY_PASS_FORWARDADD)
 
 
 /*!
