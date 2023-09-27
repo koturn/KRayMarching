@@ -137,7 +137,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         {
             //! Output color of the pixel.
             half4 color : SV_Target;
-        #ifndef _NODEPTH_ON
+        #if (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)) && !defined(_NODEPTH_ON)
             //! Depth of the pixel.
             float depth : SV_Depth;
         #endif  // !defined(_NODEPTH_ON)
@@ -464,21 +464,12 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             #pragma multi_compile_shadowcaster
 
 
-            #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-            /*!
-             * @brief Fragment shader function for ShadowCaster Pass.
-             * @param [in] fi  Input data from vertex shader.
-             * @return Depth of fragment.
-             */
-            float4 fragShadowCaster(v2f_raymarching_shadowcaster fi) : SV_Target
-            #else
             /*!
              * @brief Fragment shader function for ShadowCaster Pass.
              * @param [in] fi  Input data from vertex shader.
              * @return Depth of fragment.
              */
             fout fragShadowCaster(v2f_raymarching_shadowcaster fi)
-            #endif
             {
                 UNITY_SETUP_INSTANCE_ID(fi);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
@@ -499,8 +490,12 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             #endif  // defined(_CALCSPACE_WORLD)
 
             #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-                fi.vec = worldFinalPos - _LightPositionRange.xyz;
-                SHADOW_CASTER_FRAGMENT(fi);
+                //
+                // SHADOW_CASTER_FRAGMENT
+                //
+                fout fo;
+                fo.color = UnityEncodeCubeShadowDepth((length(worldFinalPos - _LightPositionRange.xyz) + unity_LightShadowBias.x) * _LightPositionRange.w);
+                return fo;
             #else
                 const float depth = getDepth(UnityWorldToClipPos(worldFinalPos));
 

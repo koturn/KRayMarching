@@ -148,7 +148,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
         {
             //! Output color of the pixel.
             half4 color : SV_Target;
-        #ifndef _NODEPTH_ON
+        #if (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)) && !defined(_NODEPTH_ON)
             //! Depth of the pixel.
             float depth : SV_Depth;
         #endif  // !defined(_NODEPTH_ON)

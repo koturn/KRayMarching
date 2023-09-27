@@ -90,12 +90,16 @@ struct v2f_raymarching_forward
  */
 struct v2f_raymarching_shadowcaster
 {
+    // V2F_SHADOW_CASTER;
+    // `float3 vec : TEXCOORD0;` is unnecessary even if `!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)`
+    // because calculate `vec` in fragment shader.
+
     //! Clip space position of the vertex.
-    V2F_SHADOW_CASTER;
+    float4 pos : SV_POSITION;
     //! Ray origin in object/world space.
-    float3 rayOrigin : TEXCOORD1;
+    float3 rayOrigin : TEXCOORD0;
     //! Unnormalized ray direction in object/world space.
-    float3 rayDirVec : TEXCOORD2;
+    float3 rayDirVec : TEXCOORD1;
     //! instanceID for single pass instanced rendering.
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
@@ -191,7 +195,13 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
     UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-    TRANSFER_SHADOW_CASTER(o)
+    //
+    // TRANSFER_SHADOW_CASTER(o)
+    //
+    o.pos = UnityObjectToClipPos(v.vertex);
+#if !defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+    o.pos = UnityApplyLinearShadowBias(o.pos);
+#endif  // !defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)
 
     float4 projPos = ComputeNonStereoScreenPos(o.pos);
     COMPUTE_EYEDEPTH(projPos.z);
