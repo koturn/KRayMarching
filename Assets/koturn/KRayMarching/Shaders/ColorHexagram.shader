@@ -124,9 +124,9 @@ Shader "koturn/KRayMarching/ColorHexagram"
         #include "include/alt/AltUnityStandardUtils.cginc"
         #include "AutoLight.cginc"
 
-#ifdef _USE_FAST_INVTRIFUNC_ON
-        #define MATH_REPLACE_TO_FAST_INVTRIFUNC
-#endif  // _USE_FAST_INVTRIFUNC_ON
+        #ifdef _USE_FAST_INVTRIFUNC_ON
+        #    define MATH_REPLACE_TO_FAST_INVTRIFUNC
+        #endif  // _USE_FAST_INVTRIFUNC_ON
         #include "include/Math.cginc"
         #include "include/Utils.cginc"
         #include "include/LightingUtils.cginc"
@@ -141,10 +141,10 @@ Shader "koturn/KRayMarching/ColorHexagram"
         {
             //! Output color of the pixel.
             half4 color : SV_Target;
-#ifndef _NODEPTH_ON
+        #ifndef _NODEPTH_ON
             //! Depth of the pixel.
             float depth : SV_Depth;
-#endif  // !defined(_NODEPTH_ON)
+        #endif  // !defined(_NODEPTH_ON)
         };
 
         /*!
@@ -206,33 +206,33 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
             const float3 rayOrigin = fi.rayOrigin;
             const float3 rayDir = normalize(fi.rayDirVec);
-#ifdef _ASSUMEINSIDE_ON
+        #ifdef _ASSUMEINSIDE_ON
             const float initRayLength = isFacing(fi) ? length(fi.fragPos - rayOrigin) : 0.0;
             const float maxRayLength = isFacing(fi) ? _MaxRayLength : length(fi.rayDirVec);
-#else
+        #else
             const float initRayLength = 0.0;
             const float maxRayLength = _MaxRayLength;
-#endif  // defined(_ASSUMEINSIDE_ON)
+        #endif  // defined(_ASSUMEINSIDE_ON)
 
             const rmout ro = rayMarch(rayOrigin, rayDir, initRayLength, maxRayLength);
             if (!ro.isHit) {
                 discard;
             }
 
-#ifdef _CALCSPACE_WORLD
+        #ifdef _CALCSPACE_WORLD
             const float3 worldFinalPos = rayOrigin + rayDir * ro.rayLength;
             const float3 worldNormal = getNormal(worldFinalPos);
-#else
+        #else
             const float3 localFinalPos = rayOrigin + rayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
             const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
-#endif  // defined(_CALCSPACE_WORLD)
+        #endif  // defined(_CALCSPACE_WORLD)
 
-#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+        #if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
             const float4 lmap = fi.lmap;
-#else
+        #else
             const float4 lmap = float4(0.0, 0.0, 0.0, 0.0);
-#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+        #endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
 
             _SpecColor *= ro.color.a;
             const half4 color = calcLighting(
@@ -246,9 +246,9 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
             fout fo;
             fo.color = applyFog(projPos.z, color);
-#ifndef _NODEPTH_ON
+        #ifndef _NODEPTH_ON
             fo.depth = getDepth(projPos);
-#endif  // !defined(_NODEPTH_ON)
+        #endif  // !defined(_NODEPTH_ON)
 
             return fo;
         }
@@ -265,13 +265,13 @@ Shader "koturn/KRayMarching/ColorHexagram"
          */
         rmout rayMarch(float3 rayOrigin, float3 rayDir, float initRayLength, float maxRayLength)
         {
-#if defined(UNITY_PASS_FORWARDBASE)
+        #if defined(UNITY_PASS_FORWARDBASE)
             const int maxLoop = _MaxLoop;
-#elif defined(UNITY_PASS_FORWARDADD)
+        #elif defined(UNITY_PASS_FORWARDADD)
             const int maxLoop = _MaxLoopForwardAdd;
-#elif defined(UNITY_PASS_SHADOWCASTER)
+        #elif defined(UNITY_PASS_SHADOWCASTER)
             const int maxLoop = _MaxLoopShadowCaster;
-#endif  // defined(UNITY_PASS_FORWARDBASE)
+        #endif  // defined(UNITY_PASS_FORWARDBASE)
 
             const float3 rcpScales = rcp(_Scales);
             const float3 rayDirVec = rayDir * rcpScales;
@@ -377,19 +377,19 @@ Shader "koturn/KRayMarching/ColorHexagram"
          */
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
         {
-#if defined(_LIGHTING_UNITY_LAMBERT)
+        #if defined(_LIGHTING_UNITY_LAMBERT)
             return calcLightingUnityLambert(color, worldPos, worldNormal, atten, lmap);
-#elif defined(_LIGHTING_UNITY_BLINN_PHONG)
+        #elif defined(_LIGHTING_UNITY_BLINN_PHONG)
             return calcLightingUnityBlinnPhong(color, worldPos, worldNormal, atten, lmap);
-#elif defined(_LIGHTING_UNITY_STANDARD)
+        #elif defined(_LIGHTING_UNITY_STANDARD)
             return calcLightingUnityStandard(color, worldPos, worldNormal, atten, lmap);
-#elif defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
+        #elif defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
             return calcLightingUnityStandardSpecular(color, worldPos, worldNormal, atten, lmap);
-#elif defined(_LIGHTING_UNLIT)
+        #elif defined(_LIGHTING_UNLIT)
             return color;
-#else
+        #else
             return calcLightingCustom(color, worldPos, worldNormal, atten, lmap);
-#endif  // defined(_LIGHTING_LAMBERT)
+        #endif  // defined(_LIGHTING_LAMBERT)
         }
 
         /*!
@@ -462,7 +462,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
 
 
-#if defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
+            #if defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
             /*!
              * @brief Fragment shader function.
              * @param [in] fi  Input data from vertex shader
@@ -472,7 +472,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             {
                 return half4(0.0, 0.0, 0.0, 0.0);
             }
-#else
+            #else
             /*!
              * @brief Fragment shader function.
              * @param [in] fi  Input data from vertex shader
@@ -482,7 +482,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             {
                 return frag(fi);
             }
-#endif  // defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
+            #endif  // defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
             ENDCG
         }
 
@@ -503,21 +503,21 @@ Shader "koturn/KRayMarching/ColorHexagram"
             #pragma multi_compile_shadowcaster
 
 
-#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+            #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
             /*!
              * @brief Fragment shader function for ShadowCaster Pass.
              * @param [in] fi  Input data from vertex shader.
              * @return Depth of fragment.
              */
             float4 fragShadowCaster(v2f_raymarching_shadowcaster fi) : SV_Target
-#else
+            #else
             /*!
              * @brief Fragment shader function for ShadowCaster Pass.
              * @param [in] fi  Input data from vertex shader.
              * @return Depth of fragment.
              */
             fout fragShadowCaster(v2f_raymarching_shadowcaster fi)
-#endif
+            #endif
             {
                 UNITY_SETUP_INSTANCE_ID(fi);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
@@ -530,26 +530,26 @@ Shader "koturn/KRayMarching/ColorHexagram"
                     discard;
                 }
 
-#ifdef _CALCSPACE_WORLD
+            #ifdef _CALCSPACE_WORLD
                 const float3 worldFinalPos = rayOrigin + rayDir * ro.rayLength;
-#else
+            #else
                 const float3 localFinalPos = rayOrigin + rayDir * ro.rayLength;
                 const float3 worldFinalPos = objectToWorldPos(localFinalPos);
-#endif  // defined(_CALCSPACE_WORLD)
+            #endif  // defined(_CALCSPACE_WORLD)
 
-#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+            #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
                 fi.vec = worldFinalPos - _LightPositionRange.xyz;
                 SHADOW_CASTER_FRAGMENT(fi);
-#else
+            #else
                 const float depth = getDepth(UnityWorldToClipPos(worldFinalPos));
 
                 fout fo;
                 fo.color = depth.xxxx;
-#    ifndef _NODEPTH_ON
+            #    ifndef _NODEPTH_ON
                 fo.depth = depth;
-#    endif  // !defined(_NODEPTH_ON)
+            #    endif  // !defined(_NODEPTH_ON)
                 return fo;
-#endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+            #endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
             }
             ENDCG
         }  // ShadowCaster

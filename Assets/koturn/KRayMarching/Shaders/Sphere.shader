@@ -188,21 +188,21 @@ Shader "koturn/KRayMarching/Sphere"
         #include "include/SDF.cginc"
         #include "include/VertCommon.cginc"
 
-#if defined(UNITY_COMPILER_HLSL) \
-    || defined(SHADER_API_GLCORE) \
-    || defined(SHADER_API_GLES3) \
-    || defined(SHADER_API_METAL) \
-    || defined(SHADER_API_VULKAN) \
-    || defined(SHADER_API_GLES) \
-    || defined(SHADER_API_D3D11)
-        #pragma warning (default : 3200 3201 3202 3203 3204 3205 3206 3207 3208 3209)
-        #pragma warning (default : 3550 3551 3552 3553 3554 3555 3556 3557 3558 3559)
-        #pragma warning (default : 3560 3561 3562 3563 3564 3565 3566 3567 3568 3569)
-        #pragma warning (default : 3570 3571 3572 3573 3574 3575 3576 3577 3578 3579)
-        #pragma warning (default : 3580 3581 3582 3583 3584 3585 3586 3587 3588)
-        #pragma warning (default : 4700 4701 4702 4703 4704 4705 4706 4707 4708 4710)
-        #pragma warning (default : 4711 4712 4713 4714 4715 4716 4717)
-#endif
+        #if defined(UNITY_COMPILER_HLSL) \
+            || defined(SHADER_API_GLCORE) \
+            || defined(SHADER_API_GLES3) \
+            || defined(SHADER_API_METAL) \
+            || defined(SHADER_API_VULKAN) \
+            || defined(SHADER_API_GLES) \
+            || defined(SHADER_API_D3D11)
+        #    pragma warning (default : 3200 3201 3202 3203 3204 3205 3206 3207 3208 3209)
+        #    pragma warning (default : 3550 3551 3552 3553 3554 3555 3556 3557 3558 3559)
+        #    pragma warning (default : 3560 3561 3562 3563 3564 3565 3566 3567 3568 3569)
+        #    pragma warning (default : 3570 3571 3572 3573 3574 3575 3576 3577 3578 3579)
+        #    pragma warning (default : 3580 3581 3582 3583 3584 3585 3586 3587 3588)
+        #    pragma warning (default : 4700 4701 4702 4703 4704 4705 4706 4707 4708 4710)
+        #    pragma warning (default : 4711 4712 4713 4714 4715 4716 4717)
+        #endif
 
         /*!
          * @brief Output of fragment shader.
@@ -211,10 +211,10 @@ Shader "koturn/KRayMarching/Sphere"
         {
             //! Output color of the pixel.
             half4 color : SV_Target;
-#ifndef _NODEPTH_ON
+        #ifndef _NODEPTH_ON
             //! Depth of the pixel.
             float depth : SV_Depth;
-#endif  // !defined(_NODEPTH_ON)
+        #endif  // !defined(_NODEPTH_ON)
         };
 
         /*!
@@ -265,33 +265,33 @@ Shader "koturn/KRayMarching/Sphere"
 
             const float3 rayOrigin = fi.rayOrigin;
             const float3 rayDir = normalize(fi.rayDirVec);
-#ifdef _ASSUMEINSIDE_ON
+        #ifdef _ASSUMEINSIDE_ON
             const float initRayLength = isFacing(fi) ? length(fi.fragPos - rayOrigin) : 0.0;
             const float maxRayLength = isFacing(fi) ? _MaxRayLength : length(fi.rayDirVec);
-#else
+        #else
             const float initRayLength = 0.0;
             const float maxRayLength = _MaxRayLength;
-#endif  // defined(_ASSUMEINSIDE_ON)
+        #endif  // defined(_ASSUMEINSIDE_ON)
 
             const rmout ro = rayMarch(rayOrigin, rayDir, initRayLength, maxRayLength);
             if (!ro.isHit) {
                 discard;
             }
 
-#ifdef _CALCSPACE_WORLD
+        #ifdef _CALCSPACE_WORLD
             const float3 worldFinalPos = rayOrigin + rayDir * ro.rayLength;
             const float3 worldNormal = getNormal(worldFinalPos);
-#else
+        #else
             const float3 localFinalPos = rayOrigin + rayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
             const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
-#endif  // defined(_CALCSPACE_WORLD)
+        #endif  // defined(_CALCSPACE_WORLD)
 
-#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+        #if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
             const float4 lmap = fi.lmap;
-#else
+        #else
             const float4 lmap = float4(0.0, 0.0, 0.0, 0.0);
-#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+        #endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
 
             const half4 color = calcLighting(
                 _Color,
@@ -304,9 +304,9 @@ Shader "koturn/KRayMarching/Sphere"
 
             fout fo;
             fo.color = applyFog(projPos.z, color);
-#ifndef _NODEPTH_ON
+        #ifndef _NODEPTH_ON
             fo.depth = getDepth(projPos);
-#endif  // !defined(_NODEPTH_ON)
+        #endif  // !defined(_NODEPTH_ON)
 
             return fo;
         }
@@ -323,13 +323,13 @@ Shader "koturn/KRayMarching/Sphere"
          */
         rmout rayMarch(float3 rayOrigin, float3 rayDir, float initRayLength, float maxRayLength)
         {
-#if defined(UNITY_PASS_FORWARDBASE)
+        #if defined(UNITY_PASS_FORWARDBASE)
             const int maxLoop = _MaxLoop;
-#elif defined(UNITY_PASS_FORWARDADD)
+        #elif defined(UNITY_PASS_FORWARDADD)
             const int maxLoop = _MaxLoopForwardAdd;
-#elif defined(UNITY_PASS_SHADOWCASTER)
+        #elif defined(UNITY_PASS_SHADOWCASTER)
             const int maxLoop = _MaxLoopShadowCaster;
-#endif  // defined(UNITY_PASS_FORWARDBASE)
+        #endif  // defined(UNITY_PASS_FORWARDBASE)
 
             const float3 rcpScales = rcp(_Scales);
             const float3 rayDirVec = rayDir * rcpScales;
@@ -371,47 +371,47 @@ Shader "koturn/KRayMarching/Sphere"
          */
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
         {
-#if defined(_LIGHTING_UNITY_LAMBERT)
+        #if defined(_LIGHTING_UNITY_LAMBERT)
             return calcLightingUnityLambert(color, worldPos, worldNormal, atten, lmap);
-#elif defined(_LIGHTING_UNITY_BLINN_PHONG)
+        #elif defined(_LIGHTING_UNITY_BLINN_PHONG)
             return calcLightingUnityBlinnPhong(color, worldPos, worldNormal, atten, lmap);
-#elif defined(_LIGHTING_UNITY_STANDARD)
+        #elif defined(_LIGHTING_UNITY_STANDARD)
             return calcLightingUnityStandard(color, worldPos, worldNormal, atten, lmap);
-#elif defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
+        #elif defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
             return calcLightingUnityStandardSpecular(color, worldPos, worldNormal, atten, lmap);
-#elif defined(_LIGHTING_UNLIT)
+        #elif defined(_LIGHTING_UNLIT)
             return color;
-#else
+        #else
             const float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos);
             const float3 worldLightDir = normalizedWorldSpaceLightDir(worldPos);
             const fixed3 lightCol = _LightColor0.rgb * atten;
 
             // Lambertian reflectance.
             const float nDotL = dot(worldNormal, worldLightDir);
-#    if defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
+        #    if defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
             const half3 diffuse = lightCol * sq(nDotL * 0.5 + 0.5);
-#    elif defined(_DIFFUSEMODE_HALF_LAMBERT)
+        #    elif defined(_DIFFUSEMODE_HALF_LAMBERT)
             const half3 diffuse = lightCol * (nDotL * 0.5 + 0.5);
-#    elif defined(_DIFFUSEMODE_LAMBERT)
+        #    elif defined(_DIFFUSEMODE_LAMBERT)
             const half3 diffuse = lightCol * max(0.0, nDotL);
-#    else
+        #    else
             const half3 diffuse = half3(1.0, 1.0, 1.0);
-#    endif  // defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
+        #    endif  // defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
 
             // Specular reflection.
-#    ifdef _SPECULARMODE_HALF_VECTOR
+        #    ifdef _SPECULARMODE_HALF_VECTOR
             const half3 specular = pow(max(0.0, dot(normalize(worldLightDir + worldViewDir), worldNormal)), _SpecPower) * _SpecColor.xyz * lightCol;
-#    elif _SPECULARMODE_ORIGINAL
+        #    elif _SPECULARMODE_ORIGINAL
             const half3 specular = pow(max(0.0, dot(reflect(-worldLightDir, worldNormal), worldViewDir)), _SpecPower) * _SpecColor.xyz * lightCol;
-#    else
+        #    else
             const half3 specular = half3(0.0, 0.0, 0.0);
-#    endif  // _SPECULARMODE_HALF_VECTOR
+        #    endif  // _SPECULARMODE_HALF_VECTOR
 
             // Ambient color.
-#    if defined(_AMBIENTMODE_SH)
+        #    if defined(_AMBIENTMODE_SH)
             const half3 ambient = ShadeSHPerPixel(
                 worldNormal,
-#       ifdef VERTEXLIGHT_ON
+        #       ifdef VERTEXLIGHT_ON
                 Shade4PointLights(
                     unity_4LightPosX0,
                     unity_4LightPosY0,
@@ -423,26 +423,26 @@ Shader "koturn/KRayMarching/Sphere"
                     unity_4LightAtten0,
                     worldPos,
                     worldNormal),
-#       else
+        #       else
                 half3(0.0, 0.0, 0.0),
-#       endif  // VERTEXLIGHT_ON
+        #       endif  // VERTEXLIGHT_ON
                 worldPos);
-#    elif defined(_AMBIENTMODE_LEGACY)
+        #    elif defined(_AMBIENTMODE_LEGACY)
             const half3 ambient = UNITY_LIGHTMODEL_AMBIENT.rgb;
-#    else
+        #    else
             const half3 ambient = half3(0.0, 0.0, 0.0);
-#    endif  // defined(_AMBIENTMODE_SH)
+        #    endif  // defined(_AMBIENTMODE_SH)
 
-#    ifdef _ENABLE_REFLECTION_PROBE
+        #    ifdef _ENABLE_REFLECTION_PROBE
             const half4 refColor = getRefProbeColor(
                 UnityObjectToWorldNormal(reflect(-worldViewDir, worldNormal)),
                 worldPos);
             const half4 outColor = half4((diffuse + ambient) * lerp(_Color.rgb, refColor.rgb, _Glossiness) + specular, _Color.a);
-#    else
+        #    else
             const half4 outColor = half4((diffuse + ambient) * _Color.rgb + specular, _Color.a);
-#    endif  // _ENABLE_REFLECTION_PROBE
+        #    endif  // _ENABLE_REFLECTION_PROBE
             return outColor;
-#endif  // defined(_LIGHTING_LAMBERT)
+        #endif  // defined(_LIGHTING_LAMBERT)
         }
 
         /*!
@@ -458,8 +458,8 @@ Shader "koturn/KRayMarching/Sphere"
 
             const float3 rcpScales = rcp(_Scales);
 
-#if defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
-#    if defined(_NORMALCALCOPTIMIZE_UNROLL)
+        #if defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
+        #    if defined(_NORMALCALCOPTIMIZE_UNROLL)
             static const float2 d = float2(h, 0.0);
 
             p *= rcpScales;
@@ -469,7 +469,7 @@ Shader "koturn/KRayMarching/Sphere"
                     map(p + d.xyy * rcpScales) - map(p - d.xyy * rcpScales),
                     map(p + d.yxy * rcpScales) - map(p - d.yxy * rcpScales),
                     map(p + d.yyx * rcpScales) - map(p - d.yyx * rcpScales)));
-#    elif defined(_NORMALCALCOPTIMIZE_LOOP)
+        #    elif defined(_NORMALCALCOPTIMIZE_LOOP)
             static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
             static const float3 k[6] = {s.xzz, s.yzz, s.zxz, s.zyz, s.zzx, s.zzy};
 
@@ -481,7 +481,7 @@ Shader "koturn/KRayMarching/Sphere"
             }
 
             return normalize(normal);
-#    else
+        #    else
             float3 normal = float3(0.0, 0.0, 0.0);
 
             UNITY_LOOP
@@ -493,9 +493,9 @@ Shader "koturn/KRayMarching/Sphere"
             }
 
             return normalize(normal);
-#    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
-#elif defined(_NORMALCALCMETHOD_FORWARD_DIFFERENCE)
-#    if defined(_NORMALCALCOPTIMIZE_UNROLL)
+        #    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
+        #elif defined(_NORMALCALCMETHOD_FORWARD_DIFFERENCE)
+        #    if defined(_NORMALCALCOPTIMIZE_UNROLL)
             static const float2 d = float2(h, 0.0);
 
             p *= rcpScales;
@@ -507,7 +507,7 @@ Shader "koturn/KRayMarching/Sphere"
                     map(p + d.xyy * rcpScales) - mp,
                     map(p + d.yxy * rcpScales) - mp,
                     map(p + d.yyx * rcpScales) - mp));
-#    elif defined(_NORMALCALCOPTIMIZE_LOOP)
+        #    elif defined(_NORMALCALCOPTIMIZE_LOOP)
             static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
             static const float3 k[3] = {s.xzz, s.zxz, s.zzx};
 
@@ -519,7 +519,7 @@ Shader "koturn/KRayMarching/Sphere"
             }
 
             return normalize(normal);
-#    else
+        #    else
             float3 normal = (-map(p * rcpScales)).xxx;
 
             UNITY_LOOP
@@ -529,9 +529,9 @@ Shader "koturn/KRayMarching/Sphere"
             }
 
             return normalize(normal);
-#    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
-#else
-#    if defined(_NORMALCALCOPTIMIZE_UNROLL)
+        #    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
+        #else
+        #    if defined(_NORMALCALCOPTIMIZE_UNROLL)
             static const float2 s = float2(1.0, -1.0);
             static const float2 hs = h * s;
 
@@ -542,7 +542,7 @@ Shader "koturn/KRayMarching/Sphere"
                     + s.yxy * map(p + hs.yxy * rcpScales)
                     + s.yyx * map(p + hs.yyx * rcpScales)
                     + map(p + hs.xxx * rcpScales).xxx);
-#    elif defined(_NORMALCALCOPTIMIZE_LOOP)
+        #    elif defined(_NORMALCALCOPTIMIZE_LOOP)
             static const float2 s = float2(1.0, -1.0);  // used only for generating k.
             static const float3 k[4] = {s.xyy, s.yxy, s.yyx, s.xxx};
 
@@ -554,7 +554,7 @@ Shader "koturn/KRayMarching/Sphere"
             }
 
             return normalize(normal);
-#    else
+        #    else
             float3 normal = float3(0.0, 0.0, 0.0);
 
             UNITY_LOOP
@@ -564,8 +564,8 @@ Shader "koturn/KRayMarching/Sphere"
             }
 
             return normalize(normal);
-#    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
-#endif  // defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
+        #    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
+        #endif  // defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
         }
         ENDCG
 
@@ -631,7 +631,7 @@ Shader "koturn/KRayMarching/Sphere"
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
 
 
-#if defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
+            #if defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
             /*!
              * @brief Fragment shader function.
              * @param [in] fi  Input data from vertex shader
@@ -641,7 +641,7 @@ Shader "koturn/KRayMarching/Sphere"
             {
                 return half4(0.0, 0.0, 0.0, 0.0);
             }
-#else
+            #else
             /*!
              * @brief Fragment shader function.
              * @param [in] fi  Input data from vertex shader
@@ -651,7 +651,7 @@ Shader "koturn/KRayMarching/Sphere"
             {
                 return frag(fi);
             }
-#endif  // defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
+            #endif  // defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
             ENDCG
         }  // ForwardAdd
 
@@ -676,21 +676,21 @@ Shader "koturn/KRayMarching/Sphere"
             #pragma multi_compile_shadowcaster
 
 
-#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+            #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
             /*!
              * @brief Fragment shader function for ShadowCaster Pass.
              * @param [in] fi  Input data from vertex shader.
              * @return Depth of fragment.
              */
             float4 fragShadowCaster(v2f_raymarching_shadowcaster fi) : SV_Target
-#else
+            #else
             /*!
              * @brief Fragment shader function for ShadowCaster Pass.
              * @param [in] fi  Input data from vertex shader.
              * @return Depth of fragment.
              */
             fout fragShadowCaster(v2f_raymarching_shadowcaster fi)
-#endif
+            #endif
             {
                 UNITY_SETUP_INSTANCE_ID(fi);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
@@ -703,26 +703,26 @@ Shader "koturn/KRayMarching/Sphere"
                     discard;
                 }
 
-#ifdef _CALCSPACE_WORLD
+            #ifdef _CALCSPACE_WORLD
                 const float3 worldFinalPos = rayOrigin + rayDir * ro.rayLength;
-#else
+            #else
                 const float3 localFinalPos = rayOrigin + rayDir * ro.rayLength;
                 const float3 worldFinalPos = objectToWorldPos(localFinalPos);
-#endif  // defined(_CALCSPACE_WORLD)
+            #endif  // defined(_CALCSPACE_WORLD)
 
-#if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+            #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
                 fi.vec = worldFinalPos - _LightPositionRange.xyz;
                 SHADOW_CASTER_FRAGMENT(fi);
-#else
+            #else
                 const float depth = getDepth(UnityWorldToClipPos(worldFinalPos));
 
                 fout fo;
                 fo.color = depth.xxxx;
-#    ifndef _NODEPTH_ON
+            #    ifndef _NODEPTH_ON
                 fo.depth = depth;
-#    endif  // !defined(_NODEPTH_ON)
+            #    endif  // !defined(_NODEPTH_ON)
                 return fo;
-#endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
+            #endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
             }
             ENDCG
         }  // ShadowCaster
