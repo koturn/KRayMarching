@@ -69,10 +69,10 @@ struct v2f_raymarching_forward
 #endif  // defined(_ASSUMEINSIDE_ON)
     //! Lighting and shadowing parameters.
     UNITY_LIGHTING_COORDS(3, 4)
-#if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#if defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
     //! Light map UV coordinates.
     float4 lmap : TEXCOORD5;
-#endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
+#endif  // defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
     //! instanceID for single pass instanced rendering.
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
@@ -107,6 +107,8 @@ struct v2f_raymarching_shadowcaster
 };
 
 
+float4 getLightMap(v2f_raymarching_forward fi);
+fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos);
 bool isFacing(v2f_raymarching_forward fi);
 bool isFacing(v2f_raymarching_shadowcaster fi);
 bool isFacing(face_t facing);
@@ -215,6 +217,22 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 #endif  // defined(_CALCSPACE_WORLD)
 
     return o;
+}
+
+
+/*!
+ * @brief Get light map coordinate.
+ *
+ * @param [in] fi  Input data of fragment shader function.
+ * @return Light map coordinate.
+ */
+float4 getLightMap(v2f_raymarching_forward fi)
+{
+#if defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
+    return fi.lmap;
+#else
+    return float4(0.0, 0.0, 0.0, 0.0);
+#endif  // defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
 }
 
 

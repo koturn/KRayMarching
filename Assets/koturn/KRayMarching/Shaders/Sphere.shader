@@ -280,18 +280,12 @@ Shader "koturn/KRayMarching/Sphere"
             const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
         #endif  // defined(_CALCSPACE_WORLD)
 
-        #if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
-            const float4 lmap = fi.lmap;
-        #else
-            const float4 lmap = float4(0.0, 0.0, 0.0, 0.0);
-        #endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
-
             const half4 color = calcLighting(
                 _Color,
                 worldFinalPos,
                 worldNormal,
                 getLightAttenRayMarching(fi, worldFinalPos),
-                lmap);
+                getLightMap(fi));
 
             const float4 projPos = UnityWorldToClipPos(worldFinalPos);
 

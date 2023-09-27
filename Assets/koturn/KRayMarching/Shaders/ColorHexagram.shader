@@ -114,6 +114,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
 
         CGINCLUDE
+        #pragma target 3.0
         #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
         #pragma shader_feature_local _ _ASSUMEINSIDE_ON
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
@@ -227,19 +228,13 @@ Shader "koturn/KRayMarching/ColorHexagram"
             const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
         #endif  // defined(_CALCSPACE_WORLD)
 
-        #if defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
-            const float4 lmap = fi.lmap;
-        #else
-            const float4 lmap = float4(0.0, 0.0, 0.0, 0.0);
-        #endif  // defined(LIGHTMAP_ON) && defined(DYNAMICLIGHTMAP_ON)
-
             _SpecColor *= ro.color.a;
             const half4 color = calcLighting(
                 half4(ro.color.xyz, 1.0),
                 worldFinalPos,
                 worldNormal,
                 getLightAttenRayMarching(fi, worldFinalPos),
-                lmap);
+                getLightMap(fi));
 
             const float4 projPos = UnityWorldToClipPos(worldFinalPos);
 
@@ -430,7 +425,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
             ZWrite On
 
             CGPROGRAM
-            #pragma target 3.0
             #pragma vertex vertRayMarchingForward
             #pragma fragment frag
 
@@ -453,7 +447,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
             ZWrite Off
 
             CGPROGRAM
-            #pragma target 3.0
             #pragma vertex vertRayMarchingForward
             #pragma fragment fragForwardAdd
 
