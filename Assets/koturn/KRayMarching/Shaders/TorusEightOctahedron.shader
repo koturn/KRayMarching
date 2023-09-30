@@ -26,8 +26,10 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         [KeywordEnum(Object, World)]
         _CalcSpace ("Calculation space", Int) = 0
 
-        [Toggle(_ASSUMEINSIDE_ON)]
+        [KeywordEnum(None, Simple, Max Length)]
         _AssumeInside ("Assume render target is inside object", Int) = 0
+
+        _MaxInsideLength ("Maximum length inside an object", Float) = 1000.0
 
         [Toggle(_NODEPTH_ON)]
         _NoDepth ("Disable depth ouput", Int) = 0
@@ -112,7 +114,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         CGINCLUDE
         #pragma target 3.0
         #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
-        #pragma shader_feature_local _ _ASSUMEINSIDE_ON
+        #pragma shader_feature_local _ASSUMEINSIDE_NONE _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
 
@@ -177,6 +179,8 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         uniform float3 _Scales;
         //! Marching Factor.
         uniform float _MarchingFactor;
+        //! Maximum length inside an object.
+        uniform float _MaxInsideLength;
 
         //! Radius of Torus.
         uniform float _TorusRadius;
@@ -200,15 +204,9 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
 
             const float3 rayOrigin = fi.rayOrigin;
             const float3 rayDir = normalize(fi.rayDirVec);
-        #ifdef _ASSUMEINSIDE_ON
-            const float initRayLength = isFacing(fi) ? length(fi.fragPos - rayOrigin) : 0.0;
-            const float maxRayLength = isFacing(fi) ? _MaxRayLength : length(fi.rayDirVec);
-        #else
-            const float initRayLength = 0.0;
-            const float maxRayLength = _MaxRayLength;
-        #endif  // defined(_ASSUMEINSIDE_ON)
+            const float2 initAndMaxRayLength = calcInitAndMaxRayLength(fi, rayDir, _MaxRayLength, _MaxInsideLength);
 
-            const rmout ro = rayMarch(rayOrigin, rayDir, initRayLength, maxRayLength);
+            const rmout ro = rayMarch(rayOrigin, rayDir, initAndMaxRayLength.x, initAndMaxRayLength.y);
             if (!ro.isHit) {
                 discard;
             }

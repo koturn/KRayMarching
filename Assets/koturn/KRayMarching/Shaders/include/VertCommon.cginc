@@ -12,7 +12,7 @@ typedef bool face_t;
 #    define FACE_SEMANTICS SV_IsFrontFace
 #endif  // defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES) || defined(SHADER_API_D3D9)
 
-#if defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
+#if defined(SHADER_STAGE_FRAGMENT) && (defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH))
 #    define IS_FACING(fi)  isFacing(fi.facing)
 #else
 #    define IS_FACING(fi)  true
@@ -63,10 +63,10 @@ struct v2f_raymarching_forward
     nointerpolation float3 rayOrigin : TEXCOORD0;
     //! Unnormalized ray direction in object/world space.
     float3 rayDirVec : TEXCOORD1;
-#ifdef _ASSUMEINSIDE_ON
+#if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
     //! Fragment position in object/world space.
     float3 fragPos : TEXCOORD2;
-#endif  // defined(_ASSUMEINSIDE_ON)
+#endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
     //! Lighting and shadowing parameters.
     UNITY_LIGHTING_COORDS(3, 4)
 #if defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
@@ -77,10 +77,10 @@ struct v2f_raymarching_forward
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
     UNITY_VERTEX_OUTPUT_STEREO
-#if defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
+#if defined(SHADER_STAGE_FRAGMENT) && (defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH))
     //! Facing variable (fixed or bool).
     face_t facing : FACE_SEMANTICS;
-#endif  // defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
+#endif  // defined(SHADER_STAGE_FRAGMENT) && (defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH))
 };
 
 
@@ -111,6 +111,7 @@ struct v2f_raymarching_shadowcaster
 };
 
 
+float2 calcInitAndMaxRayLength(v2f_raymarching_forward fi, float3 rayDir, float3 maxRayLength, float3 maxInsideLength);
 float4 getLightMap(v2f_raymarching_forward fi);
 fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos);
 bool isFacing(v2f_raymarching_forward fi);
@@ -162,9 +163,9 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
 
     o.rayDirVec = vertPos - o.rayOrigin;
 
-#ifdef _ASSUMEINSIDE_ON
+#if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
     o.fragPos = vertPos;
-#endif  // defined(_ASSUMEINSIDE_ON)
+#endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
 
 #ifdef LIGHTMAP_ON
     o.lmap.xy = v.texcoord1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
@@ -231,6 +232,36 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 
 
 /*!
+ * Calculate initial and maximum ray length.
+ * @param [in] fi  Input data of fragment shader function.
+ * @param [in] rayDir  Direction of the ray.
+ * @param [in] maxRayLength  Maximum ray length.
+ * @param [in] maxInsideLength  Maximum length inside an object.
+ * @return Intial and recalculated maximum ray length.
+ */
+float2 calcInitAndMaxRayLength(v2f_raymarching_forward fi, float3 rayDir, float3 maxRayLength, float3 maxInsideLength)
+{
+#if defined(_ASSUMEINSIDE_MAX_LENGTH)
+#    ifdef _CALCSPACE_WORLD
+    maxInsideLength = maxInsideLength / length(mul((float3x3)unity_WorldToObject, rayDir));
+#    endif  // defined(_CALCSPACE_WORLD)
+    const float rayDirVecLength = length(fi.rayDirVec);
+    const float3 startPos = fi.fragPos - (isFacing(fi) ? float3(0.0, 0.0, 0.0) : min(rayDirVecLength, maxInsideLength) * rayDir);
+    const float initRayLength = length(startPos - fi.rayOrigin);
+    const float recalcedMaxRayLength = min(maxRayLength, rayDirVecLength + (isFacing(fi) ? maxInsideLength : 0.0));
+#elif defined(_ASSUMEINSIDE_SIMPLE)
+    const float initRayLength = isFacing(fi) ? length(fi.fragPos - fi.rayOrigin) : 0.0;
+    const float recalcedMaxRayLength = isFacing(fi) ? maxRayLength : length(fi.rayDirVec);
+#else
+    const float initRayLength = 0.0;
+    const float recalcedMaxRayLength = maxRayLength;
+#endif  // defined(_ASSUMEINSIDE_MAX_LENGTH)
+
+    return float2(initRayLength, recalcedMaxRayLength);
+}
+
+
+/*!
  * @brief Get light map coordinate.
  *
  * @param [in] fi  Input data of fragment shader function.
@@ -269,7 +300,7 @@ bool isFacing(v2f_raymarching_forward fi)
 {
 #if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
     return true;
-#elif defined(SHADER_STAGE_FRAGMENT) && defined(_ASSUMEINSIDE_ON)
+#elif defined(SHADER_STAGE_FRAGMENT) && (defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH))
     return isFacing(fi.facing);
 #else
     return true;

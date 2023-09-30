@@ -65,6 +65,10 @@ namespace Koturn.KRayMarching.Inspectors
         /// </summary>
         private const string PropNameAssumeInside = "_AssumeInside";
         /// <summary>
+        /// Property name of "_MaxInsideLength".
+        /// </summary>
+        private const string PropNameMaxInsideLength = "_MaxInsideLength";
+        /// <summary>
         /// Property name of "_Lighting".
         /// </summary>
         private const string PropNameLighting = "_Lighting";
@@ -241,8 +245,12 @@ namespace Koturn.KRayMarching.Inspectors
                 ShaderProperty(me, mps, PropNameScales, false);
                 ShaderProperty(me, mps, PropNameMarchingFactor, false);
                 ShaderProperty(me, mps, PropNameCalcSpace, false);
+                var mpAssumeInside = FindAndDrawProperty(me, mps, PropNameAssumeInside, false);
+                using (new EditorGUI.DisabledScope(mpAssumeInside != null && mpAssumeInside.floatValue != 2.0f))
+                {
+                    ShaderProperty(me, mps, PropNameMaxInsideLength, false);
+                }
                 ShaderProperty(me, mps, PropNameNoDepth, false);
-                ShaderProperty(me, mps, PropNameAssumeInside, false);
             }
 
             EditorGUILayout.LabelField("Lighting Parameters", EditorStyles.boldLabel);
