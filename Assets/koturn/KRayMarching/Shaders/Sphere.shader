@@ -64,7 +64,8 @@ Shader "koturn/KRayMarching/Sphere"
         _NormalCalcOptimize ("Normal Calculation Optimization", Int) = 1
 
 
-        [Enum(UnityEngine.Rendering.CullMode)]
+        // [Enum(UnityEngine.Rendering.CullMode)]
+        [KeywordEnum(Off, Front, Back)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front
 
         [HideInInspector]
@@ -166,6 +167,7 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
         #pragma shader_feature_local _ASSUMEINSIDE_NONE _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
+        #pragma shader_feature_local_fragment _CULL_OFF _CULL_FRONT _CULL_BACK
         #pragma shader_feature_local_fragment _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT _DIFFUSEMODE_DISABLE
         #pragma shader_feature_local_fragment _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR _SPECULARMODE_DISABLE
         #pragma shader_feature_local_fragment _AMBIENTMODE_LEGACY _AMBIENTMODE_SH _AMBIENTMODE_DISABLE

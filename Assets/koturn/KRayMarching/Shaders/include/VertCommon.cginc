@@ -77,10 +77,13 @@ struct v2f_raymarching_forward
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
     UNITY_VERTEX_OUTPUT_STEREO
-#if defined(SHADER_STAGE_FRAGMENT) && (defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH))
+#if defined(SHADER_STAGE_FRAGMENT) \
+    && !defined(_CULL_FRONT) \
+    && !defined(_CULL_BACK) \
+    && (defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH))
     //! Facing variable (fixed or bool).
     face_t facing : FACE_SEMANTICS;
-#endif  // defined(SHADER_STAGE_FRAGMENT) && (defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH))
+#endif
 };
 
 
@@ -104,7 +107,9 @@ struct v2f_raymarching_shadowcaster
     UNITY_VERTEX_INPUT_INSTANCE_ID
     //! stereoTargetEyeIndex for single pass instanced rendering.
     UNITY_VERTEX_OUTPUT_STEREO
-#if defined(SHADER_STAGE_FRAGMENT)
+#if defined(SHADER_STAGE_FRAGMENT) \
+    && !defined(_CULL_FRONT) \
+    && !defined(_CULL_BACK)
     //! Facing variable (fixed or bool).
     face_t facing : FACE_SEMANTICS;
 #endif  // defined(SHADER_STAGE_FRAGMENT)
@@ -298,11 +303,17 @@ fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos)
  */
 bool isFacing(v2f_raymarching_forward fi)
 {
-#if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#if defined(_CULL_FRONT)
+    return false;
+#elif defined(_CULL_BACK)
+    return true;
+#elif defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+    // Unused dummy value.
     return true;
 #elif defined(SHADER_STAGE_FRAGMENT) && (defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH))
     return isFacing(fi.facing);
 #else
+    // Unused dummy value.
     return true;
 #endif  // defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
 }
@@ -315,7 +326,11 @@ bool isFacing(v2f_raymarching_forward fi)
  */
 bool isFacing(v2f_raymarching_shadowcaster fi)
 {
-#if defined(SHADER_STAGE_FRAGMENT)
+#if defined(_CULL_FRONT)
+    return false;
+#elif defined(_CULL_BACK)
+    return true;
+#elif defined(SHADER_STAGE_FRAGMENT)
     return isFacing(fi.facing);
 #else
     return true;
