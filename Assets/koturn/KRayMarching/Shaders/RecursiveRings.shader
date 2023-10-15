@@ -511,15 +511,33 @@ Shader "koturn/KRayMarching/RecursiveRings"
             #endif  // defined(_CALCSPACE_WORLD)
 
             #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-                fi.vec = worldFinalPos - _LightPositionRange.xyz;
-                SHADOW_CASTER_FRAGMENT(fi);
-            #else
-                const float depth = getDepth(UnityWorldToClipPos(worldFinalPos));
-
+                //
+                // TRANSFER_SHADOW_CASTER_NORMALOFFSET
+                //
+                const float3 vec = worldFinalPos - _LightPositionRange.xyz;
+                //
+                // SHADOW_CASTER_FRAGMENT
+                //
                 fout fo;
-                fo.color = depth.xxxx;
+                fo.color = UnityEncodeCubeShadowDepth((length(vec) + unity_LightShadowBias.x) * _LightPositionRange.w);
+                return fo;
+            #else
+                //
+                // SHADOW_CASTER_FRAGMENT
+                //
+                fout fo;
+                fo.color = float4(0.0, 0.0, 0.0, 0.0);
             #    ifndef _NODEPTH_ON
-                fo.depth = depth;
+                //
+                // TRANSFER_SHADOW_CASTER_NORMALOFFSET
+                //
+            #        ifdef _CALCSPACE_WORLD
+                const float3 worldNormal = getNormal(worldFinalPos);
+            #        else
+                const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
+            #        endif  // defined(_CALCSPACE_WORLD)
+                const float4 clipPos = UnityApplyLinearShadowBias(UnityWorldToClipPos(applyShadowBias(worldFinalPos, worldNormal)));
+                fo.depth = getDepth(clipPos);
             #    endif  // !defined(_NODEPTH_ON)
                 return fo;
             #endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)

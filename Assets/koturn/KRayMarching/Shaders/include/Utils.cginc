@@ -10,6 +10,7 @@ float3 worldToObjectPos(float4 worldPos);
 float3 objectToWorldPos(float3 localPos);
 float3 normalizedWorldSpaceViewDir(float3 worldPos);
 float3 normalizedWorldSpaceLightDir(float3 worldPos);
+float3 applyShadowBias(float3 worldPos, float3 worldNormal);
 float3 getCameraRight();
 float3 getCameraUp();
 float3 getCameraForward();
@@ -85,6 +86,32 @@ float3 normalizedWorldSpaceLightDir(float3 worldPos)
 #else
     return normalize(_WorldSpaceLightPos0.xyz - worldPos);
 #endif
+}
+
+
+/*!
+ * @brief Correct world space position with ShadowBias.
+ *
+ * @param [in] worldPos  World space position.
+ * @param [in] worldNormal  World space normal.
+ * @return Corrected world space position.
+ */
+float3 applyShadowBias(float3 worldPos, float3 worldNormal)
+{
+    UNITY_BRANCH
+    if (unity_LightShadowBias.z != 0.0) {
+#    if defined(USING_LIGHT_MULTI_COMPILE) && defined(USING_DIRECTIONAL_LIGHT)
+        const float3 worldLightDir = UnityWorldSpaceLightDir(worldPos);
+#    else
+        const float3 worldLightDir = normalize(UnityWorldSpaceLightDir(worldPos));
+#    endif  // defined(USING_LIGHT_MULTI_COMPILE) && defined(USING_DIRECTIONAL_LIGHT)
+        const float shadowCos = dot(worldNormal, worldLightDir);
+        const float shadowSine = sqrt(1.0 - shadowCos * shadowCos);
+        const float normalBias = unity_LightShadowBias.z * shadowSine;
+        worldPos.xyz -= worldNormal * normalBias;
+    }
+
+    return worldPos;
 }
 
 
