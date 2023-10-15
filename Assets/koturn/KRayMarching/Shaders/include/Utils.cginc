@@ -16,9 +16,10 @@ float3 getCameraForward();
 float getCameraFocalLength();
 bool isCameraPerspective();
 bool isCameraOrthographic();
-float3 getCameraDir(float4 projPos);
-float3 getCameraDirVec(float4 projPos);
+float3 getCameraDir(float4 screenPos);
+float3 getCameraDirVec(float4 screenPos);
 half4 applyFog(float fogFactor, half4 color);
+float getDepth(float4 clipPos);
 half3 rgb2hsv(half3 rgb);
 half3 hsv2rgb(half3 hsv);
 half3 rgbAddHue(half3 rgb, half hue);
@@ -157,23 +158,23 @@ bool isCameraOrthographic()
 
 /*!
  * @brief Get camera direction from projected position.
- * @param [in] Projected position.
+ * @param [in] Screen space position.
  * @return Camera direction in world space.
  */
-float3 getCameraDir(float4 projPos)
+float3 getCameraDir(float4 screenPos)
 {
-    return normalize(getCameraDirVec(projPos));
+    return normalize(getCameraDirVec(screenPos));
 }
 
 
 /*!
  * @brief Get unnormalized camera direction vector from projected position.
- * @param [in] Projected position.
+ * @param [in] Screen space position.
  * @return Camera direction in world space.
  */
-float3 getCameraDirVec(float4 projPos)
+float3 getCameraDirVec(float4 screenPos)
 {
-    float2 sp = (projPos.xy / projPos.w) * 2.0 - 1.0;
+    float2 sp = (screenPos.xy / screenPos.w) * 2.0 - 1.0;
 
     // Following code is equivalent to: sp.x *= _ScreenParams.x / _ScreenParams.y;
     sp.x *= _ScreenParams.x * _ScreenParams.w - _ScreenParams.x;
@@ -203,12 +204,12 @@ half4 applyFog(float fogFactor, half4 color)
 
 /*!
  * @brief Get depth from projected position.
- * @param [in] projPos  Projected position.
+ * @param [in] clipPos  Clip space position.
  * @return Depth value.
  */
-float getDepth(float4 projPos)
+float getDepth(float4 clipPos)
 {
-    const float depth = projPos.z / projPos.w;
+    const float depth = clipPos.z / clipPos.w;
 #if defined(SHADER_API_GLCORE) \
     || defined(SHADER_API_OPENGL) \
     || defined(SHADER_API_GLES) \

@@ -204,26 +204,26 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
     o.pos = UnityApplyLinearShadowBias(o.pos);
 #endif  // !defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)
 
-    float4 projPos = ComputeNonStereoScreenPos(o.pos);
-    COMPUTE_EYEDEPTH(projPos.z);
+    float4 screenPos = ComputeNonStereoScreenPos(o.pos);
+    COMPUTE_EYEDEPTH(screenPos.z);
 
 #ifdef _CALCSPACE_WORLD
     o.rayOrigin = objectToWorldPos(v.vertex.xyz);
 #    if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-    o.rayDirVec = getCameraDirVec(projPos);
+    o.rayDirVec = getCameraDirVec(screenPos);
 #    else
     o.rayDirVec = isCameraOrthographic() ? getCameraForward()
         : abs(unity_LightShadowBias.x) < 1.0e-5 ? (o.rayOrigin - _WorldSpaceCameraPos)
-        : getCameraDirVec(projPos);
+        : getCameraDirVec(screenPos);
 #    endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
 #else
     o.rayOrigin = v.vertex.xyz;
 #    if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-    o.rayDirVec = mul((float3x3)unity_WorldToObject, getCameraDirVec(projPos));
+    o.rayDirVec = mul((float3x3)unity_WorldToObject, getCameraDirVec(screenPos));
 #    else
     o.rayDirVec = isCameraOrthographic() ? mul((float3x3)unity_WorldToObject, getCameraForward())
         : abs(unity_LightShadowBias.x) < 1.0e-5 ? (v.vertex.xyz - worldToObjectPos(_WorldSpaceCameraPos))
-        : mul((float3x3)unity_WorldToObject, getCameraDirVec(projPos));
+        : mul((float3x3)unity_WorldToObject, getCameraDirVec(screenPos));
 #    endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
 #endif  // defined(_CALCSPACE_WORLD)
 

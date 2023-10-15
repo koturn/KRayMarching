@@ -248,12 +248,12 @@ Shader "koturn/KRayMarching/RecursiveRings"
                 getLightAttenRayMarching(fi, worldFinalPos),
                 getLightMap(fi));
 
-            const float4 projPos = UnityWorldToClipPos(worldFinalPos);
+            const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
 
             fout fo;
-            fo.color = applyFog(projPos.z, color);
+            fo.color = applyFog(clipPos.z, color);
         #ifndef _NODEPTH_ON
-            fo.depth = getDepth(projPos);
+            fo.depth = getDepth(clipPos);
         #endif  // !defined(_NODEPTH_ON)
 
             return fo;
