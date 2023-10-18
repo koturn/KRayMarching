@@ -170,7 +170,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
         };
 
 
-        rmout rayMarch(float3 rayOrigin, float3 rayDir, float initRayLength, float maxRayLength);
+        rmout rayMarch(rayparam rp);
         float map(float3 p, out float hueOffset);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float3 getNormal(float3 p);
@@ -223,20 +223,17 @@ Shader "koturn/KRayMarching/RecursiveRings"
             UNITY_SETUP_INSTANCE_ID(fi);
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
 
-            const float3 rayOrigin = fi.rayOrigin;
-            const float3 rayDir = normalize(fi.rayDirVec);
-            const float2 initAndMaxRayLength = calcInitAndMaxRayLength(fi, rayDir, _MaxRayLength, _MaxInsideLength);
-
-            const rmout ro = rayMarch(rayOrigin, rayDir, initAndMaxRayLength.x, initAndMaxRayLength.y);
+            const rayparam rp = calcRayParam(fi, _MaxRayLength, _MaxInsideLength);
+            const rmout ro = rayMarch(rp);
             if (!ro.isHit) {
                 discard;
             }
 
         #ifdef _CALCSPACE_WORLD
-            const float3 worldFinalPos = rayOrigin + rayDir * ro.rayLength;
+            const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
             const float3 worldNormal = getNormal(worldFinalPos);
         #else
-            const float3 localFinalPos = rayOrigin + rayDir * ro.rayLength;
+            const float3 localFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
             const float3 worldFinalPos = objectToWorldPos(localFinalPos);
             const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
         #endif  // defined(_CALCSPACE_WORLD)
@@ -263,13 +260,10 @@ Shader "koturn/KRayMarching/RecursiveRings"
         /*!
          * @brief Execute ray marching.
          *
-         * @param [in] rayOrigin  Origin of the ray.
-         * @param [in] rayDir  Direction of the ray.
-         * @param [in] initRayLength  Initial ray length.
-         * @param [in] maxRayLength  Maximum length of the ray.
+         * @param [in] rp  Ray parameters.
          * @return Result of the ray marching.
          */
-        rmout rayMarch(float3 rayOrigin, float3 rayDir, float initRayLength, float maxRayLength)
+        rmout rayMarch(rayparam rp)
         {
         #if defined(UNITY_PASS_FORWARDBASE)
             const int maxLoop = _MaxLoop;
@@ -280,18 +274,18 @@ Shader "koturn/KRayMarching/RecursiveRings"
         #endif  // defined(UNITY_PASS_FORWARDBASE)
 
             const float3 rcpScales = rcp(_Scales);
-            const float3 rayDirVec = rayDir * rcpScales;
+            const float3 rayDirVec = rp.rayDir * rcpScales;
             const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
 
             rmout ro;
-            ro.rayLength = initRayLength;
+            ro.rayLength = rp.initRayLength;
             ro.isHit = false;
 
             float hueOffset;
 
             // Loop of Ray Marching.
-            for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > maxRayLength) ? 0x7fffffff : i + 1) {
-                const float d = map((rayOrigin + rayDir * ro.rayLength) * rcpScales, /* out */ hueOffset);
+            for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > rp.maxRayLength) ? 0x7fffffff : i + 1) {
+                const float d = map((rp.rayOrigin + rp.rayDir * ro.rayLength) * rcpScales, /* out */ hueOffset);
                 ro.rayLength += d * marchingFactor;
                 ro.isHit = d < _MinRayLength;
             }
@@ -495,18 +489,16 @@ Shader "koturn/KRayMarching/RecursiveRings"
                 UNITY_SETUP_INSTANCE_ID(fi);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
 
-                const float3 rayOrigin = fi.rayOrigin;
-                const float3 rayDir = normalize(isFacing(fi) ? fi.rayDirVec : -fi.rayDirVec);
-
-                const rmout ro = rayMarch(rayOrigin, rayDir, 0.0, _MaxRayLength);
+                const rayparam rp = calcRayParam(fi, _MaxRayLength, _MaxInsideLength);
+                const rmout ro = rayMarch(rp);
                 if (!ro.isHit) {
                     discard;
                 }
 
             #ifdef _CALCSPACE_WORLD
-                const float3 worldFinalPos = rayOrigin + rayDir * ro.rayLength;
+                const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
             #else
-                const float3 localFinalPos = rayOrigin + rayDir * ro.rayLength;
+                const float3 localFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
                 const float3 worldFinalPos = objectToWorldPos(localFinalPos);
             #endif  // defined(_CALCSPACE_WORLD)
 

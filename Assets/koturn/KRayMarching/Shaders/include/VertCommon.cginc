@@ -116,7 +116,24 @@ struct v2f_raymarching_shadowcaster
 };
 
 
-float2 calcInitAndMaxRayLength(v2f_raymarching_forward fi, float3 rayDir, float3 maxRayLength, float3 maxInsideLength);
+/*!
+ * @brief Ray parameters for Raymarching.
+ */
+struct rayparam
+{
+    //! Object/World space ray origin.
+    float3 rayOrigin;
+    //! Object/World space ray direction.
+    float3 rayDir;
+    //! Object/World space initial ray length.
+    float initRayLength;
+    //! Object/World space maximum ray length.
+    float maxRayLength;
+};
+
+
+rayparam calcRayParam(v2f_raymarching_forward fi, float3 rayDir, float3 maxRayLength, float3 maxInsideLength);
+rayparam calcRayParam(v2f_raymarching_shadowcaster fi, float3 maxRayLength, float3 maxInsideLength);
 float4 getLightMap(v2f_raymarching_forward fi);
 fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos);
 bool isFacing(v2f_raymarching_forward fi);
@@ -237,32 +254,58 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 
 
 /*!
- * Calculate initial and maximum ray length.
+ * Calculate raymarching parameters for ForwardBase/ForwardAdd pass.
  * @param [in] fi  Input data of fragment shader function.
- * @param [in] rayDir  Direction of the ray.
  * @param [in] maxRayLength  Maximum ray length.
  * @param [in] maxInsideLength  Maximum length inside an object.
- * @return Intial and recalculated maximum ray length.
+ * @return Ray parameters.
  */
-float2 calcInitAndMaxRayLength(v2f_raymarching_forward fi, float3 rayDir, float3 maxRayLength, float3 maxInsideLength)
+rayparam calcRayParam(v2f_raymarching_forward fi, float3 maxRayLength, float3 maxInsideLength)
 {
+    rayparam rp;
+
+    rp.rayOrigin = fi.rayOrigin;
+    rp.rayDir = normalize(fi.rayDirVec);
+
+    const bool isFace = isFacing(fi);
+
 #if defined(_ASSUMEINSIDE_MAX_LENGTH)
 #    ifdef _CALCSPACE_WORLD
-    maxInsideLength = maxInsideLength / length(mul((float3x3)unity_WorldToObject, rayDir));
+    maxInsideLength = maxInsideLength / length(mul((float3x3)unity_WorldToObject, rp.rayDir));
 #    endif  // defined(_CALCSPACE_WORLD)
     const float rayDirVecLength = length(fi.rayDirVec);
-    const float3 startPos = fi.fragPos - (isFacing(fi) ? float3(0.0, 0.0, 0.0) : min(rayDirVecLength, maxInsideLength) * rayDir);
-    const float initRayLength = length(startPos - fi.rayOrigin);
-    const float recalcedMaxRayLength = min(maxRayLength, rayDirVecLength + (isFacing(fi) ? maxInsideLength : 0.0));
+    const float3 startPos = fi.fragPos - (isFace ? float3(0.0, 0.0, 0.0) : min(rayDirVecLength, maxInsideLength) * rp.rayDir);
+    rp.initRayLength = length(startPos - fi.rayOrigin);
+    rp.maxRayLength = min(maxRayLength, rayDirVecLength + (isFace ? maxInsideLength : 0.0));
 #elif defined(_ASSUMEINSIDE_SIMPLE)
-    const float initRayLength = isFacing(fi) ? length(fi.fragPos - fi.rayOrigin) : 0.0;
-    const float recalcedMaxRayLength = isFacing(fi) ? maxRayLength : length(fi.rayDirVec);
+    rp.initRayLength = isFace ? length(fi.fragPos - fi.rayOrigin) : 0.0;
+    rp.maxRayLength = isFace ? maxRayLength : length(fi.rayDirVec);
 #else
-    const float initRayLength = 0.0;
-    const float recalcedMaxRayLength = maxRayLength;
+    rp.initRayLength = 0.0;
+    rp.maxRayLength = maxRayLength;
 #endif  // defined(_ASSUMEINSIDE_MAX_LENGTH)
 
-    return float2(initRayLength, recalcedMaxRayLength);
+    return rp;
+}
+
+
+/*!
+ * Calculate raymarching parameters for ShadowCaster pass.
+ * @param [in] fi  Input data of fragment shader function.
+ * @param [in] maxRayLength  Maximum ray length.
+ * @param [in] maxInsideLength  Maximum length inside an object.
+ * @return Ray parameters.
+ */
+rayparam calcRayParam(v2f_raymarching_shadowcaster fi, float3 maxRayLength, float3 maxInsideLength)
+{
+    rayparam rp;
+
+    rp.rayOrigin = fi.rayOrigin;
+    rp.rayDir = normalize(isFacing(fi) ? fi.rayDirVec : -fi.rayDirVec);
+    rp.initRayLength = 0.0;
+    rp.maxRayLength = maxRayLength;
+
+    return rp;
 }
 
 
