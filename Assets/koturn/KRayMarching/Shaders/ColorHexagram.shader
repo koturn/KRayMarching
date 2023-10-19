@@ -16,6 +16,10 @@ Shader "koturn/KRayMarching/ColorHexagram"
         _MaxLoopShadowCaster ("Maximum loop count for ShadowCaster", Range(8, 1024)) = 64
 
         _MinRayLength ("Minimum length of the ray", Float) = 0.001
+
+        [KeywordEnum(Use Property Value, Far Clip, Depth Texture)]
+        _MaxRayLengthMode ("Maximum ray length mode", Int) = 1
+
         _MaxRayLength ("Maximum length of the ray", Float) = 1000.0
 
         [Vector3]
@@ -118,6 +122,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         CGINCLUDE
         #pragma target 3.0
         #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
+        #pragma shader_feature_local _MAXRAYLENGTHMODE_USE_PROPERTY_VALUE _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ASSUMEINSIDE_NONE _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON

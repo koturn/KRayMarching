@@ -4,6 +4,9 @@
 #include "Utils.cginc"
 
 
+UNITY_DECLARE_DEPTH_TEXTURE(_CameraDepthTexture);
+
+
 #if defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES) || defined(SHADER_API_D3D9)
 typedef fixed face_t;
 #    define FACE_SEMANTICS VFACE
@@ -67,11 +70,14 @@ struct v2f_raymarching_forward
     //! Fragment position in object/world space.
     float3 fragPos : TEXCOORD2;
 #endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#ifdef _MAXRAYLENGTHMODE_DEPTH_TEXTURE
+    float4 screenPos : TEXCOORD3;
+#endif  // defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
     //! Lighting and shadowing parameters.
-    UNITY_LIGHTING_COORDS(3, 4)
+    UNITY_LIGHTING_COORDS(4, 5)
 #if defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
     //! Light map UV coordinates.
-    float4 lmap : TEXCOORD5;
+    float4 lmap : TEXCOORD6;
 #endif  // defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
     //! instanceID for single pass instanced rendering.
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -200,6 +206,11 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
 
     o.pos = UnityObjectToClipPos(v.vertex);
 
+#ifdef _MAXRAYLENGTHMODE_DEPTH_TEXTURE
+    o.screenPos = ComputeNonStereoScreenPos(o.pos);
+    COMPUTE_EYEDEPTH(o.screenPos.z);
+#endif  // defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
+
     return o;
 }
 #endif  // defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
@@ -267,6 +278,22 @@ rayparam calcRayParam(v2f_raymarching_forward fi, float3 maxRayLength, float3 ma
     rp.rayOrigin = fi.rayOrigin;
     rp.rayDir = normalize(fi.rayDirVec);
 
+#if !defined(_MAXRAYLENGTHMODE_FAR_CLIP) && !defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
+    const float clipRayLength = maxRayLength;
+#else
+#    ifdef _CALCSPACE_WORLD
+    const float rdv = dot(rp.rayDir, getCameraForward());
+#    else
+    const float rdv = dot(mul((float3x3)unity_ObjectToWorld, rp.rayDir), getCameraForward());
+#    endif  // defined(_CALCSPACE_WORLD)
+#    ifdef _MAXRAYLENGTHMODE_FAR_CLIP
+    const float linearDepth = _ProjectionParams.z;
+#    else
+    const float linearDepth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, fi.screenPos));
+#    endif  // defined(_MAXRAYLENGTHMODE_FAR_CLIP)
+    const float clipRayLength = linearDepth / rdv;
+#endif
+
     const bool isFace = isFacing(fi);
 
 #if defined(_ASSUMEINSIDE_MAX_LENGTH)
@@ -276,13 +303,13 @@ rayparam calcRayParam(v2f_raymarching_forward fi, float3 maxRayLength, float3 ma
     const float rayDirVecLength = length(fi.rayDirVec);
     const float3 startPos = fi.fragPos - (isFace ? float3(0.0, 0.0, 0.0) : min(rayDirVecLength, maxInsideLength) * rp.rayDir);
     rp.initRayLength = length(startPos - fi.rayOrigin);
-    rp.maxRayLength = min(maxRayLength, rayDirVecLength + (isFace ? maxInsideLength : 0.0));
+    rp.maxRayLength = min(clipRayLength, rayDirVecLength + (isFace ? maxInsideLength : 0.0));
 #elif defined(_ASSUMEINSIDE_SIMPLE)
     rp.initRayLength = isFace ? length(fi.fragPos - fi.rayOrigin) : 0.0;
-    rp.maxRayLength = isFace ? maxRayLength : length(fi.rayDirVec);
+    rp.maxRayLength = isFace ? clipRayLength : length(fi.rayDirVec);
 #else
     rp.initRayLength = 0.0;
-    rp.maxRayLength = maxRayLength;
+    rp.maxRayLength = clipRayLength;
 #endif  // defined(_ASSUMEINSIDE_MAX_LENGTH)
 
     return rp;
