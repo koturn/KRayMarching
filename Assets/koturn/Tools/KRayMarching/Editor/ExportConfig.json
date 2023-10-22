@@ -1,0 +1,9 @@
+{
+  "Packages": [
+    {
+      "UnityPackageName": "KRayMarching.unitypackage",
+      "VpmName": "jp.koturn.kraymarching",
+      "AssetPath": "Assets/koturn/KRayMarching"
+    }
+  ]
+}
