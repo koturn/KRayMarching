@@ -25,8 +25,6 @@ Shader "koturn/KRayMarching/Sphere"
         [Vector3]
         _Scales ("Scale vector", Vector) = (1.0, 1.0, 1.0, 1.0)
 
-        _MarchingFactor ("Marching Factor", Range(0.5, 1.0)) = 1.0
-
         [KeywordEnum(Object, World)]
         _CalcSpace ("Calculation space", Int) = 0
 
@@ -34,6 +32,17 @@ Shader "koturn/KRayMarching/Sphere"
         _AssumeInside ("Assume render target is inside object", Int) = 0
 
         _MaxInsideLength ("Maximum length inside an object", Float) = 1000.0
+
+        [KeywordEnum(Normal, Over Relax, Accelaration, Auto Relax)]
+        _StepMethod ("Marching step method", Int) = 0
+
+        _MarchingFactor ("Marching Factor", Range(0.5, 1.0)) = 1.0
+
+        _OverRelaxFactor ("Coefficient of Over Relaxation Sphere Tracing", Range(1.0, 2.0)) = 1.2
+
+        _AccelarationFactor ("Coefficient of Accelarating Sphere Tracing", Range(0.0, 1.0)) = 0.8
+
+        _AutoRelaxFactor ("Coefficient of Automatic Step Size Relaxation", Range(0.0, 1.0)) = 0.8
 
         [Toggle(_NODEPTH_ON)]
         _NoDepth ("Disable depth ouput", Int) = 0
@@ -171,6 +180,7 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
         #pragma shader_feature_local _MAXRAYLENGTHMODE_USE_PROPERTY_VALUE _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ASSUMEINSIDE_NONE _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
+        #pragma shader_feature_local_fragment _STEPMETHOD_NORMAL _STEPMETHOD_OVER_RELAX _STEPMETHOD_ACCELARATION _STEPMETHOD_AUTO_RELAX
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _CULL_OFF _CULL_FRONT _CULL_BACK
         #pragma shader_feature_local_fragment _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT _DIFFUSEMODE_DISABLE
@@ -251,10 +261,16 @@ Shader "koturn/KRayMarching/Sphere"
         uniform float _MaxRayLength;
         //! Scale vector.
         uniform float3 _Scales;
-        //! Marching Factor.
-        uniform float _MarchingFactor;
         //! Maximum length inside an object.
         uniform float _MaxInsideLength;
+        //! Marching Factor.
+        uniform float _MarchingFactor;
+        //! Coefficient of Over Relaxation Sphere Tracing.
+        uniform float _OverRelaxFactor;
+        //! Coefficient of Accelarating Sphere Tracing.
+        uniform float _AccelarationFactor;
+        //! Coefficient of Automatic Step Size Relaxation.
+        uniform float _AutoRelaxFactor;
 
 
         /*!
@@ -318,19 +334,73 @@ Shader "koturn/KRayMarching/Sphere"
         #endif  // defined(UNITY_PASS_FORWARDBASE)
 
             const float3 rcpScales = rcp(_Scales);
+            const float3 rayOrigin = rp.rayOrigin * rcpScales;
             const float3 rayDirVec = rp.rayDir * rcpScales;
-            const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
 
             rmout ro;
             ro.rayLength = rp.initRayLength;
             ro.isHit = false;
 
-            // Marching Loop.
-            for (int i = 0; i < maxLoop; i = (ro.isHit || ro.rayLength > rp.maxRayLength) ? 0x7fffffff : i + 1) {
-                const float d = map((rp.rayOrigin + rp.rayDir * ro.rayLength) * rcpScales);
-                ro.rayLength += d * marchingFactor;
-                ro.isHit = d < _MinRayLength;
+        #if defined(_STEPMETHOD_OVER_RELAX)
+            const float marchingFactor = rsqrt(dot(rayDirVec, rayDirVec));
+            float r = asfloat(0x7f800000);  // +inf
+            float d = 0.0;
+            for (int i = 0; abs(r) >= _MinRayLength && ro.rayLength < rp.maxRayLength && i < maxLoop; i++) {
+                const float nextRayLength = ro.rayLength + d * marchingFactor;
+                const float nextR = map(rayOrigin + rayDirVec * nextRayLength);
+                if (d <= r + abs(nextR)) {
+                    d = _OverRelaxFactor * nextR;
+                    ro.rayLength = nextRayLength;
+                    r = nextR;
+                } else {
+                    d = r;
+                }
             }
+            ro.isHit = abs(r) < _MinRayLength;
+        #elif defined(_STEPMETHOD_ACCELARATION)
+            const float marchingFactor = rsqrt(dot(rayDirVec, rayDirVec));
+            float r = map(rayOrigin + rayDirVec * ro.rayLength);
+            float d = r;
+            for (int i = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && i < maxLoop; i++) {
+                const float nextRayLength = ro.rayLength + d * marchingFactor;
+                const float nextR = map(rayOrigin + rayDirVec * nextRayLength);
+                if (d <= r + abs(nextR)) {
+                    const float deltaR = nextR - r;
+                    d = nextR + _AccelarationFactor * nextR * ((d + deltaR) / (d - deltaR));
+                    ro.rayLength = nextRayLength;
+                    r = nextR;
+                } else {
+                    d = r;
+                }
+            }
+            ro.isHit = abs(r) < _MinRayLength;
+        #elif defined(_STEPMETHOD_AUTO_RELAX)
+            const float marchingFactor = rsqrt(dot(rayDirVec, rayDirVec));
+            float r = map(rayOrigin + rayDirVec * ro.rayLength);
+            float d = r;
+            float m = -1.0;
+            for (i = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && i < maxLoop; i++) {
+                const float nextRayLength = ro.rayLength + d * marchingFactor;
+                const float nextR = map(rayOrigin + rayDirVec * nextRayLength);
+                if (d <= r + abs(nextR)) {
+                    m = lerp(m, (nextR - r) / d, _AutoRelaxFactor);
+                    ro.rayLength = nextRayLength;
+                    r = nextR;
+                } else {
+                    m = -1.0;
+                }
+                d = 2.0 * r / (1.0 - m);
+            }
+            ro.isHit = r < _MinRayLength;
+        #else  // Assume: _STEPMETHOD_NORMAL
+            const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
+            float d = asfloat(0x7f800000);  // +inf
+            for (int i = 0; d >= _MinRayLength && ro.rayLength < rp.maxRayLength && i < maxLoop; i++) {
+                d = map(rayOrigin + rayDirVec * ro.rayLength);
+                ro.rayLength += d * marchingFactor;
+            }
+            ro.isHit = d < _MinRayLength;
+        #endif
 
             return ro;
         }

@@ -51,10 +51,6 @@ namespace Koturn.KRayMarching.Inspectors
         /// </summary>
         private const string PropNameScales = "_Scales";
         /// <summary>
-        /// Property name of "_MarchingFactor".
-        /// </summary>
-        private const string PropNameMarchingFactor = "_MarchingFactor";
-        /// <summary>
         /// Property name of "_CalcSpace".
         /// </summary>
         private const string PropNameCalcSpace = "_CalcSpace";
@@ -70,6 +66,26 @@ namespace Koturn.KRayMarching.Inspectors
         /// Property name of "_MaxInsideLength".
         /// </summary>
         private const string PropNameMaxInsideLength = "_MaxInsideLength";
+        /// <summary>
+        /// Property name of "_StepMethod".
+        /// </summary>
+        private const string PropNameStepMethod = "_StepMethod";
+        /// <summary>
+        /// Property name of "_MarchingFactor".
+        /// </summary>
+        private const string PropNameMarchingFactor = "_MarchingFactor";
+        /// <summary>
+        /// Property name of "_OverRelaxFactor".
+        /// </summary>
+        private const string PropNameOverRelaxFactor = "_OverRelaxFactor";
+        /// <summary>
+        /// Property name of "_AccelationFactor".
+        /// </summary>
+        private const string PropNameAccelarationFactor = "_AccelarationFactor";
+        /// <summary>
+        /// Property name of "_AutoRelaxFactor".
+        /// </summary>
+        private const string PropNameAutoRelaxFactor = "_AutoRelaxFactor";
         /// <summary>
         /// Property name of "_Lighting".
         /// </summary>
@@ -294,13 +310,35 @@ namespace Koturn.KRayMarching.Inspectors
                 ShaderProperty(me, mps, PropNameMaxRayLengthMode, false);
                 ShaderProperty(me, mps, PropNameMaxRayLength, false);
                 ShaderProperty(me, mps, PropNameScales, false);
-                ShaderProperty(me, mps, PropNameMarchingFactor, false);
                 ShaderProperty(me, mps, PropNameCalcSpace, false);
                 var mpAssumeInside = FindAndDrawProperty(me, mps, PropNameAssumeInside, false);
                 using (new EditorGUI.DisabledScope(mpAssumeInside != null && mpAssumeInside.floatValue != 2.0f))
                 {
                     ShaderProperty(me, mps, PropNameMaxInsideLength, false);
                 }
+
+                var mpStepMethod = FindAndDrawProperty(me, mps, PropNameStepMethod, false);
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    var stepMethodIndex = mpStepMethod == null ? 0 : (int)mpStepMethod.floatValue;
+                    using (new EditorGUI.DisabledScope(stepMethodIndex != 0))
+                    {
+                        ShaderProperty(me, mps, PropNameMarchingFactor, false);
+                    }
+                    using (new EditorGUI.DisabledScope(stepMethodIndex != 1))
+                    {
+                        ShaderProperty(me, mps, PropNameOverRelaxFactor, false);
+                    }
+                    using (new EditorGUI.DisabledScope(stepMethodIndex != 2))
+                    {
+                        ShaderProperty(me, mps, PropNameAccelarationFactor, false);
+                    }
+                    using (new EditorGUI.DisabledScope(stepMethodIndex != 3))
+                    {
+                        ShaderProperty(me, mps, PropNameAutoRelaxFactor, false);
+                    }
+                }
+
                 ShaderProperty(me, mps, PropNameNoDepth, false);
             }
 
