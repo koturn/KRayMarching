@@ -87,6 +87,18 @@ namespace Koturn.KRayMarching.Inspectors
         /// </summary>
         private const string PropNameAutoRelaxFactor = "_AutoRelaxFactor";
         /// <summary>
+        /// Property name of "_DebugView".
+        /// </summary>
+        private const string PropNameDebugView = "_DebugView";
+        /// <summary>
+        /// Property name of "_DebugStepDiv".
+        /// </summary>
+        private const string PropNameDebugStepDiv = "_DebugStepDiv";
+        /// <summary>
+        /// Property name of "_DebugRayLengthDiv".
+        /// </summary>
+        private const string PropNameDebugRayLengthDiv = "_DebugRayLengthDiv";
+        /// <summary>
         /// Property name of "_Lighting".
         /// </summary>
         private const string PropNameLighting = "_Lighting";
@@ -340,6 +352,20 @@ namespace Koturn.KRayMarching.Inspectors
                 }
 
                 ShaderProperty(me, mps, PropNameNoDepth, false);
+
+                var mpDebugView = FindAndDrawProperty(me, mps, PropNameDebugView, false);
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    var debugViewIndex = mpDebugView == null ? 0 : (int)mpDebugView.floatValue;
+                    using (new EditorGUI.DisabledScope(debugViewIndex != 1))
+                    {
+                        ShaderProperty(me, mps, PropNameDebugStepDiv, false);
+                    }
+                    using (new EditorGUI.DisabledScope(debugViewIndex != 2))
+                    {
+                        ShaderProperty(me, mps, PropNameDebugRayLengthDiv, false);
+                    }
+                }
             }
 
             EditorGUILayout.LabelField("Lighting Parameters", EditorStyles.boldLabel);

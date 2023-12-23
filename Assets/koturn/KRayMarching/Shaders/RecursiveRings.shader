@@ -47,6 +47,14 @@ Shader "koturn/KRayMarching/RecursiveRings"
         [Toggle(_NODEPTH_ON)]
         _NoDepth ("Disable depth ouput", Int) = 0
 
+        [KeywordEnum(None, Step, Ray Length)]
+        _DebugView ("Debug view mode", Int) = 0
+
+        [IntRange]
+        _DebugStepDiv ("Divisor of number of ray steps for debug view", Range(1, 1024)) = 24
+
+        _DebugRayLengthDiv ("Divisor of ray length for debug view", Range(0.01, 1000.0)) = 5.0
+
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
         _Lighting ("Lighting method", Int) = 2
 
@@ -178,6 +186,8 @@ Shader "koturn/KRayMarching/RecursiveRings"
         {
             //! Length of the ray.
             float rayLength;
+            //! Number of ray steps.
+            int rayStep;
             //! A flag whether the ray collided with an object or not.
             bool isHit;
             //! Color of the object.
@@ -213,6 +223,10 @@ Shader "koturn/KRayMarching/RecursiveRings"
         uniform float _AccelarationFactor;
         //! Coefficient of Automatic Step Size Relaxation.
         uniform float _AutoRelaxFactor;
+        //! Divisor of number of ray steps for debug view.
+        uniform float _DebugStepDiv;
+        //! Divisor of ray length for debug view.
+        uniform float _DebugRayLengthDiv;
 
         //! Base color of torus.
         uniform float3 _TorusBaseColor;
@@ -246,9 +260,11 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
             const rayparam rp = calcRayParam(fi, _MaxRayLength, _MaxInsideLength);
             const rmout ro = rayMarch(rp);
+        #if !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
             if (!ro.isHit) {
                 discard;
             }
+        #endif  // !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
 
         #ifdef _CALCSPACE_WORLD
             const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
@@ -259,17 +275,22 @@ Shader "koturn/KRayMarching/RecursiveRings"
             const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
         #endif  // defined(_CALCSPACE_WORLD)
 
+            const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
+
+            fout fo;
+        #if defined(_DEBUGVIEW_STEP)
+            fo.color = float4((ro.rayStep / _DebugStepDiv).xxx, 1.0);
+        #elif defined(_DEBUGVIEW_RAY_LENGTH)
+            fo.color = float4((ro.rayLength / _DebugRayLengthDiv).xxx, 1.0);
+        #else
             const half4 color = calcLighting(
                 half4(ro.color, 1.0),
                 worldFinalPos,
                 worldNormal,
                 getLightAttenRayMarching(fi, worldFinalPos),
                 getLightMap(fi));
-
-            const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
-
-            fout fo;
             fo.color = applyFog(clipPos.z, color);
+        #endif
         #ifndef _NODEPTH_ON
             fo.depth = getDepth(clipPos);
         #endif  // !defined(_NODEPTH_ON)
@@ -308,7 +329,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
             const float marchingFactor = rsqrt(dot(rayDirVec, rayDirVec));
             float r = asfloat(0x7f800000);  // +inf
             float d = 0.0;
-            for (int i = 0; abs(r) >= _MinRayLength && ro.rayLength < rp.maxRayLength && i < maxLoop; i++) {
+            for (ro.rayStep = 0; abs(r) >= _MinRayLength && ro.rayLength < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
                 const float nextRayLength = ro.rayLength + d * marchingFactor;
                 const float nextR = map(rayOrigin + rayDirVec * nextRayLength, /* out */ hueOffset);
                 if (d <= r + abs(nextR)) {
@@ -324,7 +345,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
             const float marchingFactor = rsqrt(dot(rayDirVec, rayDirVec));
             float r = map(rayOrigin + rayDirVec * ro.rayLength, /* out */ hueOffset);
             float d = r;
-            for (int i = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && i < maxLoop; i++) {
+            for (ro.rayStep = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
                 const float nextRayLength = ro.rayLength + d * marchingFactor;
                 const float nextR = map(rayOrigin + rayDirVec * nextRayLength, /* out */ hueOffset);
                 if (d <= r + abs(nextR)) {
@@ -342,7 +363,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
             float r = map(rayOrigin + rayDirVec * ro.rayLength, /* out */ hueOffset);
             float d = r;
             float m = -1.0;
-            for (i = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && i < maxLoop; i++) {
+            for (ro.rayStep = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
                 const float nextRayLength = ro.rayLength + d * marchingFactor;
                 const float nextR = map(rayOrigin + rayDirVec * nextRayLength, /* out */ hueOffset);
                 if (d <= r + abs(nextR)) {
@@ -358,7 +379,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
         #else  // Assume: _STEPMETHOD_NORMAL
             const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
             float d = asfloat(0x7f800000);  // +inf
-            for (int i = 0; d >= _MinRayLength && ro.rayLength < rp.maxRayLength && i < maxLoop; i++) {
+            for (ro.rayStep = 0; d >= _MinRayLength && ro.rayLength < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
                 d = map(rayOrigin + rayDirVec * ro.rayLength, /* out */ hueOffset);
                 ro.rayLength += d * marchingFactor;
             }
@@ -478,6 +499,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
             #pragma multi_compile_fwdbase
             #pragma multi_compile_fog
+            #pragma shader_feature_local_fragment _DEBUGVIEW_NONE _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
             ENDCG
         }
@@ -501,10 +523,11 @@ Shader "koturn/KRayMarching/RecursiveRings"
             #pragma multi_compile_fwdadd_fullshadows
             #pragma multi_compile_fog
             #pragma shader_feature_local _ _NOFORWARDADD_ON
+            #pragma shader_feature_local_fragment _DEBUGVIEW_NONE _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
 
 
-            #if defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
+            #if defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
             /*!
              * @brief Fragment shader function.
              * @param [in] fi  Input data from vertex shader
@@ -524,7 +547,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
             {
                 return frag(fi);
             }
-            #endif  // defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT)
+            #endif  // defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
             ENDCG
         }
 

@@ -147,7 +147,7 @@ bool isFacing(v2f_raymarching_shadowcaster fi);
 bool isFacing(face_t facing);
 
 
-#if defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#if defined(UNITY_PASS_FORWARDADD) && defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
 #    if defined(UNITY_COMPILER_HLSL) \
         || defined(SHADER_API_GLCORE) \
         || defined(SHADER_API_GLES3) \
@@ -213,7 +213,7 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
 
     return o;
 }
-#endif  // defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#endif  // defined(UNITY_PASS_FORWARDADD) && defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
 
 /*!
  * @brief Vertex shader function for ShadowCaster Pass.
