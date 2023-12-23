@@ -31,7 +31,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
         [KeywordEnum(None, Simple, Max Length)]
         _AssumeInside ("Assume render target is inside object", Int) = 0
 
-        _MaxInsideLength ("Maximum length inside an object", Float) = 1000.0
+        _MaxInsideLength ("Maximum length inside an object", Float) = 1.7321
 
         [KeywordEnum(Normal, Over Relax, Accelaration, Auto Relax)]
         _StepMethod ("Marching step method", Int) = 0
