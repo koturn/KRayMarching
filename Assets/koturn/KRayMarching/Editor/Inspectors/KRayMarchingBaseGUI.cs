@@ -324,6 +324,7 @@ namespace Koturn.KRayMarching.Inspectors
                 ShaderProperty(me, mps, PropNameScales, false);
                 ShaderProperty(me, mps, PropNameCalcSpace, false);
                 var mpAssumeInside = FindAndDrawProperty(me, mps, PropNameAssumeInside, false);
+                using (new EditorGUI.IndentLevelScope())
                 using (new EditorGUI.DisabledScope(mpAssumeInside != null && mpAssumeInside.floatValue != 2.0f))
                 {
                     ShaderProperty(me, mps, PropNameMaxInsideLength, false);
@@ -385,6 +386,7 @@ namespace Koturn.KRayMarching.Inspectors
                     isNeedGM = ToBool(mpEnableReflectionProbe.floatValue);
                 }
 
+                using (new EditorGUI.IndentLevelScope())
                 using (new EditorGUI.DisabledScope(lightingMethod == LightingMethod.UnityLambert || lightingMethod == LightingMethod.Unlit))
                 {
                     var isCustomLit = lightingMethod == LightingMethod.Custom;
