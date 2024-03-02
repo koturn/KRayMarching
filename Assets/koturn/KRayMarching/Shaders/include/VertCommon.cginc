@@ -62,22 +62,25 @@ struct v2f_raymarching_forward
 {
     //! Clip space position of the vertex.
     float4 pos : SV_POSITION;
-    //! Ray origin in object/world space.
-    nointerpolation float3 rayOrigin : TEXCOORD0;
-    //! Unnormalized ray direction in object/world space.
-    float3 rayDirVec : TEXCOORD1;
-#if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#if defined(_CALCSPACE_WORLD) || defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
     //! Fragment position in object/world space.
-    float3 fragPos : TEXCOORD2;
-#endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+    float3 fragPos : TEXCOORD0;
+#else
+    //! Unnormalized ray direction in object space.
+    float3 rayDirVec : TEXCOORD0;
+#endif  // defined(_CALCSPACE_WORLD) || defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#ifndef _CALCSPACE_WORLD
+    //! Ray origin in object/world space.
+    nointerpolation float3 rayOrigin : TEXCOORD1;
+#endif  // !defined(_CALCSPACE_WORLD)
 #ifdef _MAXRAYLENGTHMODE_DEPTH_TEXTURE
-    float4 screenPos : TEXCOORD3;
+    float4 screenPos : TEXCOORD2;
 #endif  // defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
     //! Lighting and shadowing parameters.
-    UNITY_LIGHTING_COORDS(4, 5)
+    UNITY_LIGHTING_COORDS(3, 4)
 #if defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
     //! Light map UV coordinates.
-    float4 lmap : TEXCOORD6;
+    float4 lmap : TEXCOORD5;
 #endif  // defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
     //! instanceID for single pass instanced rendering.
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -182,18 +185,16 @@ v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
 #ifdef _CALCSPACE_WORLD
-    const float3 vertPos = objectToWorldPos(v.vertex.xyz);
-    o.rayOrigin = _WorldSpaceCameraPos;
+    o.fragPos = objectToWorldPos(v.vertex.xyz);
 #else
     const float3 vertPos = v.vertex.xyz;
     o.rayOrigin = worldToObjectPos(_WorldSpaceCameraPos);
-#endif  // defined(_CALCSPACE_WORLD)
-
-    o.rayDirVec = vertPos - o.rayOrigin;
-
-#if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#    if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
     o.fragPos = vertPos;
-#endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#    else
+    o.rayDirVec = vertPos - o.rayOrigin;
+#    endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#endif  // defined(_CALCSPACE_WORLD)
 
 #ifdef LIGHTMAP_ON
     o.lmap.xy = v.texcoord1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
@@ -275,8 +276,18 @@ rayparam calcRayParam(v2f_raymarching_forward fi, float3 maxRayLength, float3 ma
 {
     rayparam rp;
 
+#ifdef _CALCSPACE_WORLD
+    rp.rayOrigin = _WorldSpaceCameraPos;
+    const float3 rayDirVec = fi.fragPos - _WorldSpaceCameraPos;
+#else
     rp.rayOrigin = fi.rayOrigin;
-    rp.rayDir = normalize(fi.rayDirVec);
+#    if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+    const float3 rayDirVec = fi.fragPos - fi.rayOrigin;
+#    else
+    const float3 rayDirVec = fi.rayDirVec;
+#    endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#endif  // defined(_CALCSPACE_WORLD)
+    rp.rayDir = normalize(rayDirVec);
 
 #if !defined(_MAXRAYLENGTHMODE_FAR_CLIP) && !defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
     const float clipRayLength = maxRayLength;
@@ -300,13 +311,13 @@ rayparam calcRayParam(v2f_raymarching_forward fi, float3 maxRayLength, float3 ma
 #    ifdef _CALCSPACE_WORLD
     maxInsideLength = maxInsideLength / length(mul((float3x3)unity_WorldToObject, rp.rayDir));
 #    endif  // defined(_CALCSPACE_WORLD)
-    const float rayDirVecLength = length(fi.rayDirVec);
+    const float rayDirVecLength = length(rayDirVec);
     const float3 startPos = fi.fragPos - (isFace ? float3(0.0, 0.0, 0.0) : min(rayDirVecLength, maxInsideLength) * rp.rayDir);
-    rp.initRayLength = length(startPos - fi.rayOrigin);
+    rp.initRayLength = length(startPos - rp.rayOrigin);
     rp.maxRayLength = min(clipRayLength, rayDirVecLength + (isFace ? maxInsideLength : 0.0));
 #elif defined(_ASSUMEINSIDE_SIMPLE)
-    rp.initRayLength = isFace ? length(fi.fragPos - fi.rayOrigin) : 0.0;
-    rp.maxRayLength = isFace ? clipRayLength : length(fi.rayDirVec);
+    rp.initRayLength = isFace ? length(fi.fragPos - rp.rayOrigin) : 0.0;
+    rp.maxRayLength = isFace ? clipRayLength : length(rayDirVec);
 #else
     rp.initRayLength = 0.0;
     rp.maxRayLength = clipRayLength;
