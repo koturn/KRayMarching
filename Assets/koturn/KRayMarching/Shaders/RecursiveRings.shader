@@ -3,8 +3,6 @@ Shader "koturn/KRayMarching/RecursiveRings"
     Properties
     {
         // Common Ray Marching Parameters.
-        [Toggle(_NOFORWARDADD_ON)]
-        _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
@@ -81,6 +79,8 @@ Shader "koturn/KRayMarching/RecursiveRings"
         [Toggle(_USE_FAST_INVTRIFUNC_ON)]
         _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
 
+        [Toggle(_NOFORWARDADD_ON)]
+        _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 
         [Enum(UnityEngine.Rendering.CullMode)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front

@@ -3,8 +3,6 @@ Shader "koturn/KRayMarching/Sphere"
     Properties
     {
         // Common Ray Marching Parameters.
-        [Toggle(_NOFORWARDADD_ON)]
-        _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
@@ -84,6 +82,8 @@ Shader "koturn/KRayMarching/Sphere"
         [KeywordEnum(Unroll, Loop, Loop Without LUT)]
         _NormalCalcOptimize ("Normal Calculation Optimization", Int) = 1
 
+        [Toggle(_NOFORWARDADD_ON)]
+        _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 
         // [Enum(UnityEngine.Rendering.CullMode)]
         [KeywordEnum(Off, Front, Back)]

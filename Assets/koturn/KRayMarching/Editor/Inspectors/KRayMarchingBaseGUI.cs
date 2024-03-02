@@ -306,12 +306,12 @@ namespace Koturn.KRayMarching.Inspectors
                 return;
             }
 
+            var mpNoForwardAdd = FindProperty(PropNameNoForwardAdd, mps, false);
+
             EditorGUILayout.LabelField("Ray Marching Parameters", EditorStyles.boldLabel);
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
-                var mpNoForwardAdd = FindAndDrawProperty(me, mps, PropNameNoForwardAdd, false);
-
                 ShaderProperty(me, mps, PropNameMaxLoop, false);
                 using (new EditorGUI.DisabledScope(mpNoForwardAdd != null && ToBool(mpNoForwardAdd.floatValue)))
                 {
@@ -437,6 +437,7 @@ namespace Koturn.KRayMarching.Inspectors
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
+                ShaderProperty(me, mpNoForwardAdd);
                 ShaderProperty(me, mps, PropNameCull, false);
                 DrawRenderingMode(me, mps);
                 ShaderProperty(me, mps, PropNameZTest, false);
