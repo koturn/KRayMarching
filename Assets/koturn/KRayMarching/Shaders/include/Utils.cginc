@@ -21,9 +21,20 @@ float3 getCameraDir(float4 screenPos);
 float3 getCameraDirVec(float4 screenPos);
 half4 applyFog(float fogFactor, half4 color);
 float getDepth(float4 clipPos);
+#if defined(SHADER_API_D3D11) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (defined(SHADER_TARGET_SURFACE_ANALYSIS) && !defined(SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
+half4 tex2DTriPlanar(Texture2D tex, SamplerState samplertex, float3 pos, float3 normal);
+#endif  // defined(SHADER_API_D3D11) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (defined(SHADER_TARGET_SURFACE_ANALYSIS) && !defined(SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
+half4 tex2DTriPlanar(sampler2D tex, float3 pos, float3 normal);
 half3 rgb2hsv(half3 rgb);
 half3 hsv2rgb(half3 hsv);
 half3 rgbAddHue(half3 rgb, half hue);
+
+
+#if defined(SHADER_API_D3D11) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (defined(SHADER_TARGET_SURFACE_ANALYSIS) && !defined(SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
+#    define SAMPLE_TEX2D_TRIPLANAR(tex, pos, normal)  tex2DTriPlanar(tex, sampler##tex, pos, normal)
+#else
+#    define SAMPLE_TEX2D_TRIPLANAR(tex, pos, normal)  tex2DTriPlanar(tex, pos, normal)
+#endif  // defined(SHADER_API_D3D11) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (defined(SHADER_TARGET_SURFACE_ANALYSIS) && !defined(SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
 
 
 /*!
@@ -245,6 +256,47 @@ float getDepth(float4 clipPos)
 #else
     return depth;
 #endif
+}
+
+
+/*!
+* @brief Sample texture using Tri-Planar texture mapping.
+*
+* @param [in] tex  2D texture.
+* @param [in] sampler  Texture sampler for tex.
+* @param [in] pos  Object/World space position.
+* @param [in] normal  Normal.
+*
+* @return Sampled color.
+*/
+half4 tex2DTriPlanar(Texture2D tex, SamplerState samplertex, float3 pos, float3 normal)
+{
+    float3 blending = normalize(max(abs(normal), 0.00001));
+    blending /= dot(blending, (1.0).xxx);
+    const half4 xaxis = tex.Sample(samplertex, pos.yz);
+    const half4 yaxis = tex.Sample(samplertex, pos.xz);
+    const half4 zaxis = tex.Sample(samplertex, pos.xy);
+    return xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
+}
+
+
+/*!
+* @brief Sample texture using Tri-Planar texture mapping.
+*
+* @param [in] tex  2D texture samplar.
+* @param [in] pos  Object/World space position.
+* @param [in] normal  Normal.
+*
+* @return Sampled color.
+*/
+half4 tex2DTriPlanar(sampler2D tex, float3 pos, float3 normal)
+{
+    float3 blending = normalize(max(abs(normal), 0.00001));
+    blending /= dot(blending, (1.0).xxx);
+    const half4 xaxis = tex2D(tex, pos.yz);
+    const half4 yaxis = tex2D(tex, pos.xz);
+    const half4 zaxis = tex2D(tex, pos.xy);
+    return xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
 }
 
 

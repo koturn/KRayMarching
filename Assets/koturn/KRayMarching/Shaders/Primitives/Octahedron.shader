@@ -1,4 +1,4 @@
-Shader "koturn/KRayMarching/ColorHexagram"
+﻿Shader "koturn/KRayMarching/Primitives/Octahedron"
 {
     Properties
     {
@@ -28,23 +28,20 @@ Shader "koturn/KRayMarching/ColorHexagram"
         _CalcSpace ("Calculation space", Int) = 0
 
         [KeywordEnum(None, Simple, Max Length)]
-        _AssumeInside ("Assume render target is inside object", Int) = 0
+        _AssumeInside ("Assume render target is inside object", Int) = 2
 
         _MaxInsideLength ("Maximum length inside an object", Float) = 1.7321
 
         [KeywordEnum(Normal, Over Relax, Accelaration, Auto Relax)]
-        _StepMethod ("Marching step method", Int) = 0
+        _StepMethod ("Marching step method", Int) = 2
 
         _MarchingFactor ("Marching Factor", Range(0.5, 1.0)) = 1.0
 
         _OverRelaxFactor ("Coefficient of Over Relaxation Sphere Tracing", Range(1.0, 2.0)) = 1.2
 
-        _AccelarationFactor ("Coefficient of Accelarating Sphere Tracing", Range(0.0, 1.0)) = 0.8
+        _AccelarationFactor ("Coefficient of Accelarating Sphere Tracing", Range(0.0, 1.0)) = 0.95
 
-        _AutoRelaxFactor ("Coefficient of Automatic Step Size Relaxation", Range(0.0, 1.0)) = 0.8
-
-        [Toggle(_USE_FAST_INVTRIFUNC_ON)]
-        _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
+        _AutoRelaxFactor ("Coefficient of Automatic Step Size Relaxation", Range(0.0, 1.0)) = 0.95
 
         [KeywordEnum(None, Step, Ray Length)]
         _DebugView ("Debug view mode", Int) = 0
@@ -58,16 +55,23 @@ Shader "koturn/KRayMarching/ColorHexagram"
         // ---------------------------------------------------------------------
         [Header(SDF Parameters)]
         [Space(8)]
-        _TorusRadius ("Radius of Torus", Float) = 0.25
-        _TorusRadiusAmp ("Radius Amplitude of Torus", Float) = 0.05
-        _TorusWidth ("Width of Torus", Float) = 0.005
-        _OctahedronSize ("Size of Octahedron", Float) = 0.05
-        _LineColorMultiplier ("Multiplier of lines", Float) = 5.0
+        _Size ("Size of the Octahedron", Float) = 0.5
+
+        [Vector3]
+        _OctahedronScales ("Scales of the Octahedron", Vector) = (1.0, 1.0, 1.0, 0.0)
+
+        [Toggle(_EXACT_ON)]
+        _Exact ("Exact", Int) = 0
 
 
         // ---------------------------------------------------------------------
         [Header(Lighting Parameters)]
         [Space(8)]
+        [NoScaleOffset]
+        _MainTex ("Main texture", 2D) = "white" {}
+
+        _Color ("Tint color for main texture", Color) = (1.0, 1.0, 1.0, 1.0)
+
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit)]
         _Lighting ("Lighting method", Int) = 2
 
@@ -75,7 +79,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         _Metallic ("Metallic", Range(0.0, 1.0)) = 0.0
 
         _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
-        _SpecPower ("Specular Power", Range(0.0, 128.0)) = 1.0
+        _SpecPower ("Specular Power", Range(0.0, 128.0)) = 5.0
 
 
         // ---------------------------------------------------------------------
@@ -89,6 +93,12 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
         [Enum(UnityEngine.Rendering.CullMode)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front
+
+        [Enum(False, 0, True, 1)]
+        _ZClip ("ZClip", Int) = 1  // Default: True
+
+        _OffsetFactor ("Offset Factor", Range(-1.0, 1.0)) = 0
+        _OffsetUnit ("Offset Units", Range(-1.0, 1.0)) = 0
 
         [ColorMask]
         _ColorMask ("Color Mask", Int) = 15
@@ -134,6 +144,8 @@ Shader "koturn/KRayMarching/ColorHexagram"
         }
 
         Cull [_Cull]
+        ZClip [_ZClip]
+        Offset [_OffsetFactor], [_OffsetUnit]
         ColorMask [_ColorMask]
         AlphaToMask [_AlphaToMask]
 
@@ -148,7 +160,6 @@ Shader "koturn/KRayMarching/ColorHexagram"
             ZFail [_StencilZFail]
         }
 
-
         CGINCLUDE
         #pragma target 3.0
         #pragma shader_feature_local _ _CALCSPACE_WORLD
@@ -156,32 +167,14 @@ Shader "koturn/KRayMarching/ColorHexagram"
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
         #pragma shader_feature_local_fragment _ _STEPMETHOD_OVER_RELAX _STEPMETHOD_ACCELARATION _STEPMETHOD_AUTO_RELAX
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
-        #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
+        #pragma shader_feature_local_fragment _ _EXACT_ON
 
-        #define RAYMARCHING_SDF map
-        #define RAYMARCHING_GET_BASE_COLOR getBaseColor
+        #include "Template.cginc"
 
-        float map(float3 p);
-        float map(float3 p, out half4 color);
-        half4 getBaseColor(float3 p, float3 normal, float rayLength);
-
-        #include "RayMarchingCore.cginc"
-
-        #ifdef _USE_FAST_INVTRIFUNC_ON
-        #    define atan2(x, y)  atan2Fast(x, y)
-        #endif  // _USE_FAST_INVTRIFUNC_ON
-
-
-        //! Multiplier of lines.
-        uniform float _LineColorMultiplier;
-        //! Radius of Torus.
-        uniform float _TorusRadius;
-        //! Radius Amplitude of Torus.
-        uniform float _TorusRadiusAmp;
-        //! Width of Torus.
-        uniform float _TorusWidth;
-        //! Size of Octahedron.
-        uniform float _OctahedronSize;
+        //! Size of the Octahedron.
+        uniform float _Size;
+        //! Scales of the Octahedron.
+        uniform float3 _OctahedronScales;
 
 
         /*!
@@ -191,99 +184,14 @@ Shader "koturn/KRayMarching/ColorHexagram"
          */
         float map(float3 p)
         {
-            half4 _;
-            return map(p, /* out */ _);
-        }
-
-        /*!
-         * @brief SDF (Signed Distance Function) of objects.
-         * @param [in] p  Position of the tip of the ray.
-         * @return Signed Distance to the objects.
-         */
-        float map(float3 p, out half4 color)
-        {
-            static const half4 kColors[6] = {
-                half4(0.8, 0.4, 0.4, 1.0),  // R
-                half4(0.8, 0.8, 0.4, 1.0),  // Y
-                half4(0.4, 0.8, 0.4, 1.0),  // G
-                half4(0.4, 0.8, 0.8, 1.0),  // C
-                half4(0.4, 0.4, 0.8, 1.0),  // B
-                half4(0.8, 0.4, 0.8, 1.0)   // M
-            };
-            static const float kOneThirdPi = UNITY_PI / 3.0;
-            static const float kTwoThirdPi = UNITY_PI * (2.0 / 3.0);
-            static const float kOneSixthPi = UNITY_PI / 6.0;
-            static const float kInvOneThirdPi = rcp(kOneThirdPi);
-            static const float kInvTwoThirdPi = rcp(kTwoThirdPi);
-
-            const float radius = _TorusRadius + _SinTime.w * _TorusRadiusAmp;
-
-            float minDist = sdTorus(p.xzy, float2(radius, _TorusWidth));
-
-            p.xy = invRotate2D(p.xy, _Time.y);
-
-            const float xyAngle = atan2(p.y, p.x);
-            color = half4(
-                rgbAddHue(half3(1.0, 0.75, 0.25), xyAngle / UNITY_TWO_PI + rcp(UNITY_PI / 12.0)) * _LineColorMultiplier,
-                0.0);
-
-            const float rotUnit = floor(xyAngle * kInvOneThirdPi);
-            float3 rayPos1 = p;
-            rayPos1.xy = invRotate2D(rayPos1.xy, kOneThirdPi * rotUnit + kOneSixthPi);
-
-            const float dist = sdOctahedron(rayPos1 - float3(radius, 0.0, 0.0), _OctahedronSize, float3(2.0, 2.0, 0.5));
-            if (minDist > dist) {
-                minDist = dist;
-                const int idx = ((int)rotUnit);
-                color = idx == 0 ? kColors[0]
-                    : idx == 1 ? kColors[1]
-                    : idx == 2 ? kColors[2]
-                    : idx == -3 ? kColors[3]
-                    : idx == -2 ? kColors[4]
-                    : kColors[5];
-            }
-
-            const float2 posXY1 = invRotate2D(float2(radius, 0.0), kTwoThirdPi);
-            const float2 posXY2 = invRotate2D(float2(radius, 0.0), -kTwoThirdPi);
-            const float2 posCenterXY = (posXY1 + posXY2) * 0.5;
-            const float length12 = length(posXY2 - posXY1) * 0.5;
-
-            for (int i = 0; i < 2; i++) {
-                const float rotUnit2 = floor((xyAngle + kOneSixthPi - kOneThirdPi * i) * kInvTwoThirdPi);
-
-                float3 rayPos2 = p;
-                rayPos2.xy = invRotate2D(rayPos2.xy, kTwoThirdPi * rotUnit2 + kOneThirdPi * (i + 3) + kOneSixthPi);
-                rayPos2.xy -= invRotate2D(posCenterXY, posCenterXY, kTwoThirdPi * rotUnit2 + kOneSixthPi);
-
-                const float dist2 = sdCappedCylinder(rayPos2, length12 * 5, 0.0025);
-                if (minDist > dist2) {
-                    minDist = dist2;
-                    const int idx = int(rotUnit2);
-                    const half3 albedo = idx == 0 ? kColors[0 + i]
-                        : idx == -1 ? kColors[4 + i]
-                        : kColors[2 + i];
-                    color = half4(albedo * _LineColorMultiplier, 0.0);
-                }
-            }
-
-            return minDist;
-        }
-
-        /*!
-         * @brief Get color of the object.
-         * @param [in] p  Object/World space position.
-         * @param [in] normal  Object/World space normal.
-         * @param [in] rayLength  Ray length.
-         * @return Base color of the object.
-         */
-        half4 getBaseColor(float3 p, float3 normal, float rayLength)
-        {
-            half4 color;
-            map(p, /* out */ color);
-            _SpecColor *= color.a;
-            return color;
+        #if defined(_EXACT_ON)
+            return sdOctahedronExact(p, _Size, _OctahedronScales);
+        #else
+            return sdOctahedron(p, _Size, _OctahedronScales);
+        #endif  //! defined(_EXACT_ON)
         }
         ENDCG
+
 
         Pass
         {
@@ -351,5 +259,5 @@ Shader "koturn/KRayMarching/ColorHexagram"
         }
     }
 
-    CustomEditor "Koturn.KRayMarching.Inspectors.ColorHexagramGUI"
+    CustomEditor "Koturn.KRayMarching.Inspectors.Primitives.OctahedronGUI"
 }

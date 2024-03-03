@@ -87,6 +87,10 @@ namespace Koturn.KRayMarching.Inspectors
         /// </summary>
         private const string PropNameDebugRayLengthDiv = "_DebugRayLengthDiv";
         /// <summary>
+        /// Property name of "_MainTex".
+        /// </summary>
+        private const string PropNameMainTex = "_MainTex";
+        /// <summary>
         /// Property name of "_Color".
         /// </summary>
         private const string PropNameColor = "_Color";
@@ -387,11 +391,10 @@ namespace Koturn.KRayMarching.Inspectors
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
-                ShaderProperty(me, mps, PropNameColor, false);
+                TexturePropertySingleLine(me, mps, PropNameMainTex, PropNameColor, false, false);
 
                 var mpLighting = FindAndDrawProperty(me, mps, PropNameLighting, false);
                 var lightingMethod = (LightingMethod)(mpLighting == null ? -1 : (int)mpLighting.floatValue);
-
 
                 var isNeedGM = true;
                 var mpEnableReflectionProbe = FindAndDrawProperty(me, mps, PropNameEnableReflectionProbe, false);
@@ -530,6 +533,59 @@ namespace Koturn.KRayMarching.Inspectors
             }
 
             return prop;
+        }
+
+        /// <summary>
+        /// Draw default texture and color pair.
+        /// </summary>
+        /// <param name="me">A <see cref="MaterialEditor"/></param>
+        /// <param name="mps"><see cref="MaterialProperty"/> array</param>
+        /// <param name="propNameTex">Name of shader property of texture</param>
+        /// <param name="propNameColor">Name of shader property of color</param>
+        /// <param name="isMandatoryTex">If <c>true</c> then this method will throw an exception
+        /// if a property with <<paramref name="propNameTex"/> was not found.</param>
+        /// <param name="isMandatoryColor">If <c>true</c> then this method will throw an exception
+        /// if a property with <<paramref name="propNameColor"/> was not found.</param>
+        protected static void TexturePropertySingleLine(MaterialEditor me, MaterialProperty[] mps, string propNameTex, string propNameColor, bool isMandatoryTex = true, bool isMandatoryColor = true)
+        {
+            var mpTex = FindProperty(propNameTex, mps, isMandatoryTex);
+            var mpColor = FindProperty(propNameColor, mps, isMandatoryColor);
+
+            if (mpTex == null && mpColor == null)
+            {
+                return;
+            }
+
+            if (mpTex == null)
+            {
+                ShaderProperty(me, mpColor);
+            }
+            else if (mpColor == null)
+            {
+                ShaderProperty(me, mpTex);
+            }
+            else
+            {
+                TexturePropertySingleLine(me, mpTex, mpColor);
+                if ((mpTex.flags & MaterialProperty.PropFlags.NoScaleOffset) == 0)
+                {
+                    me.TextureScaleOffsetProperty(mpTex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Draw default texture and color pair.
+        /// </summary>
+        /// <param name="me">A <see cref="MaterialEditor"/></param>
+        /// <param name="mpTex">Target <see cref="MaterialProperty"/> of texture</param>
+        /// <param name="mpColor">Target <see cref="MaterialProperty"/> of color</param>
+        protected static void TexturePropertySingleLine(MaterialEditor me, MaterialProperty mpTex, MaterialProperty mpColor)
+        {
+            me.TexturePropertySingleLine(
+                new GUIContent(mpTex.displayName, mpColor.displayName),
+                mpTex,
+                mpColor);
         }
 
         /// <summary>
