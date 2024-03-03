@@ -2,6 +2,9 @@
 #define LIGHTINGUTILS_INCLUDED
 
 
+half4 calcLightingUnity(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
+half4 calcLightingUnity(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient);
+
 #ifndef LIGHTINGUTILS_OMIT_OLD_LIGHTING
 #include "Lighting.cginc"
 half4 calcLightingUnityLambert(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
@@ -17,9 +20,6 @@ half4 calcLightingUnityStandard(half4 color, float3 worldPos, float3 worldNormal
 half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
 half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient);
 #endif  // LIGHTINGUTILS_OMIT_PBS_LIGHTING
-
-half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, /* unused */ float4 lmap);
-half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, /* unused */ float4 lmap, half3 ambient);
 
 #include "UnityLightingCommon.cginc"
 
@@ -45,6 +45,56 @@ uniform half _Glossiness;
 //! Value of Metallic.
 uniform half _Metallic;
 
+
+/*!
+ * Calculate lighting using functions provided from Unity Library.
+ * @param [in] color  Base color.
+ * @param [in] worldPos  World coordinate.
+ * @param [in] worldNormal  Normal in world space.
+ * @param [in] atten  Light attenuation.
+ * @param [in] lmap  Light map parameters.
+ * @return Color with lighting applied.
+ */
+half4 calcLightingUnity(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
+{
+#if !defined(LIGHTINGUTILS_OMIT_OLD_LIGHTING) && defined(_LIGHTING_UNITY_LAMBERT)
+    return calcLightingUnityLambert(color, worldPos, worldNormal, atten, lmap);
+#elif !defined(LIGHTINGUTILS_OMIT_OLD_LIGHTING) && defined(_LIGHTING_UNITY_BLINN_PHONG)
+    return calcLightingUnityBlinnPhong(color, worldPos, worldNormal, atten, lmap);
+#elif !defined(LIGHTINGUTILS_OMIT_PBS_LIGHTING) && defined(_LIGHTING_UNITY_STANDARD)
+    return calcLightingUnityStandard(color, worldPos, worldNormal, atten, lmap);
+#elif !defined(LIGHTINGUTILS_OMIT_PBS_LIGHTING) && defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
+    return calcLightingUnityStandardSpecular(color, worldPos, worldNormal, atten, lmap);
+#else  // Assume _LIGHTING_UNLIT
+    return color;
+#endif  // defined(_LIGHTING_LAMBERT)
+}
+
+
+/*!
+ * Calculate lighting using functions provided from Unity Library.
+ * @param [in] color  Base color.
+ * @param [in] worldPos  World coordinate.
+ * @param [in] worldNormal  Normal in world space.
+ * @param [in] atten  Light attenuation.
+ * @param [in] lmap  Light map parameters.
+ * @param [in] ambient  Ambient light.
+ * @return Color with lighting applied.
+ */
+half4 calcLightingUnity(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient)
+{
+#if !defined(LIGHTINGUTILS_OMIT_OLD_LIGHTING) && defined(_LIGHTING_UNITY_LAMBERT)
+    return calcLightingUnityLambert(color, worldPos, worldNormal, atten, lmap, ambient);
+#elif !defined(LIGHTINGUTILS_OMIT_OLD_LIGHTING) && defined(_LIGHTING_UNITY_BLINN_PHONG)
+    return calcLightingUnityBlinnPhong(color, worldPos, worldNormal, atten, lmap, ambient);
+#elif !defined(LIGHTINGUTILS_OMIT_PBS_LIGHTING) && defined(_LIGHTING_UNITY_STANDARD)
+    return calcLightingUnityStandard(color, worldPos, worldNormal, atten, lmap, ambient);
+#elif !defined(LIGHTINGUTILS_OMIT_PBS_LIGHTING) && defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
+    return calcLightingUnityStandardSpecular(color, worldPos, worldNormal, atten, lmap, ambient);
+#else  // Assume _LIGHTING_UNLIT
+    return color;
+#endif  // defined(_LIGHTING_LAMBERT)
+}
 
 
 #ifndef LIGHTINGUTILS_OMIT_OLD_LIGHTING
@@ -267,63 +317,6 @@ half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 wor
     return outColor;
 }
 #endif  // LIGHTINGUTILS_OMIT_PBS_LIGHTING
-
-
-/*!
- * Calculate lighting.
- * @param [in] color  Base color.
- * @param [in] worldPos  World coordinate.
- * @param [in] worldNormal  Normal in world space.
- * @param [in] atten  Light attenuation.
- * @param [in] lmap  Light map parameters.
- * @return Color with lighting applied.
- */
-half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, /* unused */ float4 lmap)
-{
-    return calcLightingCustom(color, worldPos, worldNormal, atten, lmap, calcAmbient(worldPos, worldNormal));
-}
-
-
-/*!
- * Calculate lighting.
- * @param [in] fi  Input data from vertex shader.
- * @param [in] color  Base color.
- * @param [in] worldPos  World coordinate.
- * @param [in] worldNormal  Normal in world space.
- * @param [in] lmap  Light map parameters (Unused).
- * @param [in] ambient  Ambient light.
- * @return Color with lighting applied.
- */
-half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, /* unused */ float4 lmap, half3 ambient)
-{
-    const float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos);
-    const float3 worldLightDir = normalizedWorldSpaceLightDir(worldPos);
-    const fixed3 lightCol = _LightColor0.rgb * atten;
-
-    // Lambertian reflectance.
-    const float nDotL = dot(worldNormal, worldLightDir);
-    const half3 diffuse = lightCol * sq(nDotL * 0.5 + 0.5);
-
-    // Specular reflection.
-    // const half3 specular = pow(max(0.0, dot(normalize(worldLightDir + worldViewDir), worldNormal)), _SpecPower) * _SpecColor.rgb * lightCol;
-    const half3 specular = pow(max(0.0, dot(reflect(-worldLightDir, worldNormal), worldViewDir)), _SpecPower) * _SpecColor.rgb * lightCol;
-
-    // Ambient color.
-#    if UNITY_SHOULD_SAMPLE_SH
-    ambient = ShadeSHPerPixel(worldNormal, ambient, worldPos);
-#    endif  // !UNITY_SHOULD_SAMPLE_SH
-
-#    if defined(_ENABLE_REFLECTION_PROBE) && defined(UNITY_PASS_FORWARDBASE)
-    const half4 refColor = getRefProbeColor(
-        reflect(-worldViewDir, worldNormal),
-        worldPos);
-    const half4 outColor = half4((diffuse + ambient) * lerp(color.rgb, refColor.rgb, _Glossiness) + specular, color.a);
-#    else
-    const half4 outColor = half4((diffuse + ambient) * color.rgb + specular, color.a);
-#    endif  // defined(_ENABLE_REFLECTION_PROBE) && defined(UNITY_PASS_FORWARDBASE)
-
-    return outColor;
-}
 
 
 /*!

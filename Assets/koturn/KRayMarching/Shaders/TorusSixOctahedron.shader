@@ -67,7 +67,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         // ---------------------------------------------------------------------
         [Header(Lighting Parameters)]
         [Space(8)]
-        [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
+        [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit)]
         _Lighting ("Lighting method", Int) = 0
 
         _Glossiness ("Smoothness", Range(0.0, 1.0)) = 0.5
@@ -201,7 +201,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         rmout rayMarch(rayparam rp);
         float map(float3 p, out float colorIndex);
-        half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         float3 getNormal(float3 p);
 
 
@@ -277,7 +276,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         #elif defined(_DEBUGVIEW_RAY_LENGTH)
             fo.color = float4((ro.rayLength / _DebugRayLengthDiv).xxx, 1.0);
         #else
-            const half4 color = calcLighting(
+            const half4 color = calcLightingUnity(
                 half4(ro.color, 1.0),
                 worldFinalPos,
                 worldNormal,
@@ -431,32 +430,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         }
 
         /*!
-         * Calculate lighting.
-         * @param [in] color  Base color.
-         * @param [in] worldPos  World coordinate.
-         * @param [in] worldNormal  Normal in world space.
-         * @param [in] atten  Light attenuation.
-         * @param [in] lmap  Light map parameters.
-         * @return Color with lighting applied.
-         */
-        half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
-        {
-        #if defined(_LIGHTING_UNITY_LAMBERT)
-            return calcLightingUnityLambert(color, worldPos, worldNormal, atten, lmap);
-        #elif defined(_LIGHTING_UNITY_BLINN_PHONG)
-            return calcLightingUnityBlinnPhong(color, worldPos, worldNormal, atten, lmap);
-        #elif defined(_LIGHTING_UNITY_STANDARD)
-            return calcLightingUnityStandard(color, worldPos, worldNormal, atten, lmap);
-        #elif defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
-            return calcLightingUnityStandardSpecular(color, worldPos, worldNormal, atten, lmap);
-        #elif defined(_LIGHTING_UNLIT)
-            return color;
-        #else
-            return calcLightingCustom(color, worldPos, worldNormal, atten, lmap);
-        #endif  // defined(_LIGHTING_LAMBERT)
-        }
-
-        /*!
          * @brief Calculate normal of the objects.
          * @param [in] p  Position of the tip of the ray.
          * @return Normal of the objects.
@@ -501,7 +474,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             #pragma multi_compile_fwdbase
             #pragma multi_compile_fog
             #pragma shader_feature_local_fragment _DEBUGVIEW_NONE _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
-            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
+            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT
             ENDCG
         }
 
@@ -525,7 +498,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
             #pragma multi_compile_fog
             #pragma shader_feature_local _ _NOFORWARDADD_ON
             #pragma shader_feature_local_fragment _DEBUGVIEW_NONE _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
-            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
+            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT
 
 
             #if defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)

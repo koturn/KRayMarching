@@ -464,47 +464,54 @@ Shader "koturn/KRayMarching/Sphere"
          */
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
         {
-        #if defined(_LIGHTING_UNITY_LAMBERT)
-            return calcLightingUnityLambert(color, worldPos, worldNormal, atten, lmap);
-        #elif defined(_LIGHTING_UNITY_BLINN_PHONG)
-            return calcLightingUnityBlinnPhong(color, worldPos, worldNormal, atten, lmap);
-        #elif defined(_LIGHTING_UNITY_STANDARD)
-            return calcLightingUnityStandard(color, worldPos, worldNormal, atten, lmap);
-        #elif defined(_LIGHTING_UNITY_STANDARD_SPECULAR)
-            return calcLightingUnityStandardSpecular(color, worldPos, worldNormal, atten, lmap);
-        #elif defined(_LIGHTING_UNLIT)
-            return color;
+        #if defined(_LIGHTING_CUSTOM)
+            return calcLightingCustom(color, worldPos, worldNormal, atten, lmap);
         #else
+            return calcLightingUnity(color, worldPos, worldNormal, atten, lmap);
+        #endif  // defined(_LIGHTING_CUSTOM)
+        }
+
+        /*!
+         * Calculate lighting using custom method.
+         * @param [in] color  Base color.
+         * @param [in] worldPos  World coordinate.
+         * @param [in] worldNormal  Normal in world space.
+         * @param [in] atten  Light attenuation.
+         * @param [in] lmap  Light map parameters.
+         * @return Color with lighting applied.
+         */
+        half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
+        {
             const float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos);
             const float3 worldLightDir = normalizedWorldSpaceLightDir(worldPos);
             const fixed3 lightCol = _LightColor0.rgb * atten;
 
             // Lambertian reflectance.
             const float nDotL = dot(worldNormal, worldLightDir);
-        #    if defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
+        #if defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
             const half3 diffuse = lightCol * sq(nDotL * 0.5 + 0.5);
-        #    elif defined(_DIFFUSEMODE_HALF_LAMBERT)
+        #elif defined(_DIFFUSEMODE_HALF_LAMBERT)
             const half3 diffuse = lightCol * (nDotL * 0.5 + 0.5);
-        #    elif defined(_DIFFUSEMODE_LAMBERT)
+        #elif defined(_DIFFUSEMODE_LAMBERT)
             const half3 diffuse = lightCol * max(0.0, nDotL);
-        #    else
+        #else
             const half3 diffuse = half3(1.0, 1.0, 1.0);
-        #    endif  // defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
+        #endif  // defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
 
             // Specular reflection.
-        #    ifdef _SPECULARMODE_HALF_VECTOR
+        #ifdef _SPECULARMODE_HALF_VECTOR
             const half3 specular = pow(max(0.0, dot(normalize(worldLightDir + worldViewDir), worldNormal)), _SpecPower) * _SpecColor.xyz * lightCol;
-        #    elif _SPECULARMODE_ORIGINAL
+        #elif _SPECULARMODE_ORIGINAL
             const half3 specular = pow(max(0.0, dot(reflect(-worldLightDir, worldNormal), worldViewDir)), _SpecPower) * _SpecColor.xyz * lightCol;
-        #    else
+        #else
             const half3 specular = half3(0.0, 0.0, 0.0);
-        #    endif  // _SPECULARMODE_HALF_VECTOR
+        #endif  // defined(_SPECULARMODE_HALF_VECTOR)
 
             // Ambient color.
-        #    if defined(_AMBIENTMODE_SH)
+        #if defined(_AMBIENTMODE_SH)
             const half3 ambient = ShadeSHPerPixel(
                 worldNormal,
-        #       ifdef VERTEXLIGHT_ON
+        #   ifdef VERTEXLIGHT_ON
                 Shade4PointLights(
                     unity_4LightPosX0,
                     unity_4LightPosY0,
@@ -516,26 +523,25 @@ Shader "koturn/KRayMarching/Sphere"
                     unity_4LightAtten0,
                     worldPos,
                     worldNormal),
-        #       else
+        #   else
                 half3(0.0, 0.0, 0.0),
-        #       endif  // VERTEXLIGHT_ON
+        #   endif  // defined(VERTEXLIGHT_ON)
                 worldPos);
-        #    elif defined(_AMBIENTMODE_LEGACY)
+        #elif defined(_AMBIENTMODE_LEGACY)
             const half3 ambient = UNITY_LIGHTMODEL_AMBIENT.rgb;
-        #    else
+        #else
             const half3 ambient = half3(0.0, 0.0, 0.0);
-        #    endif  // defined(_AMBIENTMODE_SH)
+        #endif  // defined(_AMBIENTMODE_SH)
 
-        #    ifdef _ENABLE_REFLECTION_PROBE
+        #ifdef _ENABLE_REFLECTION_PROBE
             const half4 refColor = getRefProbeColor(
                 UnityObjectToWorldNormal(reflect(-worldViewDir, worldNormal)),
                 worldPos);
             const half4 outColor = half4((diffuse + ambient) * lerp(_Color.rgb, refColor.rgb, _Glossiness) + specular, _Color.a);
-        #    else
+        #else
             const half4 outColor = half4((diffuse + ambient) * _Color.rgb + specular, _Color.a);
-        #    endif  // _ENABLE_REFLECTION_PROBE
+        #endif  // defined(_ENABLE_REFLECTION_PROBE)
             return outColor;
-        #endif  // defined(_LIGHTING_LAMBERT)
         }
 
         /*!
