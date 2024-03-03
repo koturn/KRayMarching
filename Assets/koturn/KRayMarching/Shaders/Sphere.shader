@@ -2,8 +2,9 @@ Shader "koturn/KRayMarching/Sphere"
 {
     Properties
     {
-        // Common Ray Marching Parameters.
-
+        // ---------------------------------------------------------------------
+        [Header(Ray Marching Parameters)]
+        [Space(8)]
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
 
@@ -53,8 +54,16 @@ Shader "koturn/KRayMarching/Sphere"
 
         _DebugRayLengthDiv ("Divisor of ray length for debug view", Range(0.01, 1000.0)) = 5.0
 
+
+        // ---------------------------------------------------------------------
+        [Header(SDF Parameters)]
+        [Space(8)]
         _Color ("Color of the objects", Color) = (1.0, 1.0, 1.0, 1.0)
 
+
+        // ---------------------------------------------------------------------
+        [Header(Lighting Parameters)]
+        [Space(8)]
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
         _Lighting ("Lighting method", Int) = 0
 
@@ -82,6 +91,10 @@ Shader "koturn/KRayMarching/Sphere"
         [KeywordEnum(Unroll, Loop, Loop Without LUT)]
         _NormalCalcOptimize ("Normal Calculation Optimization", Int) = 1
 
+
+        // ---------------------------------------------------------------------
+        [Header(Rendering Parameters)]
+        [Space(8)]
         [Toggle(_NOFORWARDADD_ON)]
         _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 
@@ -131,6 +144,9 @@ Shader "koturn/KRayMarching/Sphere"
         _AlphaToMask ("Alpha To Mask", Int) = 0  // Default: Off
 
 
+        // ---------------------------------------------------------------------
+        [Header(Stencil Parameters)]
+        [Space(8)]
         [IntRange]
         _StencilRef ("Stencil Reference Value", Range(0, 255)) = 0
 

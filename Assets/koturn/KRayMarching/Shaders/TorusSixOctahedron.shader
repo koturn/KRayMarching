@@ -2,7 +2,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 {
     Properties
     {
-        // Common Ray Marching Parameters.
+        // ---------------------------------------------------------------------
+        [Header(Ray Marching Parameters)]
+        [Space(8)]
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
 
@@ -44,6 +46,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         [Toggle(_NODEPTH_ON)]
         _NoDepth ("Disable depth ouput", Int) = 0
 
+        [Toggle(_USE_FAST_INVTRIFUNC_ON)]
+        _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
+
         [KeywordEnum(None, Step, Ray Length)]
         _DebugView ("Debug view mode", Int) = 0
 
@@ -52,6 +57,19 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         _DebugRayLengthDiv ("Divisor of ray length for debug view", Range(0.01, 1000.0)) = 5.0
 
+
+        // ---------------------------------------------------------------------
+        [Header(SDF Parameters)]
+        [Space(8)]
+        _TorusRadius ("Radius of Torus", Float) = 0.25
+        _TorusRadiusAmp ("Radius Amplitude of Torus", Float) = 0.05
+        _TorusWidth ("Width of Torus", Float) = 0.005
+        _OctahedronSize ("Size of Octahedron", Float) = 0.05
+
+
+        // ---------------------------------------------------------------------
+        [Header(Lighting Parameters)]
+        [Space(8)]
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
         _Lighting ("Lighting method", Int) = 0
 
@@ -61,16 +79,10 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
         _SpecPower ("Specular Power", Range(0.0, 128.0)) = 5.0
 
-        // SDF parameters.
-        _TorusRadius ("Radius of Torus", Float) = 0.25
-        _TorusRadiusAmp ("Radius Amplitude of Torus", Float) = 0.05
-        _TorusWidth ("Width of Torus", Float) = 0.005
-        _OctahedronSize ("Size of Octahedron", Float) = 0.05
 
-        [Toggle(_USE_FAST_INVTRIFUNC_ON)]
-        _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
-
-
+        // ---------------------------------------------------------------------
+        [Header(Rendering Parameters)]
+        [Space(8)]
         [Toggle(_NOFORWARDADD_ON)]
         _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 
@@ -84,6 +96,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         _AlphaToMask ("Alpha To Mask", Int) = 0  // Default: Off
 
 
+        // ---------------------------------------------------------------------
+        [Header(Stencil Parameters)]
+        [Space(8)]
         [IntRange]
         _StencilRef ("Stencil Reference Value", Range(0, 255)) = 0
 

@@ -2,8 +2,9 @@ Shader "koturn/KRayMarching/RecursiveRings"
 {
     Properties
     {
-        // Common Ray Marching Parameters.
-
+        // ---------------------------------------------------------------------
+        [Header(Ray Marching Parameters)]
+        [Space(8)]
         [IntRange]
         _MaxLoop ("Maximum loop count for ForwardBase", Range(8, 1024)) = 128
 
@@ -53,16 +54,10 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
         _DebugRayLengthDiv ("Divisor of ray length for debug view", Range(0.01, 1000.0)) = 5.0
 
-        [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
-        _Lighting ("Lighting method", Int) = 2
 
-        _Glossiness ("Smoothness", Range(0.0, 1.0)) = 0.5
-        _Metallic ("Metallic", Range(0.0, 1.0)) = 0.0
-
-        _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
-        _SpecPower ("Specular Power", Range(0.0, 128.0)) = 5.0
-
-        // SDF parameters.
+        // ---------------------------------------------------------------------
+        [Header(SDF Parameters)]
+        [Space(8)]
         _TorusBaseColor ("Base color of torus", Color) = (0.8, 0.4, 0.4, 1.0)
 
         [IntRange]
@@ -76,9 +71,25 @@ Shader "koturn/KRayMarching/RecursiveRings"
         _TorusAnimDecay ("Decay rate of animation speed per one recursion", Float) = 2.0
 
 
+        // ---------------------------------------------------------------------
+        [Header(Lighting Parameters)]
+        [Space(8)]
+        [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
+        _Lighting ("Lighting method", Int) = 2
+
+        _Glossiness ("Smoothness", Range(0.0, 1.0)) = 0.5
+        _Metallic ("Metallic", Range(0.0, 1.0)) = 0.0
+
+        _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
+        _SpecPower ("Specular Power", Range(0.0, 128.0)) = 5.0
+
         [Toggle(_USE_FAST_INVTRIFUNC_ON)]
         _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
 
+
+        // ---------------------------------------------------------------------
+        [Header(Rendering Parameters)]
+        [Space(8)]
         [Toggle(_NOFORWARDADD_ON)]
         _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 
@@ -95,6 +106,9 @@ Shader "koturn/KRayMarching/RecursiveRings"
         _AlphaToMask ("Alpha To Mask", Int) = 0  // Default: Off
 
 
+        // ---------------------------------------------------------------------
+        [Header(Stencil Parameters)]
+        [Space(8)]
         [IntRange]
         _StencilRef ("Stencil Reference Value", Range(0, 255)) = 0
 
