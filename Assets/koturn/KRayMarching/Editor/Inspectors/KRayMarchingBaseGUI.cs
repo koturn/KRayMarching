@@ -15,10 +15,6 @@ namespace Koturn.KRayMarching.Inspectors
     public class KRayMarchingBaseGUI : ShaderGUI
     {
         /// <summary>
-        /// Property name of "_Color".
-        /// </summary>
-        private const string PropNameColor = "_Color";
-        /// <summary>
         /// Property name of "_MaxLoop".
         /// </summary>
         private const string PropNameMaxLoop = "_MaxLoop";
@@ -30,10 +26,6 @@ namespace Koturn.KRayMarching.Inspectors
         /// Property name of "_MaxLoopShadowCaster".
         /// </summary>
         private const string PropNameMaxLoopShadowCaster = "_MaxLoopShadowCaster";
-        /// <summary>
-        /// Property name of "_NoForwardAdd".
-        /// </summary>
-        private const string PropNameNoForwardAdd = "_NoForwardAdd";
         /// <summary>
         /// Property name of "_MinRayLength".
         /// </summary>
@@ -54,10 +46,6 @@ namespace Koturn.KRayMarching.Inspectors
         /// Property name of "_CalcSpace".
         /// </summary>
         private const string PropNameCalcSpace = "_CalcSpace";
-        /// <summary>
-        /// Property name of "_NoDepth".
-        /// </summary>
-        private const string PropNameNoDepth = "_NoDepth";
         /// <summary>
         /// Property name of "_AssumeInside".
         /// </summary>
@@ -99,17 +87,13 @@ namespace Koturn.KRayMarching.Inspectors
         /// </summary>
         private const string PropNameDebugRayLengthDiv = "_DebugRayLengthDiv";
         /// <summary>
+        /// Property name of "_Color".
+        /// </summary>
+        private const string PropNameColor = "_Color";
+        /// <summary>
         /// Property name of "_Lighting".
         /// </summary>
         private const string PropNameLighting = "_Lighting";
-        /// <summary>
-        /// Property name of "_SpecColor".
-        /// </summary>
-        private const string PropNameSpecColor = "_SpecColor";
-        /// <summary>
-        /// Property name of "_SpecPower".
-        /// </summary>
-        private const string PropNameSpecPower = "_SpecPower";
         /// <summary>
         /// Property name of "_EnableRefProbe".
         /// </summary>
@@ -122,6 +106,14 @@ namespace Koturn.KRayMarching.Inspectors
         /// Property name of "_Metallic".
         /// </summary>
         private const string PropNameMetallic = "_Metallic";
+        /// <summary>
+        /// Property name of "_SpecColor".
+        /// </summary>
+        private const string PropNameSpecColor = "_SpecColor";
+        /// <summary>
+        /// Property name of "_SpecPower".
+        /// </summary>
+        private const string PropNameSpecPower = "_SpecPower";
         /// <summary>
         /// Property name of "_DiffuseMode".
         /// </summary>
@@ -142,7 +134,14 @@ namespace Koturn.KRayMarching.Inspectors
         /// Property name of "_NormalCalcOptimize".
         /// </summary>
         private const string PropNameNormalCalcOptimize = "_NormalCalcOptimize";
-
+        /// <summary>
+        /// Property name of "_NoDepth".
+        /// </summary>
+        private const string PropNameNoDepth = "_NoDepth";
+        /// <summary>
+        /// Property name of "_NoForwardAdd".
+        /// </summary>
+        private const string PropNameNoForwardAdd = "_NoForwardAdd";
         /// <summary>
         /// Property name of "_Cull".
         /// </summary>
