@@ -5,6 +5,10 @@
 
 
 float sq(float x);
+float fmodglsl(float x, float y);
+float2 fmodglsl(float2 x, float2 y);
+float3 fmodglsl(float3 x, float3 y);
+float4 fmodglsl(float4 x, float4 y);
 float atanPos(float x);
 float atanFast(float x);
 float atan2Fast(float x, float y);
@@ -38,6 +42,58 @@ float getPmodIndex(float2 p, float r);
 float sq(float x)
 {
     return x * x;
+}
+
+
+/*!
+ * @brief Returns the remainder of x divided by y with the same sign as y.
+ *
+ * @param [in] x  Scalar numerator.
+ * @param [in] y  Scalar denominator.
+ * @return Remainder of x / y with the same sign as y.
+ */
+float fmodglsl(float x, float y)
+{
+    return x - y * floor(x / y);
+}
+
+
+/*!
+ * @brief Returns the remainder of x divided by y with the same sign as y.
+ *
+ * @param [in] x  Vector numerator.
+ * @param [in] y  Vector denominator.
+ * @return Remainder of x / y with the same sign as y.
+ */
+float2 fmodglsl(float2 x, float2 y)
+{
+    return x - y * floor(x / y);
+}
+
+
+/*!
+ * @brief Returns the remainder of x divided by y with the same sign as y.
+ *
+ * @param [in] x  Vector numerator.
+ * @param [in] y  Vector denominator.
+ * @return Remainder of x / y with the same sign as y.
+ */
+float3 fmodglsl(float3 x, float3 y)
+{
+    return x - y * floor(x / y);
+}
+
+
+/*!
+ * @brief Returns the remainder of x divided by y with the same sign as y.
+ *
+ * @param [in] x  Vector numerator.
+ * @param [in] y  Vector denominator.
+ * @return Remainder of x / y with the same sign as y.
+ */
+float4 fmodglsl(float4 x, float4 y)
+{
+    return x - y * floor(x / y);
 }
 
 
