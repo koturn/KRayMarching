@@ -246,18 +246,26 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
 #    if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
     o.rayDirVec = getCameraDirVec(screenPos);
 #    else
-    o.rayDirVec = isCameraOrthographic() ? getCameraForward()
-        : abs(unity_LightShadowBias.x) < 1.0e-5 ? (o.rayOrigin - _WorldSpaceCameraPos)
-        : getCameraDirVec(screenPos);
+    if (isCameraOrthographic()) {
+        o.rayDirVec = getCameraForward();
+    } else if (abs(unity_LightShadowBias.x) < 1.0e-5) {
+        o.rayDirVec = o.rayOrigin - _WorldSpaceCameraPos;
+    } else {
+        o.rayDirVec = getCameraDirVec(screenPos);
+    }
 #    endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
 #else
     o.rayOrigin = v.vertex.xyz;
 #    if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
     o.rayDirVec = mul((float3x3)unity_WorldToObject, getCameraDirVec(screenPos));
 #    else
-    o.rayDirVec = isCameraOrthographic() ? mul((float3x3)unity_WorldToObject, getCameraForward())
-        : abs(unity_LightShadowBias.x) < 1.0e-5 ? (v.vertex.xyz - worldToObjectPos(_WorldSpaceCameraPos))
-        : mul((float3x3)unity_WorldToObject, getCameraDirVec(screenPos));
+    if (isCameraOrthographic()) {
+        o.rayDirVec = mul((float3x3)unity_WorldToObject, getCameraForward());
+    } else if (abs(unity_LightShadowBias.x) < 1.0e-5) {
+        o.rayDirVec = v.vertex.xyz - worldToObjectPos(_WorldSpaceCameraPos);
+    } else {
+        o.rayDirVec = mul((float3x3)unity_WorldToObject, getCameraDirVec(screenPos));
+    }
 #    endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
 #endif  // defined(_CALCSPACE_WORLD)
 
