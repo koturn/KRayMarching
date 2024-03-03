@@ -420,12 +420,15 @@ Shader "koturn/KRayMarching/RecursiveRings"
             float minDist = sdTorus(p.xzy, rt.x, rt.y);
             hueOffset = 1000.0;
 
+            float s = 1.0;
             for (int i = 0; i < _TorusRecursion; i++) {
-                p.xy = rotate2D(p.xy, rotAngle);
+                p.xy = rotate2D(p.xy, rotAngle * s);
 
-                float angle = atan2Fast(p.y, p.x);
+                float angle = atan2(p.y, p.x);
                 float pIndex;
-                p = float3(pmod(p.xy, angle, _TorusNumber) - float2(rt.x, 0.0), p.z);
+                p.xy = float2(pmod(p.xy, angle, _TorusNumber, /* out */ pIndex) - float2(rt.x, 0.0));
+                s = (uint(pIndex + _TorusNumber + 1.0) & 1) == 0 ? 1.0 : -1.0;
+                // s = fmodglsl(pIndex, 2.0) < 0.5 ? 1.0 : -1.0;
 
                 rt *= rtDecay;
 
