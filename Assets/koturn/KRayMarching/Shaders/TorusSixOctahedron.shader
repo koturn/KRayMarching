@@ -43,9 +43,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         _AutoRelaxFactor ("Coefficient of Automatic Step Size Relaxation", Range(0.0, 1.0)) = 0.8
 
-        [Toggle(_NODEPTH_ON)]
-        _NoDepth ("Disable depth ouput", Int) = 0
-
         [Toggle(_USE_FAST_INVTRIFUNC_ON)]
         _UseFastInvTriFunc ("Use Fast Inverse Trigonometric Functions", Int) = 1
 
@@ -83,6 +80,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
         [Space(8)]
+        [Toggle(_NODEPTH_ON)]
+        _NoDepth ("Disable depth ouput", Int) = 0
+
         [Toggle(_NOFORWARDADD_ON)]
         _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 

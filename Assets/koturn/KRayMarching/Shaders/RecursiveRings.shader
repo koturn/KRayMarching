@@ -43,9 +43,6 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
         _AutoRelaxFactor ("Coefficient of Automatic Step Size Relaxation", Range(0.0, 1.0)) = 0.8
 
-        [Toggle(_NODEPTH_ON)]
-        _NoDepth ("Disable depth ouput", Int) = 0
-
         [KeywordEnum(None, Step, Ray Length)]
         _DebugView ("Debug view mode", Int) = 0
 
@@ -90,6 +87,9 @@ Shader "koturn/KRayMarching/RecursiveRings"
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
         [Space(8)]
+        [Toggle(_NODEPTH_ON)]
+        _NoDepth ("Disable depth ouput", Int) = 0
+
         [Toggle(_NOFORWARDADD_ON)]
         _NoForwardAdd ("Disable ForwardAdd", Int) = 0
 

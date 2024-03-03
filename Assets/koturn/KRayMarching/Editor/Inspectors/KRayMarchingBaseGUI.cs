@@ -352,8 +352,6 @@ namespace Koturn.KRayMarching.Inspectors
                     }
                 }
 
-                ShaderProperty(me, mps, PropNameNoDepth, false);
-
                 var mpDebugView = FindAndDrawProperty(me, mps, PropNameDebugView, false);
                 using (new EditorGUI.IndentLevelScope())
                 {
@@ -437,6 +435,7 @@ namespace Koturn.KRayMarching.Inspectors
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
+                ShaderProperty(me, mps, PropNameNoDepth, false);
                 ShaderProperty(me, mpNoForwardAdd);
                 ShaderProperty(me, mps, PropNameCull, false);
                 DrawRenderingMode(me, mps);
