@@ -23,14 +23,8 @@ float2 pmod(float2 p, float r);
 float2 pmod(float2 p, float angle, float r);
 float2 pmod(float2 p, float angle, float r, out float pIndex);
 float getPmodIndex(float2 p, float r);
-
-
-#ifdef MATH_REPLACE_TO_FAST_INVTRIFUNC
-#    define acos(x)  acosFast(x)
-#    define asin(x)  asinFast(x)
-#    define atan(x)  atanFast(x)
-#    define atan2(x, y)  atan2Fast(x, y)
-#endif  // MATH_REPLACE_TO_FAST_INVTRIFUNC
+float2 pmodFast(float2 p, float r);
+float getPmodIndexFast(float2 p, float r);
 
 
 /*!
@@ -359,6 +353,34 @@ float2 pmod(float2 p, float angle, float r, out float pIndex)
 float getPmodIndex(float2 p, float r)
 {
     const float a = atan2(p.y, p.x) + UNITY_PI / r;
+    const float n = UNITY_TWO_PI / r;
+    return floor(a / n);
+}
+
+
+/*!
+ * @brief Polar Mod (Fold Rotate) Function using atan2Fast().
+ *
+ * @param [in] p  2D-coordinate.
+ * @param [in] r  Number of divisions.
+ * @return 2D-coordinate of polar mod.
+ */
+float2 pmodFast(float2 p, float r)
+{
+    return pmod(p, atan2Fast(p.y, p.x), r);
+}
+
+
+/*!
+ * @brief Get index of Polar Mod (Fold Rotate) using atan2Fast().
+ *
+ * @param [in] p  2D-coordinate.
+ * @param [in] r  Number of divisions.
+ * @return Index of Polar Mod.
+ */
+float getPmodIndexFast(float2 p, float r)
+{
+    const float a = atan2Fast(p.y, p.x) + UNITY_PI / r;
     const float n = UNITY_TWO_PI / r;
     return floor(a / n);
 }

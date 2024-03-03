@@ -160,14 +160,15 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         #include "include/alt/AltUnityStandardUtils.cginc"
         #include "AutoLight.cginc"
 
-        #ifdef _USE_FAST_INVTRIFUNC_ON
-        #    define MATH_REPLACE_TO_FAST_INVTRIFUNC
-        #endif  // _USE_FAST_INVTRIFUNC_ON
         #include "include/Math.cginc"
         #include "include/Utils.cginc"
         #include "include/LightingUtils.cginc"
         #include "include/SDF.cginc"
         #include "include/VertCommon.cginc"
+
+        #ifdef _USE_FAST_INVTRIFUNC_ON
+        #    define atan2(x, y)  atan2Fast(x, y)
+        #endif  // _USE_FAST_INVTRIFUNC_ON
 
 
         /*!
