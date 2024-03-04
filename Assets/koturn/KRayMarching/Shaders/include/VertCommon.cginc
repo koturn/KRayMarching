@@ -151,23 +151,13 @@ bool isFacing(face_t facing);
 
 
 #if defined(UNITY_PASS_FORWARDADD) && defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
-#    if defined(UNITY_COMPILER_HLSL) \
-        || defined(SHADER_API_GLCORE) \
-        || defined(SHADER_API_GLES3) \
-        || defined(SHADER_API_METAL) \
-        || defined(SHADER_API_VULKAN) \
-        || defined(SHADER_API_GLES) \
-        || defined(SHADER_API_D3D11)
-// Disable WARN_FLOAT_DIVISION_BY_ZERO.
-#        pragma warning (disable : 4008)
-#    endif
 /*!
  * @brief Vertex shader function for disabling ForwardAdd Pass.
  * @return NaN vertex.
  */
 float4 vertRayMarchingForward() : SV_POSITION
 {
-    return (0.0 / 0.0).xxxx;  // NaN (-qNaN)
+    return asfloat(0x7fc00000).xxxx;  // qNaN
 }
 #else
 /*!
