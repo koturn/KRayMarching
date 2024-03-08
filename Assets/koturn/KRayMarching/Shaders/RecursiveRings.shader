@@ -166,81 +166,19 @@ Shader "koturn/KRayMarching/RecursiveRings"
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
 
-        #include "include/alt/AltUnityCG.cginc"
-        #include "include/alt/AltUnityStandardUtils.cginc"
-        #include "AutoLight.cginc"
+        #define RAYMARCHING_SDF map
+        #define RAYMARCHING_GET_BASE_COLOR getBaseColor
 
-        #include "include/Math.cginc"
-        #include "include/Utils.cginc"
-        #include "include/LightingUtils.cginc"
-        #include "include/SDF.cginc"
-        #include "include/VertCommon.cginc"
+        float map(float3 p);
+        float map(float3 p, out float hueOffset);
+        half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength);
+
+        #include "RayMarchingCore.cginc"
 
         #ifdef _USE_FAST_INVTRIFUNC_ON
         #    define atan2(x, y)  atan2Fast(x, y)
         #endif  // _USE_FAST_INVTRIFUNC_ON
 
-
-        /*!
-         * @brief Output of fragment shader.
-         */
-        struct fout
-        {
-            //! Output color of the pixel.
-            half4 color : SV_Target;
-        #if (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)) && !defined(_NODEPTH_ON)
-            //! Depth of the pixel.
-            float depth : SV_Depth;
-        #endif  // !defined(_NODEPTH_ON)
-        };
-
-        /*!
-         * @brief Output of rayMarch().
-         */
-        struct rmout
-        {
-            //! Length of the ray.
-            float rayLength;
-            //! Number of ray steps.
-            int rayStep;
-            //! A flag whether the ray collided with an object or not.
-            bool isHit;
-            //! Color of the object.
-            half3 color;
-        };
-
-
-        rmout rayMarch(rayparam rp);
-        float map(float3 p, out float hueOffset);
-        float3 getNormal(float3 p);
-
-
-        //! Maximum loop count for ForwardBase.
-        uniform int _MaxLoop;
-        //! Maximum loop count for ForwardAdd.
-        uniform int _MaxLoopForwardAdd;
-        //! Maximum loop count for ShadowCaster.
-        uniform int _MaxLoopShadowCaster;
-        //! Minimum length of the ray.
-        uniform float _MinRayLength;
-        //! Maximum length of the ray.
-        uniform float _MaxRayLength;
-        //! Scale vector.
-        uniform float3 _Scales;
-        //! Maximum length inside an object.
-        uniform float _MaxInsideLength;
-        //! Marching Factor.
-        uniform float _MarchingFactor;
-        //! Coefficient of Over Relaxation Sphere Tracing.
-        uniform float _OverRelaxFactor;
-        //! Coefficient of Accelarating Sphere Tracing.
-        uniform float _AccelarationFactor;
-        //! Coefficient of Automatic Step Size Relaxation.
-        uniform float _AutoRelaxFactor;
-        //! Divisor of number of ray steps for debug view.
-        uniform float _DebugStepDiv;
-        //! Divisor of ray length for debug view.
-        uniform float _DebugRayLengthDiv;
 
         //! Base color of torus.
         uniform float3 _TorusBaseColor;
@@ -263,152 +201,20 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
 
         /*!
-         * @brief Fragment shader function.
-         * @param [in] fi  Input data from vertex shader
-         * @return Output of each texels (fout).
+         * @brief SDF (Signed Distance Function) of objects.
+         * @param [in] p  Position of the tip of the ray.
+         * @return Signed Distance to the objects.
          */
-        fout frag(v2f_raymarching_forward fi)
+        float map(float3 p)
         {
-            UNITY_SETUP_INSTANCE_ID(fi);
-            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
-
-            const rayparam rp = calcRayParam(fi, _MaxRayLength, _MaxInsideLength);
-            const rmout ro = rayMarch(rp);
-        #if !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
-            if (!ro.isHit) {
-                discard;
-            }
-        #endif  // !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
-
-        #ifdef _CALCSPACE_WORLD
-            const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
-            const float3 worldNormal = getNormal(worldFinalPos);
-        #else
-            const float3 localFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
-            const float3 worldFinalPos = objectToWorldPos(localFinalPos);
-            const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
-        #endif  // defined(_CALCSPACE_WORLD)
-
-            const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
-
-            fout fo;
-        #if defined(_DEBUGVIEW_STEP)
-            fo.color = float4((ro.rayStep / _DebugStepDiv).xxx, 1.0);
-        #elif defined(_DEBUGVIEW_RAY_LENGTH)
-            fo.color = float4((ro.rayLength / _DebugRayLengthDiv).xxx, 1.0);
-        #else
-            const half4 color = calcLightingUnity(
-                half4(ro.color, 1.0),
-                worldFinalPos,
-                worldNormal,
-                getLightAttenRayMarching(fi, worldFinalPos),
-                getLightMap(fi));
-            fo.color = applyFog(clipPos.z, color);
-        #endif
-        #ifndef _NODEPTH_ON
-            fo.depth = getDepth(clipPos);
-        #endif  // !defined(_NODEPTH_ON)
-
-            return fo;
-        }
-
-
-        /*!
-         * @brief Execute ray marching.
-         *
-         * @param [in] rp  Ray parameters.
-         * @return Result of the ray marching.
-         */
-        rmout rayMarch(rayparam rp)
-        {
-        #if defined(UNITY_PASS_FORWARDBASE)
-            const int maxLoop = _MaxLoop;
-        #elif defined(UNITY_PASS_FORWARDADD)
-            const int maxLoop = _MaxLoopForwardAdd;
-        #elif defined(UNITY_PASS_SHADOWCASTER)
-            const int maxLoop = _MaxLoopShadowCaster;
-        #endif  // defined(UNITY_PASS_FORWARDBASE)
-
-            const float3 rcpScales = rcp(_Scales);
-            const float3 rayOrigin = rp.rayOrigin * rcpScales;
-            const float3 rayDirVec = rp.rayDir * rcpScales;
-
-            rmout ro;
-            ro.rayLength = rp.initRayLength;
-            ro.isHit = false;
-
-            float hueOffset;
-
-        #if defined(_STEPMETHOD_OVER_RELAX)
-            const float marchingFactor = rsqrt(dot(rayDirVec, rayDirVec));
-            float r = asfloat(0x7f800000);  // +inf
-            float d = 0.0;
-            for (ro.rayStep = 0; abs(r) >= _MinRayLength && ro.rayLength < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
-                const float nextRayLength = ro.rayLength + d * marchingFactor;
-                const float nextR = map(rayOrigin + rayDirVec * nextRayLength, /* out */ hueOffset);
-                if (d <= r + abs(nextR)) {
-                    d = _OverRelaxFactor * nextR;
-                    ro.rayLength = nextRayLength;
-                    r = nextR;
-                } else {
-                    d = r;
-                }
-            }
-            ro.isHit = abs(r) < _MinRayLength;
-        #elif defined(_STEPMETHOD_ACCELARATION)
-            const float marchingFactor = rsqrt(dot(rayDirVec, rayDirVec));
-            float r = map(rayOrigin + rayDirVec * ro.rayLength, /* out */ hueOffset);
-            float d = r;
-            for (ro.rayStep = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
-                const float nextRayLength = ro.rayLength + d * marchingFactor;
-                const float nextR = map(rayOrigin + rayDirVec * nextRayLength, /* out */ hueOffset);
-                if (d <= r + abs(nextR)) {
-                    const float deltaR = nextR - r;
-                    d = nextR + _AccelarationFactor * nextR * ((d + deltaR) / (d - deltaR));
-                    ro.rayLength = nextRayLength;
-                    r = nextR;
-                } else {
-                    d = r;
-                }
-            }
-            ro.isHit = abs(r) < _MinRayLength;
-        #elif defined(_STEPMETHOD_AUTO_RELAX)
-            const float marchingFactor = rsqrt(dot(rayDirVec, rayDirVec));
-            float r = map(rayOrigin + rayDirVec * ro.rayLength, /* out */ hueOffset);
-            float d = r;
-            float m = -1.0;
-            for (ro.rayStep = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
-                const float nextRayLength = ro.rayLength + d * marchingFactor;
-                const float nextR = map(rayOrigin + rayDirVec * nextRayLength, /* out */ hueOffset);
-                if (d <= r + abs(nextR)) {
-                    m = lerp(m, (nextR - r) / d, _AutoRelaxFactor);
-                    ro.rayLength = nextRayLength;
-                    r = nextR;
-                } else {
-                    m = -1.0;
-                }
-                d = 2.0 * r / (1.0 - m);
-            }
-            ro.isHit = r < _MinRayLength;
-        #else  // Assume: _STEPMETHOD_NORMAL
-            const float marchingFactor = _MarchingFactor * rsqrt(dot(rayDirVec, rayDirVec));
-            float d = asfloat(0x7f800000);  // +inf
-            for (ro.rayStep = 0; d >= _MinRayLength && ro.rayLength < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
-                d = map(rayOrigin + rayDirVec * ro.rayLength, /* out */ hueOffset);
-                ro.rayLength += d * marchingFactor;
-            }
-            ro.isHit = d < _MinRayLength;
-        #endif
-
-            ro.color = hueOffset == 1000.0 ? float3(0.8, 0.8, 0.8) : rgbAddHue(_TorusBaseColor, hueOffset);
-
-            return ro;
+            float _;
+            return map(p, /* out */ _);
         }
 
         /*!
          * @brief SDF (Signed Distance Function) of objects.
          * @param [in] p  Position of the tip of the ray.
-         * @param [in] p  Position of the tip of the ray.
+         * @param [in] hueOffset  Hue offset ob the object color.
          * @return Signed Distance to the objects.
          */
         float map(float3 p, out float hueOffset)
@@ -447,30 +253,20 @@ Shader "koturn/KRayMarching/RecursiveRings"
         }
 
         /*!
-         * @brief Calculate normal of the objects.
-         * @param [in] p  Position of the tip of the ray.
-         * @return Normal of the objects.
-         * @see https://iquilezles.org/articles/normalsSDF/
+         * @brief Get color of the object.
+         * @param [in] rayOrigin  Object/World space ray origin.
+         * @param [in] rayDir  Object/World space ray direction.
+         * @param [in] rayLength  Object/World space Ray length.
+         * @return Base color of the object.
          */
-        float3 getNormal(float3 p)
+        half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength)
         {
-            static const float2 k = float2(1.0, -1.0);
-            static const float3 ks[] = {k.xyy, k.yxy, k.yyx, k.xxx};
-            static const float h = 0.0001;
-
-            const float3 rcpScales = rcp(_Scales);
-
-            float3 normal = float3(0.0, 0.0, 0.0);
-            float _;
-
-            for (int i = 0; i < 4; i++) {
-                normal += ks[i] * map((p + ks[i] * h) * rcpScales, /* out */ _);
-            }
-
-            return normalize(normal);
+            const float3 p = rayOrigin + rayDir * rayLength;
+            float hueOffset = 1000.0;
+            map(p, /* out */ hueOffset);
+            return half4(hueOffset == 1000.0 ? float3(0.8, 0.8, 0.8) : rgbAddHue(_TorusBaseColor, hueOffset), 1.0);
         }
         ENDCG
-
 
         Pass
         {
@@ -486,7 +282,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
             CGPROGRAM
             #pragma vertex vertRayMarchingForward
-            #pragma fragment frag
+            #pragma fragment fragRayMarchingForward
 
             #pragma multi_compile_fwdbase
             #pragma multi_compile_fog
@@ -509,36 +305,13 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
             CGPROGRAM
             #pragma vertex vertRayMarchingForward
-            #pragma fragment fragForwardAdd
+            #pragma fragment fragRayMarchingForward
 
             #pragma multi_compile_fwdadd_fullshadows
             #pragma multi_compile_fog
             #pragma shader_feature_local _ _NOFORWARDADD_ON
             #pragma shader_feature_local_fragment _DEBUGVIEW_NONE _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT
-
-
-            #if defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
-            /*!
-             * @brief Fragment shader function.
-             * @param [in] fi  Input data from vertex shader
-             * @return Output of each texels (fout).
-             */
-            half4 fragForwardAdd() : SV_Target
-            {
-                return half4(0.0, 0.0, 0.0, 0.0);
-            }
-            #else
-            /*!
-             * @brief Fragment shader function.
-             * @param [in] fi  Input data from vertex shader
-             * @return Output of each texels (fout).
-             */
-            fout fragForwardAdd(v2f_raymarching_forward fi)
-            {
-                return frag(fi);
-            }
-            #endif  // defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
             ENDCG
         }
 
@@ -554,68 +327,11 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
             CGPROGRAM
             #pragma vertex vertRayMarchingShadowCaster
-            #pragma fragment fragShadowCaster
+            #pragma fragment fragRayMarchingShadowCaster
 
             #pragma multi_compile_shadowcaster
-
-
-            /*!
-             * @brief Fragment shader function for ShadowCaster Pass.
-             * @param [in] fi  Input data from vertex shader.
-             * @return Depth of fragment.
-             */
-            fout fragShadowCaster(v2f_raymarching_shadowcaster fi)
-            {
-                UNITY_SETUP_INSTANCE_ID(fi);
-                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
-
-                const rayparam rp = calcRayParam(fi, _MaxRayLength, _MaxInsideLength);
-                const rmout ro = rayMarch(rp);
-                if (!ro.isHit) {
-                    discard;
-                }
-
-            #ifdef _CALCSPACE_WORLD
-                const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
-            #else
-                const float3 localFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
-                const float3 worldFinalPos = objectToWorldPos(localFinalPos);
-            #endif  // defined(_CALCSPACE_WORLD)
-
-            #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-                //
-                // TRANSFER_SHADOW_CASTER_NORMALOFFSET
-                //
-                const float3 vec = worldFinalPos - _LightPositionRange.xyz;
-                //
-                // SHADOW_CASTER_FRAGMENT
-                //
-                fout fo;
-                fo.color = UnityEncodeCubeShadowDepth((length(vec) + unity_LightShadowBias.x) * _LightPositionRange.w);
-                return fo;
-            #else
-                //
-                // SHADOW_CASTER_FRAGMENT
-                //
-                fout fo;
-                fo.color = float4(0.0, 0.0, 0.0, 0.0);
-            #    ifndef _NODEPTH_ON
-                //
-                // TRANSFER_SHADOW_CASTER_NORMALOFFSET
-                //
-            #        ifdef _CALCSPACE_WORLD
-                const float3 worldNormal = getNormal(worldFinalPos);
-            #        else
-                const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));
-            #        endif  // defined(_CALCSPACE_WORLD)
-                const float4 clipPos = UnityApplyLinearShadowBias(UnityWorldToClipPos(applyShadowBias(worldFinalPos, worldNormal)));
-                fo.depth = getDepth(clipPos);
-            #    endif  // !defined(_NODEPTH_ON)
-                return fo;
-            #endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
-            }
             ENDCG
-        }  // ShadowCaster
+        }
     }
 
     CustomEditor "Koturn.KRayMarching.Inspectors.RecursiveRingsGUI"
