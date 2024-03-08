@@ -141,8 +141,8 @@ struct rayparam
 };
 
 
-rayparam calcRayParam(v2f_raymarching_forward fi, float3 rayDir, float3 maxRayLength, float3 maxInsideLength);
-rayparam calcRayParam(v2f_raymarching_shadowcaster fi, float3 maxRayLength, float3 maxInsideLength);
+rayparam calcRayParam(v2f_raymarching_forward fi, float3 rayDir, float maxRayLength, float3 maxInsideLength);
+rayparam calcRayParam(v2f_raymarching_shadowcaster fi, float maxRayLength, float3 maxInsideLength);
 float4 getLightMap(v2f_raymarching_forward fi);
 fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos);
 bool isFacing(v2f_raymarching_forward fi);
@@ -270,7 +270,7 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
  * @param [in] maxInsideLength  Maximum length inside an object.
  * @return Ray parameters.
  */
-rayparam calcRayParam(v2f_raymarching_forward fi, float3 maxRayLength, float3 maxInsideLength)
+rayparam calcRayParam(v2f_raymarching_forward fi, float maxRayLength, float3 maxInsideLength)
 {
     rayparam rp;
 
@@ -332,7 +332,7 @@ rayparam calcRayParam(v2f_raymarching_forward fi, float3 maxRayLength, float3 ma
  * @param [in] maxInsideLength  Maximum length inside an object.
  * @return Ray parameters.
  */
-rayparam calcRayParam(v2f_raymarching_shadowcaster fi, float3 maxRayLength, float3 maxInsideLength)
+rayparam calcRayParam(v2f_raymarching_shadowcaster fi, float maxRayLength, float3 maxInsideLength)
 {
     rayparam rp;
 

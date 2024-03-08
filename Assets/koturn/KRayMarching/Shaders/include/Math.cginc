@@ -185,9 +185,9 @@ float atan2Fast(float x, float y)
     poly = 1.0 + poly * t1;
     poly *= t0;
 #endif
-    const float u0 = absD < 1.0 ? poly : (UNITY_HALF_PI - poly);
+    const float u0 = absD.x < 1.0 ? poly : (UNITY_HALF_PI - poly);
 
-    return (d >= 0.0 ? u0 : -u0) + (y >= 0.0 ? 0.0 : x >= 0.0 ? UNITY_PI : -UNITY_PI);
+    return (d.x >= 0.0 ? u0 : -u0) + (y >= 0.0 ? 0.0 : x >= 0.0 ? UNITY_PI : -UNITY_PI);
 #else
     return atanFast(x / y) + UNITY_PI * (y < 0.0 ? 1.0 : 0.0) * (x < 0.0 ? -1.0 : 1.0);
 #endif

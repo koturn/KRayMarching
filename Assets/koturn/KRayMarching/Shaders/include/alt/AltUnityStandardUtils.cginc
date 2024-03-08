@@ -32,7 +32,7 @@ float3 BoxProjectedCubemapDirectionAlt(float3 worldRefDir, float3 worldPos, floa
     UNITY_BRANCH
     if (probePos.w > 0.0) {
         const float3 magnitudes = ((worldRefDir > float3(0.0, 0.0, 0.0) ? boxMax.xyz : boxMin.xyz) - worldPos) / worldRefDir;
-        return worldRefDir * min(magnitudes.x, min(magnitudes.y, magnitudes.z)) + (worldPos - probePos);
+        return worldRefDir * min(magnitudes.x, min(magnitudes.y, magnitudes.z)) + (worldPos - probePos.xyz);
     } else {
         return worldRefDir;
     }

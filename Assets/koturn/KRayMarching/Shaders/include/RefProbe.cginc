@@ -1,7 +1,8 @@
 #ifndef REFPROBE_INCLUDED
 #define REFPROBE_INCLUDED
 
-#include "UnityCG.cginc"
+#include "alt/AltUnityCG.cginc"
+#include "alt/AltUnityStandardUtils.cginc"
 
 
 half4 getRefProbeColor(float3 worldRefDir, float3 worldPos);
@@ -9,7 +10,6 @@ half4 getRefProbeColor0(float3 worldRefDir, float3 worldPos);
 half4 getRefProbeColor1(float3 worldRefDir, float3 worldPos);
 float3 boxProj0(float3 worldRefDir, float3 worldPos);
 float3 boxProj1(float3 worldRefDir, float3 worldPos);
-float3 boxProj(float3 worldRefDir, float3 worldPos, float4 probePos, float4 boxMin, float4 boxMax);
 
 
 /*!
@@ -68,7 +68,7 @@ half4 getRefProbeColor1(float3 worldRefDir, float3 worldPos)
  */
 float3 boxProj0(float3 worldRefDir, float3 worldPos)
 {
-    return boxProj(
+    return BoxProjectedCubemapDirectionAlt(
         worldRefDir,
         worldPos,
         unity_SpecCube0_ProbePosition,
@@ -87,42 +87,12 @@ float3 boxProj0(float3 worldRefDir, float3 worldPos)
  */
 float3 boxProj1(float3 worldRefDir, float3 worldPos)
 {
-    return boxProj(
+    return BoxProjectedCubemapDirectionAlt(
         worldRefDir,
         worldPos,
         unity_SpecCube1_ProbePosition,
         unity_SpecCube1_BoxMin,
         unity_SpecCube1_BoxMax);
-}
-
-
-/*!
- * @brief Obtain reflection direction considering box projection.
- *
- * This function is more efficient than BoxProjectedCubemapDirection() in UnityStandardUtils.cginc.
- *
- * @param [in] worldRefDir  Refrection dir (must be normalized).
- * @param [in] worldPos  World coordinate.
- * @param [in] probePos  Position of Refrection probe.
- * @param [in] boxMin  Position of Refrection probe.
- * @param [in] boxMax  Position of Refrection probe.
- * @return Refrection direction considering box projection.
- */
-float3 boxProj(float3 worldRefDir, float3 worldPos, float4 probePos, float4 boxMin, float4 boxMax)
-{
-    // UNITY_SPECCUBE_BOX_PROJECTION is defined if
-    // "Reflection Probes Box Projection" of GraphicsSettings is enabled.
-#ifdef UNITY_SPECCUBE_BOX_PROJECTION
-    // probePos.w == 1.0 if Box Projection is enabled.
-    if (probePos.w > 0.0) {
-        const float3 magnitudes = ((worldRefDir > float3(0.0, 0.0, 0.0) ? boxMax.xyz : boxMin.xyz) - worldPos) / worldRefDir;
-        return worldRefDir * min(magnitudes.x, min(magnitudes.y, magnitudes.z)) + (worldPos - probePos);
-    } else {
-        return worldRefDir;
-    }
-#else
-    return worldRefDir;
-#endif  // UNITY_SPECCUBE_BOX_PROJECTION
 }
 
 
