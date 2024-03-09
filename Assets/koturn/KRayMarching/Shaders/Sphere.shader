@@ -73,14 +73,14 @@ Shader "koturn/KRayMarching/Sphere"
         _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
         _SpecPower ("Specular Power", Range(0.0, 128.0)) = 5.0
 
-        [KeywordEnum(Lambert, Half Lambert, Squared Half Lembert, Disable)]
-        _DiffuseMode ("Reflection Mode", Int) = 2
+        [KeywordEnum(None, Lambert, Half Lambert, Squared Half Lambert)]
+        _DiffuseMode ("Reflection Mode", Int) = 3
 
-        [KeywordEnum(Original, Half Vector, Disable)]
-        _SpecularMode ("Specular Mode", Int) = 1
+        [KeywordEnum(None, Original, Half Vector)]
+        _SpecularMode ("Specular Mode", Int) = 2
 
-        [KeywordEnum(Legacy, SH, Disable)]
-        _AmbientMode ("Ambient Mode", Int) = 1
+        [KeywordEnum(None, Legacy, SH)]
+        _AmbientMode ("Ambient Mode", Int) = 2
 
         [KeywordEnum(Central Difference, Forward Differece, Tetrahedron)]
         _NormalCalcMethod ("Normal Calculation Mode", Int) = 2
@@ -207,12 +207,8 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma shader_feature_local_fragment _STEPMETHOD_NORMAL _STEPMETHOD_OVER_RELAX _STEPMETHOD_ACCELARATION _STEPMETHOD_AUTO_RELAX
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
         #pragma shader_feature_local_fragment _CULL_OFF _CULL_FRONT _CULL_BACK
-        #pragma shader_feature_local_fragment _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT _DIFFUSEMODE_DISABLE
-        #pragma shader_feature_local_fragment _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR _SPECULARMODE_DISABLE
-        #pragma shader_feature_local_fragment _AMBIENTMODE_LEGACY _AMBIENTMODE_SH _AMBIENTMODE_DISABLE
         #pragma shader_feature_local_fragment _NORMALCALCMETHOD_CENTRAL_DIFFERENCE _NORMALCALCMETHOD_FOREARD_DIFFERENCE _NORMALCALCMETHOD_TETRAHEDRON
         #pragma shader_feature_local_fragment _NORMALCALCOPTIMIZE_UNROLL _NORMALCALCOPTIMIZE_LOOP _NORMALCALCOPTIMIZE_LOOP_WITHOUT_LUT
-        #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
 
         #define RAYMARCHING_SDF map
         #define RAYMARCHING_CALC_NORMAL calcNormal
@@ -223,6 +219,7 @@ Shader "koturn/KRayMarching/Sphere"
         float3 calcNormal(float3 p);
         half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
+        half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
 
         #if defined(UNITY_COMPILER_HLSL) \
             || defined(SHADER_API_GLCORE) \
@@ -305,10 +302,12 @@ Shader "koturn/KRayMarching/Sphere"
         #endif  // defined(_DIFFUSEMODE_SQUARED_HALF_LAMBERT)
 
             // Specular reflection.
-        #ifdef _SPECULARMODE_HALF_VECTOR
-            const half3 specular = pow(max(0.0, dot(normalize(worldLightDir + worldViewDir), worldNormal)), _SpecPower) * _SpecColor.xyz * lightCol;
-        #elif _SPECULARMODE_ORIGINAL
-            const half3 specular = pow(max(0.0, dot(reflect(-worldLightDir, worldNormal), worldViewDir)), _SpecPower) * _SpecColor.xyz * lightCol;
+        #if defined(_SPECULARMODE_HALF_VECTOR)
+            const float3 halfDir = normalize(worldLightDir + worldViewDir);
+            const half3 specular = pow(max(0.0, dot(halfDir, worldNormal)), _SpecPower) * _SpecColor.xyz * lightCol;
+        #elif defined(_SPECULARMODE_ORIGINAL)
+            const float3 refDir = reflect(-worldLightDir, worldNormal);
+            const half3 specular = pow(max(0.0, dot(refDir, worldViewDir)), _SpecPower) * _SpecColor.xyz * lightCol;
         #else
             const half3 specular = half3(0.0, 0.0, 0.0);
         #endif  // defined(_SPECULARMODE_HALF_VECTOR)
@@ -317,7 +316,7 @@ Shader "koturn/KRayMarching/Sphere"
         #if defined(_AMBIENTMODE_SH)
             const half3 ambient = ShadeSHPerPixel(
                 worldNormal,
-        #   ifdef VERTEXLIGHT_ON
+        #   if defined(VERTEXLIGHT_ON)
                 Shade4PointLights(
                     unity_4LightPosX0,
                     unity_4LightPosY0,
@@ -339,15 +338,15 @@ Shader "koturn/KRayMarching/Sphere"
             const half3 ambient = half3(0.0, 0.0, 0.0);
         #endif  // defined(_AMBIENTMODE_SH)
 
-        #ifdef _ENABLE_REFLECTION_PROBE
-            const half4 refColor = getRefProbeColor(
+        #if defined(_ENABLE_REFLECTION_PROBE)
+            const half3 refColor = getRefProbeColor(
                 UnityObjectToWorldNormal(reflect(-worldViewDir, worldNormal)),
-                worldPos);
-            const half4 outColor = half4((diffuse + ambient) * lerp(_Color.rgb, refColor.rgb, _Glossiness) + specular, _Color.a);
+                worldPos).rgb;
+            const half3 baseColor = lerp(color.rgb, refColor.rgb, _Glossiness);
         #else
-            const half4 outColor = half4((diffuse + ambient) * _Color.rgb + specular, _Color.a);
+            const half3 baseColor = color.rgb;
         #endif  // defined(_ENABLE_REFLECTION_PROBE)
-            return outColor;
+            return half4((diffuse + ambient) * baseColor + specular, color.a);
         }
 
         /*!
@@ -518,6 +517,10 @@ Shader "koturn/KRayMarching/Sphere"
             #pragma multi_compile_fog
             #pragma shader_feature_local_fragment _DEBUGVIEW_NONE _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
+            #pragma shader_feature_local_fragment _DIFFUSEMODE_NONE _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT
+            #pragma shader_feature_local_fragment _SPECULARMODE_NONE _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR
+            #pragma shader_feature_local_fragment _AMBIENTMODE_NONE _AMBIENTMODE_LEGACY _AMBIENTMODE_SH
+            #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
             ENDCG
         }
 
@@ -558,6 +561,10 @@ Shader "koturn/KRayMarching/Sphere"
             #pragma shader_feature_local _ _NOFORWARDADD_ON
             #pragma shader_feature_local_fragment _DEBUGVIEW_NONE _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
+            #pragma shader_feature_local_fragment _DIFFUSEMODE_NONE _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT
+            #pragma shader_feature_local_fragment _SPECULARMODE_NONE _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR
+            #pragma shader_feature_local_fragment _AMBIENTMODE_NONE _AMBIENTMODE_LEGACY _AMBIENTMODE_SH
+            #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
             ENDCG
         }
 
