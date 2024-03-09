@@ -230,7 +230,7 @@ Shader "koturn/KRayMarching/Sphere"
         #define RAYMARCHING_CALC_LIGHTING calcLighting
 
         float map(float3 p);
-        half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength);
+        half4 getBaseColor(float3 p, float3 normal, float rayLength);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
 
@@ -364,12 +364,12 @@ Shader "koturn/KRayMarching/Sphere"
 
         /*!
          * @brief Get color of the object.
-         * @param [in] rayOrigin  Object/World space ray origin.
-         * @param [in] rayDir  Object/World space ray direction.
-         * @param [in] rayLength  Object/World space Ray length.
+         * @param [in] p  Object/World space position.
+         * @param [in] normal  Object/World space normal.
+         * @param [in] rayLength  Ray length.
          * @return Base color of the object.
          */
-        half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength)
+        half4 getBaseColor(float3 p, float3 normal, float rayLength)
         {
             return _Color;
         }

@@ -144,11 +144,13 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching_forward fi)
 #    if defined(_CALCSPACE_WORLD)
     const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
     const float3 worldNormal = RAYMARCHING_CALC_NORMAL(worldFinalPos);
+    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(worldFinalPos, worldNormal, ro.rayLength);
 #    else
     const float3 localFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
     const float3 worldFinalPos = objectToWorldPos(localFinalPos);
     const float3 localNormal = RAYMARCHING_CALC_NORMAL(localFinalPos);
     const float3 worldNormal = UnityObjectToWorldNormal(localNormal);
+    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(localFinalPos, localNormal, ro.rayLength);
 #    endif  // defined(_CALCSPACE_WORLD)
 
     const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
@@ -160,7 +162,7 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching_forward fi)
     fo.color = float4((ro.rayLength / _DebugRayLengthDiv).xxx, 1.0);
 #    else
     const half4 color = RAYMARCHING_CALC_LIGHTING(
-        RAYMARCHING_GET_BASE_COLOR(rp.rayOrigin, rp.rayDir, ro.rayLength),
+        baseColor,
         worldFinalPos,
         worldNormal,
         getLightAttenRayMarching(fi, worldFinalPos),
@@ -431,11 +433,12 @@ float3 sdfDefaultRaymarching(float3 p)
 
 /*!
  * @brief Get color of the object.
- * @param [in] rp  Ray parameters.
- * @param [in] ro  Result of the ray marching.
+ * @param [in] p  Object/World space position.
+ * @param [in] normal  Object/World space normal.
+ * @param [in] rayLength  Ray length.
  * @return Base color of the object.
  */
-half4 getBaseColorDefaultRaymarching(float3 rayOrigin, float3 rayDir, float rayLength)
+half4 getBaseColorDefaultRaymarching(float3 p, float3 normal, float rayLength)
 {
     return half4(1.0, 1.0, 1.0, 1.0);
 }

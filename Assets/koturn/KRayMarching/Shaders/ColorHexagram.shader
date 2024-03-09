@@ -163,7 +163,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
         float map(float3 p);
         float map(float3 p, out half4 color);
-        half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength);
+        half4 getBaseColor(float3 p, float3 normal, float rayLength);
 
         #include "RayMarchingCore.cginc"
 
@@ -271,14 +271,13 @@ Shader "koturn/KRayMarching/ColorHexagram"
 
         /*!
          * @brief Get color of the object.
-         * @param [in] rayOrigin  Object/World space ray origin.
-         * @param [in] rayDir  Object/World space ray direction.
-         * @param [in] rayLength  Object/World space Ray length.
+         * @param [in] p  Object/World space position.
+         * @param [in] normal  Object/World space normal.
+         * @param [in] rayLength  Ray length.
          * @return Base color of the object.
          */
-        half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength)
+        half4 getBaseColor(float3 p, float3 normal, float rayLength)
         {
-            const float3 p = rayOrigin + rayDir * rayLength;
             half4 color;
             map(p, /* out */ color);
             _SpecColor *= color.a;

@@ -161,7 +161,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         float map(float3 p);
         float map(float3 p, out float hueOffset);
-        half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength);
+        half4 getBaseColor(float3 p, float3 normal, float rayLength);
 
         #include "RayMarchingCore.cginc"
 
@@ -222,12 +222,12 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         /*!
          * @brief Get color of the object.
-         * @param [in] rayOrigin  Object/World space ray origin.
-         * @param [in] rayDir  Object/World space ray direction.
-         * @param [in] rayLength  Object/World space Ray length.
+         * @param [in] p  Object/World space position.
+         * @param [in] normal  Object/World space normal.
+         * @param [in] rayLength  Ray length.
          * @return Base color of the object.
          */
-        half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength)
+        half4 getBaseColor(float3 p, float3 normal, float rayLength)
         {
             static const half4 kColors[6] = {
                 half4(0.8, 0.4, 0.4, 1.0),  // R
@@ -238,7 +238,6 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
                 half4(0.8, 0.4, 0.8, 1.0)   // M
             };
 
-            const float3 p = rayOrigin + rayDir * rayLength;
             float colorIndex;
             map(p, /* out */ colorIndex);
 
