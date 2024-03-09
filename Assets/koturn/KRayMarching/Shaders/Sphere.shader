@@ -211,12 +211,25 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma shader_feature_local_fragment _NORMALCALCOPTIMIZE_UNROLL _NORMALCALCOPTIMIZE_LOOP _NORMALCALCOPTIMIZE_LOOP_WITHOUT_LUT
 
         #define RAYMARCHING_SDF map
-        #define RAYMARCHING_CALC_NORMAL calcNormal
+        #if defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
+        #    define RAYMARCHING_CALC_NORMAL calcNormalCentralDiffRayMarching
+        #elif defined(_NORMALCALCMETHOD_FOREARD_DIFFERENCE)
+        #    define RAYMARCHING_CALC_NORMAL calcNormalForwardDiffRayMarching
+        #else
+        #    define RAYMARCHING_CALC_NORMAL calcNormalRayMarching
+        #endif  // defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
+        #if defined(_NORMALCALCOPTIMIZE_UNROLL)
+        #    define RAYMARCHING_PREFER_UNROLL
+        #elif defined(_NORMALCALCOPTIMIZE_LOOP)
+        #    define RAYMARCHING_UNROLL UNITY_LOOP
+        #else
+        #    define RAYMARCHING_UNROLL UNITY_LOOP
+        #    define RAYMARCHING_CALC_NORMAL_WITHOUT_LUT
+        #endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
         #define RAYMARCHING_GET_BASE_COLOR getBaseColor
         #define RAYMARCHING_CALC_LIGHTING calcLighting
 
         float map(float3 p);
-        float3 calcNormal(float3 p);
         half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength);
         half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
         half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
@@ -347,129 +360,6 @@ Shader "koturn/KRayMarching/Sphere"
             const half3 baseColor = color.rgb;
         #endif  // defined(_ENABLE_REFLECTION_PROBE)
             return half4((diffuse + ambient) * baseColor + specular, color.a);
-        }
-
-        /*!
-         * @brief Calculate normal of the objects.
-         *
-         * @param [in] p  Position of the tip of the ray.
-         * @return Normal of the objects.
-         * @see https://iquilezles.org/articles/normalsSDF/
-         */
-        float3 calcNormal(float3 p)
-        {
-            static const float h = 0.0001;
-
-            const float3 rcpScales = rcp(_Scales);
-
-        #if defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
-        #    if defined(_NORMALCALCOPTIMIZE_UNROLL)
-            static const float2 d = float2(h, 0.0);
-
-            p *= rcpScales;
-
-            return normalize(
-                float3(
-                    map(p + d.xyy * rcpScales) - map(p - d.xyy * rcpScales),
-                    map(p + d.yxy * rcpScales) - map(p - d.yxy * rcpScales),
-                    map(p + d.yyx * rcpScales) - map(p - d.yyx * rcpScales)));
-        #    elif defined(_NORMALCALCOPTIMIZE_LOOP)
-            static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
-            static const float3 k[6] = {s.xzz, s.yzz, s.zxz, s.zyz, s.zzx, s.zzy};
-
-            float3 normal = float3(0.0, 0.0, 0.0);
-
-            UNITY_LOOP
-            for (int i = 0; i < 6; i++) {
-                normal += k[i] * map((p + h * k[i]) * rcpScales);
-            }
-
-            return normalize(normal);
-        #    else
-            float3 normal = float3(0.0, 0.0, 0.0);
-
-            UNITY_LOOP
-            for (int i = 0; i < 6; i++) {
-                const int j = i >> 1;
-                const float4 v = float4(int4((int3(j + 3, i, j) >> 1), i) & 1);
-                const float3 k = v.xyz * (v.w * 2.0 - 1.0);
-                normal += k * map((p + h * k) * rcpScales);
-            }
-
-            return normalize(normal);
-        #    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
-        #elif defined(_NORMALCALCMETHOD_FORWARD_DIFFERENCE)
-        #    if defined(_NORMALCALCOPTIMIZE_UNROLL)
-            static const float2 d = float2(h, 0.0);
-
-            p *= rcpScales;
-
-            const float mp = map(p);
-
-            return normalize(
-                float3(
-                    map(p + d.xyy * rcpScales) - mp,
-                    map(p + d.yxy * rcpScales) - mp,
-                    map(p + d.yyx * rcpScales) - mp));
-        #    elif defined(_NORMALCALCOPTIMIZE_LOOP)
-            static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
-            static const float3 k[3] = {s.xzz, s.zxz, s.zzx};
-
-            float3 normal = (-map(p * rcpScales)).xxx;
-
-            UNITY_LOOP
-            for (int i = 0; i < 3; i++) {
-                normal += k[i] * map((p + h * k[i]) * rcpScales);
-            }
-
-            return normalize(normal);
-        #    else
-            float3 normal = (-map(p * rcpScales)).xxx;
-
-            UNITY_LOOP
-            for (int i = 0; i < 3; i++) {
-                const float3 k = float3(int3((i + 3) >> 1, i, i >> 1) & 1);
-                normal += k * map((p + h * k) * rcpScales);
-            }
-
-            return normalize(normal);
-        #    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
-        #else
-        #    if defined(_NORMALCALCOPTIMIZE_UNROLL)
-            static const float2 s = float2(1.0, -1.0);
-            static const float2 hs = h * s;
-
-            p *= rcpScales;
-
-            return normalize(
-                s.xyy * map(p + hs.xyy * rcpScales)
-                    + s.yxy * map(p + hs.yxy * rcpScales)
-                    + s.yyx * map(p + hs.yyx * rcpScales)
-                    + map(p + hs.xxx * rcpScales).xxx);
-        #    elif defined(_NORMALCALCOPTIMIZE_LOOP)
-            static const float2 s = float2(1.0, -1.0);  // used only for generating k.
-            static const float3 k[4] = {s.xyy, s.yxy, s.yyx, s.xxx};
-
-            float3 normal = float3(0.0, 0.0, 0.0);
-
-            UNITY_LOOP
-            for (int i = 0; i < 4; i++) {
-                normal += k[i] * map((p + h * k[i]) * rcpScales);
-            }
-
-            return normalize(normal);
-        #    else
-            float3 normal = float3(0.0, 0.0, 0.0);
-
-            UNITY_LOOP
-            for (int i = 0; i < 4; i++) {
-                const float3 k = float3(int3((i + 3) >> 1, i, i >> 1) & 1) * 2.0 - 1.0;
-                normal += k * map((p + h * k) * rcpScales);
-            }
-
-            return normalize(normal);
-        #    endif  // defined(_NORMALCALCOPTIMIZE_UNROLL)
-        #endif  // defined(_NORMALCALCMETHOD_CENTRAL_DIFFERENCE)
         }
 
         /*!
