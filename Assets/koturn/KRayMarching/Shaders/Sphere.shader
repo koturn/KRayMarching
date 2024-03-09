@@ -201,12 +201,12 @@ Shader "koturn/KRayMarching/Sphere"
 
         CGINCLUDE
         #pragma target 3.0
-        #pragma shader_feature_local _CALCSPACE_OBJECT _CALCSPACE_WORLD
-        #pragma shader_feature_local _MAXRAYLENGTHMODE_USE_PROPERTY_VALUE _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
-        #pragma shader_feature_local _ASSUMEINSIDE_NONE _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
-        #pragma shader_feature_local_fragment _STEPMETHOD_NORMAL _STEPMETHOD_OVER_RELAX _STEPMETHOD_ACCELARATION _STEPMETHOD_AUTO_RELAX
+        #pragma shader_feature_local _ _CALCSPACE_WORLD
+        #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
+        #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
+        #pragma shader_feature_local_fragment _ _STEPMETHOD_OVER_RELAX _STEPMETHOD_ACCELARATION _STEPMETHOD_AUTO_RELAX
         #pragma shader_feature_local_fragment _ _NODEPTH_ON
-        #pragma shader_feature_local_fragment _CULL_OFF _CULL_FRONT _CULL_BACK
+        #pragma shader_feature_local_fragment _ _CULL_FRONT _CULL_BACK
         #pragma shader_feature_local_fragment _NORMALCALCMETHOD_CENTRAL_DIFFERENCE _NORMALCALCMETHOD_FOREARD_DIFFERENCE _NORMALCALCMETHOD_TETRAHEDRON
         #pragma shader_feature_local_fragment _NORMALCALCOPTIMIZE_UNROLL _NORMALCALCOPTIMIZE_LOOP _NORMALCALCOPTIMIZE_LOOP_WITHOUT_LUT
 
@@ -405,11 +405,11 @@ Shader "koturn/KRayMarching/Sphere"
             //   FOG_EXP
             //   FOG_EXP2
             #pragma multi_compile_fog
-            #pragma shader_feature_local_fragment _DEBUGVIEW_NONE _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
+            #pragma shader_feature_local_fragment _ _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
-            #pragma shader_feature_local_fragment _DIFFUSEMODE_NONE _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT
-            #pragma shader_feature_local_fragment _SPECULARMODE_NONE _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR
-            #pragma shader_feature_local_fragment _AMBIENTMODE_NONE _AMBIENTMODE_LEGACY _AMBIENTMODE_SH
+            #pragma shader_feature_local_fragment _ _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT
+            #pragma shader_feature_local_fragment _ _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR
+            #pragma shader_feature_local_fragment _ _AMBIENTMODE_LEGACY _AMBIENTMODE_SH
             #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
             ENDCG
         }

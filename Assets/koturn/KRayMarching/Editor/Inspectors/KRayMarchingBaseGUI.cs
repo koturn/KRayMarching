@@ -247,6 +247,10 @@ namespace Koturn.KRayMarching.Inspectors
         /// Editor UI mode names.
         /// </summary>
         private static readonly string[] _editorModeNames;
+        /// <summary>
+        /// Unnecessary shader keywords.
+        /// </summary>
+        private static readonly string[] _unnecessaryKeywords;
 
         /// <summary>
         /// Current editor UI mode.
@@ -265,6 +269,18 @@ namespace Koturn.KRayMarching.Inspectors
         {
             _editorMode = (EditorMode)(-1);
             _editorModeNames = Enum.GetNames(typeof(EditorMode));
+            _unnecessaryKeywords = new string[]
+            {
+                "_CALCSPACE_OBJECT",
+                "_MAXRAYLENGTHMODE_USE_PROPERTY_VALUE",
+                "_ASSUMEINSIDE_NONE",
+                "_STEPMETHOD_NORMAL ",
+                "_CULL_OFF",
+                "_DEBUGVIEW_NONE",
+                "_DIFFUSEMODE_NONE",
+                "_SPECULARMODE_NONE",
+                "_AMBIENTMODE_NONE"
+            };
         }
 
         /// <summary>
@@ -302,6 +318,7 @@ namespace Koturn.KRayMarching.Inspectors
             if (_editorMode == EditorMode.Default)
             {
                 base.OnGUI(me, mps);
+                RemoveUnnecessaryKeywords(me);
                 return;
             }
 
@@ -451,6 +468,8 @@ namespace Koturn.KRayMarching.Inspectors
                 EditorGUILayout.Space();
                 DrawAdvancedOptions(me, mps);
             }
+
+            RemoveUnnecessaryKeywords(me);
         }
 
         /// <summary>
@@ -737,6 +756,30 @@ namespace Koturn.KRayMarching.Inspectors
                 me.EnableInstancingField();
                 me.DoubleSidedGIField();
 #endif  // UNITY_5_6_OR_NEWER
+            }
+        }
+
+        /// <summary>
+        /// Remove unneccessary shader keywords.
+        /// </summary>
+        /// <param name="me">A <see cref="MaterialEditor"/>.</param>
+        private static void RemoveUnnecessaryKeywords(MaterialEditor me)
+        {
+            foreach (var material in me.targets.Cast<Material>())
+            {
+                RemoveUnnecessaryKeywords(material);
+            }
+        }
+
+        /// <summary>
+        /// Remove unneccessary shader keywords.
+        /// </summary>
+        /// <param name="material">A <see cref="Material"/>.</param>
+        private static void RemoveUnnecessaryKeywords(Material material)
+        {
+            foreach (var keyword in _unnecessaryKeywords)
+            {
+                material.DisableKeyword(keyword);
             }
         }
 
