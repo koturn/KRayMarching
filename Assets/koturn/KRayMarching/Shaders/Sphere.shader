@@ -12,7 +12,7 @@ Shader "koturn/KRayMarching/Sphere"
         _MaxLoopForwardAdd ("Maximum loop count for ForwardAdd", Range(8, 1024)) = 64
 
         [IntRange]
-        _MaxLoopShadowCaster ("Maximum loop count for ShadowCaster", Range(8, 1024)) = 64
+        _MaxLoopShadowCaster ("Maximum loop count for ShadowCaster", Range(8, 1024)) = 32
 
         _MinRayLength ("Minimum length of the ray", Float) = 0.01
 
@@ -62,7 +62,7 @@ Shader "koturn/KRayMarching/Sphere"
         [Header(Lighting Parameters)]
         [Space(8)]
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit, Custom)]
-        _Lighting ("Lighting method", Int) = 0
+        _Lighting ("Lighting method", Int) = 2
 
         [Toggle(_ENABLE_REFLECTION_PROBE)]
         _EnableReflectionProbe ("Enable Reflection Probe", Int) = 1

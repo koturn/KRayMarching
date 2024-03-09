@@ -12,7 +12,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         _MaxLoopForwardAdd ("Maximum loop count for ForwardAdd", Range(8, 1024)) = 64
 
         [IntRange]
-        _MaxLoopShadowCaster ("Maximum loop count for ShadowCaster", Range(8, 1024)) = 64
+        _MaxLoopShadowCaster ("Maximum loop count for ShadowCaster", Range(8, 1024)) = 32
 
         _MinRayLength ("Minimum length of the ray", Float) = 0.001
 
@@ -68,7 +68,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         [Header(Lighting Parameters)]
         [Space(8)]
         [KeywordEnum(Unity Lambert, Unity Blinn Phong, Unity Standard, Unity Standard Specular, Unlit)]
-        _Lighting ("Lighting method", Int) = 0
+        _Lighting ("Lighting method", Int) = 2
 
         _Glossiness ("Smoothness", Range(0.0, 1.0)) = 0.5
         _Metallic ("Metallic", Range(0.0, 1.0)) = 0.0
