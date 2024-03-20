@@ -371,7 +371,8 @@ float sdCappedCylinder(float3 p, float3 a, float3 b, float radius)
     const float x2 = x * x;
     const float y2 = y * y * baba;
     const float d = (max(x, y) < 0.0) ? -min(x2, y2) : ((x > 0.0 ? x2 : 0.0) + (y > 0.0 ? y2 : 0.0));
-    return sign(d) * sqrt(abs(d)) / baba;
+    // return sign(d) * sqrt(abs(d)) / baba;
+    return (d < 0.0 ? -1.0 : 1.0) * sqrt(abs(d)) / baba;
 }
 
 
@@ -464,7 +465,8 @@ float sdSolidAngle(float3 p, float angle, float height)
     const float2 q = float2(length(p.xz), p.y);
     const float l = length(q) - height;
     const float m = length(q - sc * clamp(dot(q, sc), 0.0, height));
-    return max(l, m * sign(sc.y * q.x - sc.x * q.y));
+    // return max(l, m * sign(sc.y * q.x - sc.x * q.y));
+    return max(l, m * (sc.y * q.x - sc.x * q.y < 0.0 ? -1.0 : 1.0));
 }
 
 
@@ -566,9 +568,9 @@ float sdRoundCone(float3 p, float3 a, float3 b, float ra, float rb)
     const float z2 = z * z * l2;
 
     // single square root!
-    const float k = sign(rr) * rr * rr * x2;
-    return sign(z) * a2 * z2 > k ? sqrt(x2 + z2) * il2 - rb
-        : sign(y) * a2 * y2 < k ? sqrt(x2 + y2) * il2 - ra
+    const float k = (rr < 0.0 ? -1.0 : 1.0) * rr * rr * x2;
+    return (z < 0.0 ? -1.0 : 1.0) * a2 * z2 > k ? sqrt(x2 + z2) * il2 - rb
+        : (y < 0.0 ? -1.0 : 1.0) * a2 * y2 < k ? sqrt(x2 + y2) * il2 - ra
         : (sqrt(x2 * a2 * il2) + y * rr) * il2 - ra;
 }
 
@@ -655,7 +657,7 @@ float sdRhombus(float3 p, float2 xzSize, float height, float r)
     const float f = clamp((xzSize.x * c.x - xzSize.y * c.y) / dot(xzSize, xzSize), -1.0, 1.0);
     const float2 q = float2(
         // length(p.xz - 0.5 * xzSize * float2(1.0 - f, 1.0 + f)) * sign(p.x * xzSize.y + p.z * xzSize.x - xzSize.x * xzSize.y) - r,
-        length(p.xz - 0.5 * xzSize * float2(1.0 - f, 1.0 + f)) * sign(dot(float3(p.xz, -xzSize.x), xzSize.yxy)) - r,
+        length(p.xz - 0.5 * xzSize * float2(1.0 - f, 1.0 + f)) * (dot(float3(p.xz, -xzSize.x), xzSize.yxy) < 0.0 ? -1.0 : 1.0) - r,
         p.y - height);
     return min(0.0, max(q.x, q.y)) + length(max(0.0, q));
 }
