@@ -680,6 +680,7 @@ float sdOctahedronExact(float3 p, float s)
  * @brief SDF of Octahedron (not exact).
  * @param [in] p  Position.
  * @param [in] s  Size of Octahedron.
+ * @param [in] scales  Scales of Octahedron.
  * @return Signed Distance to the Octahedron.
  */
 float sdOctahedronExact(float3 p, float s, float3 scales)

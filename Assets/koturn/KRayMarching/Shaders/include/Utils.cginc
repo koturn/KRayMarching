@@ -196,7 +196,7 @@ bool isCameraOrthographic()
 
 /*!
  * @brief Get camera direction from projected position.
- * @param [in] Screen space position.
+ * @param [in] screenPos  Screen space position.
  * @return Camera direction in world space.
  */
 float3 getCameraDir(float4 screenPos)
@@ -207,7 +207,7 @@ float3 getCameraDir(float4 screenPos)
 
 /*!
  * @brief Get unnormalized camera direction vector from projected position.
- * @param [in] Screen space position.
+ * @param [in] screenPos  Screen space position.
  * @return Camera direction in world space.
  */
 float3 getCameraDirVec(float4 screenPos)
@@ -230,6 +230,7 @@ float3 getCameraDirVec(float4 screenPos)
  * This function can be used to localize those declarations.
  * If fog is disabled, this function returns color as is.
  *
+ * @param [in] fogFactor  Fog factor (Z-coordinate in screen space).
  * @param [in] color  Target color.
  * @return Fog-applied color.
  */
@@ -263,7 +264,7 @@ float getDepth(float4 clipPos)
 * @brief Sample texture using Tri-Planar texture mapping.
 *
 * @param [in] tex  2D texture.
-* @param [in] sampler  Texture sampler for tex.
+* @param [in] samplertex  Texture sampler for tex.
 * @param [in] pos  Object/World space position.
 * @param [in] normal  Normal.
 *
