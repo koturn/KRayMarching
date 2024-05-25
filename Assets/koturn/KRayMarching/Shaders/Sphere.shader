@@ -388,7 +388,7 @@ Shader "koturn/KRayMarching/Sphere"
             ZTest [_ZTest]
 
             CGPROGRAM
-            #pragma vertex vertRayMarchingForward
+            #pragma vertex vertRayMarching
             #pragma fragment fragRayMarchingForward
 
             // keywords:
@@ -427,7 +427,7 @@ Shader "koturn/KRayMarching/Sphere"
             ZTest LEqual
 
             CGPROGRAM
-            #pragma vertex vertRayMarchingForward
+            #pragma vertex vertRayMarching
             #pragma fragment fragRayMarchingForward
 
             // Keywords:
@@ -454,6 +454,41 @@ Shader "koturn/KRayMarching/Sphere"
             #pragma shader_feature_local_fragment _DIFFUSEMODE_NONE _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT
             #pragma shader_feature_local_fragment _SPECULARMODE_NONE _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR
             #pragma shader_feature_local_fragment _AMBIENTMODE_NONE _AMBIENTMODE_LEGACY _AMBIENTMODE_SH
+            #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
+            ENDCG
+        }
+
+        Pass
+        {
+            Name "DEFERRED"
+            Tags
+            {
+                "LightMode" = "Deferred"
+            }
+
+            Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
+            ZWrite [_ZWrite]
+            ZTest [_ZTest]
+
+            CGPROGRAM
+            #pragma vertex vertRayMarching
+            #pragma fragment fragRayMarchingDeferred
+
+            #pragma exclude_renderers nomrt
+
+            // keywords:
+            //   LIGHTMAP_ON
+            //   DIRLIGHTMAP_COMBINED
+            //   DYNAMICLIGHTMAP_ON
+            //   UNITY_HDR_ON
+            //   SHADOWS_SHADOWMASK
+            //   LIGHTPROBE_SH
+            #pragma multi_compile_prepassfinal
+            #pragma shader_feature_local_fragment _ _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
+            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
+            #pragma shader_feature_local_fragment _ _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT
+            #pragma shader_feature_local_fragment _ _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR
+            #pragma shader_feature_local_fragment _ _AMBIENTMODE_LEGACY _AMBIENTMODE_SH
             #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
             ENDCG
         }

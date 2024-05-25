@@ -298,7 +298,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             ZWrite On
 
             CGPROGRAM
-            #pragma vertex vertRayMarchingForward
+            #pragma vertex vertRayMarching
             #pragma fragment fragRayMarchingForward
 
             #pragma multi_compile_fwdbase
@@ -321,7 +321,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
             ZWrite Off
 
             CGPROGRAM
-            #pragma vertex vertRayMarchingForward
+            #pragma vertex vertRayMarching
             #pragma fragment fragRayMarchingForward
 
             #pragma multi_compile_fwdadd_fullshadows

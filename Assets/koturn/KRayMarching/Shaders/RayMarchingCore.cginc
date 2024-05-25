@@ -27,6 +27,9 @@
 #if !defined(RAYMARCHING_CALC_LIGHTING)
 #    define RAYMARCHING_CALC_LIGHTING calcLightingUnity
 #endif  // !defined(RAYMARCHING_CALC_LIGHTING)
+#if !defined(RAYMARCHING_CALC_LIGHTING_DEFERRED)
+#    define RAYMARCHING_CALC_LIGHTING_DEFERRED calcLightingUnityDeferred
+#endif  // !defined(RAYMARCHING_CALC_LIGHTING_DEFERRED)
 #if !defined(RAYMARCHING_UNROLL_LIMIT)
 #    define RAYMARCHING_UNROLL_LIMIT 128
 #endif  // !defined(RAYMARCHING_UNROLL_LIMIT)
@@ -61,6 +64,27 @@ struct fout_raymarching
 };
 
 /*!
+ * @brief G-Buffer data which is output of fragDeferred.
+ * @see fragDeferred
+ */
+struct gbuffer_raymarching
+{
+    //! Diffuse and occlustion. (rgb: diffuse, a: occlusion)
+    half4 diffuse : SV_Target0;
+    //! Specular and smoothness. (rgb: specular, a: smoothness)
+    half4 specular : SV_Target1;
+    //! Normal. (rgb: normal, a: unused)
+    half4 normal : SV_Target2;
+    //! Emission. (rgb: emission, a: unused)
+    half4 emission : SV_Target3;
+#if !defined(_NODEPTH_ON)
+    //! Depth of the pixel.
+    float depth : SV_Depth;
+#endif  // !defined(_NODEPTH_ON)
+};
+
+
+/*!
  * @brief Output of rayMarchDefault().
  */
 struct result_raymarching
@@ -74,7 +98,8 @@ struct result_raymarching
 };
 
 
-fout_raymarching fragRayMarchingForward(v2f_raymarching_forward fi);
+fout_raymarching fragRayMarchingForward(v2f_raymarching fi);
+gbuffer_raymarching fragRayMarchingDeferred(v2f_raymarching fi);
 fout_raymarching fragRayMarchingShadowCaster(v2f_raymarching_shadowcaster fi);
 result_raymarching rayMarchDefault(rayparam rp);
 float3 calcNormalRayMarching(float3 p);
@@ -128,7 +153,7 @@ half4 fragRayMarchingForward() : SV_Target
  * @param [in] fi  Input data from vertex shader
  * @return Output of each texels (fout_raymarching).
  */
-fout_raymarching fragRayMarchingForward(v2f_raymarching_forward fi)
+fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
 {
     UNITY_SETUP_INSTANCE_ID(fi);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
@@ -176,6 +201,66 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching_forward fi)
     return fo;
 }
 #endif  // defined(UNITY_PASS_FORWARDADD) && (defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
+
+
+/*!
+ * @brief Fragment shader function.
+ * @param [in] fi  Input data from vertex shader
+ * @return G-Buffer data.
+ */
+gbuffer_raymarching fragRayMarchingDeferred(v2f_raymarching fi)
+{
+    UNITY_SETUP_INSTANCE_ID(fi);
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(fi);
+
+    const rayparam rp = calcRayParam(fi, _MaxRayLength, _MaxInsideLength);
+    const result_raymarching ro = rayMarchDefault(rp);
+#if !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
+    if (!ro.isHit) {
+        discard;
+    }
+#endif  // !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
+
+#if defined(_CALCSPACE_WORLD)
+    const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
+    const float3 worldNormal = RAYMARCHING_CALC_NORMAL(worldFinalPos);
+    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(worldFinalPos, worldNormal, ro.rayLength);
+#else
+    const float3 localFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
+    const float3 worldFinalPos = objectToWorldPos(localFinalPos);
+    const float3 localNormal = RAYMARCHING_CALC_NORMAL(localFinalPos);
+    const float3 worldNormal = UnityObjectToWorldNormal(localNormal);
+    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(localFinalPos, localNormal, ro.rayLength);
+#endif  // defined(_CALCSPACE_WORLD)
+
+    gbuffer_raymarching gb;
+    UNITY_INITIALIZE_OUTPUT(gbuffer_raymarching, gb);
+#if defined(_DEBUGVIEW_STEP)
+    gb.diffuse.a = 1.0;
+    gb.normal.rgb = worldNormal * 0.5 + 0.5;
+    gb.emission = float4((ro.rayStep / _DebugStepDiv).xxx, 1.0);
+#elif defined(_DEBUGVIEW_RAY_LENGTH)
+    gb.diffuse.a = 1.0;
+    gb.normal.rgb = worldNormal * 0.5 + 0.5;
+    gb.emission = float4((ro.rayLength / _DebugRayLengthDiv).xxx, 1.0);
+#else
+    gb.emission = RAYMARCHING_CALC_LIGHTING_DEFERRED(
+        baseColor,
+        worldFinalPos,
+        worldNormal,
+        getLightAttenRayMarching(fi, worldFinalPos),
+        getLightMap(fi),
+        /* out */ gb.diffuse,
+        /* out */ gb.specular,
+        /* out */ gb.normal);
+#endif  // defined(_DEBUGVIEW_STEP)
+#if !defined(_NODEPTH_ON)
+    const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
+    gb.depth = getDepth(clipPos);
+#endif  // !defined(_NODEPTH_ON)
+
+    return gb;
+}
 
 
 /*!
@@ -244,13 +329,13 @@ fout_raymarching fragRayMarchingShadowCaster(v2f_raymarching_shadowcaster fi)
  */
 result_raymarching rayMarchDefault(rayparam rp)
 {
-#if defined(UNITY_PASS_FORWARDBASE)
-    const int maxLoop = _MaxLoop;
-#elif defined(UNITY_PASS_FORWARDADD)
+#if defined(UNITY_PASS_FORWARDADD)
     const int maxLoop = _MaxLoopForwardAdd;
 #elif defined(UNITY_PASS_SHADOWCASTER)
     const int maxLoop = _MaxLoopShadowCaster;
-#endif  // defined(UNITY_PASS_FORWARDBASE)
+#else  // Assume: UNITY_PASS_FORWARDBASE and UNITY_PASS_DEFERRED
+    const int maxLoop = _MaxLoop;
+#endif  // defined(UNITY_PASS_FORWARDADD)
 
     const float3 rcpScales = rcp(_Scales);
     const float3 rayOrigin = rp.rayOrigin * rcpScales;

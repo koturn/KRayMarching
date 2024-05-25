@@ -58,7 +58,7 @@ struct appdata_raymarching_shadowcaster
  * @brief Output of the vertex shader, vertRayMarchingForward()
  * and input of fragment shader.
  */
-struct v2f_raymarching_forward
+struct v2f_raymarching
 {
     //! Clip space position of the vertex.
     float4 pos : SV_POSITION;
@@ -141,11 +141,11 @@ struct rayparam
 };
 
 
-rayparam calcRayParam(v2f_raymarching_forward fi, float3 rayDir, float maxRayLength, float3 maxInsideLength);
+rayparam calcRayParam(v2f_raymarching fi, float3 rayDir, float maxRayLength, float3 maxInsideLength);
 rayparam calcRayParam(v2f_raymarching_shadowcaster fi, float maxRayLength, float3 maxInsideLength);
-float4 getLightMap(v2f_raymarching_forward fi);
-fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos);
-bool isFacing(v2f_raymarching_forward fi);
+float4 getLightMap(v2f_raymarching fi);
+fixed getLightAttenRayMarching(v2f_raymarching fi, float3 worldPos);
+bool isFacing(v2f_raymarching fi);
 bool isFacing(v2f_raymarching_shadowcaster fi);
 bool isFacing(face_t facing);
 
@@ -155,7 +155,7 @@ bool isFacing(face_t facing);
  * @brief Vertex shader function for disabling ForwardAdd Pass.
  * @return NaN vertex.
  */
-float4 vertRayMarchingForward() : SV_POSITION
+float4 vertRayMarching() : SV_POSITION
 {
     return asfloat(0x7fc00000).xxxx;  // qNaN
 }
@@ -165,10 +165,10 @@ float4 vertRayMarchingForward() : SV_POSITION
  * @param [in] v  Input data
  * @return Output for fragment shader (v2f).
  */
-v2f_raymarching_forward vertRayMarchingForward(appdata_raymarching_forward v)
+v2f_raymarching vertRayMarching(appdata_raymarching_forward v)
 {
-    v2f_raymarching_forward o;
-    UNITY_INITIALIZE_OUTPUT(v2f_raymarching_forward, o);
+    v2f_raymarching o;
+    UNITY_INITIALIZE_OUTPUT(v2f_raymarching, o);
 
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_TRANSFER_INSTANCE_ID(v, o);
@@ -270,7 +270,7 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
  * @param [in] maxInsideLength  Maximum length inside an object.
  * @return Ray parameters.
  */
-rayparam calcRayParam(v2f_raymarching_forward fi, float maxRayLength, float3 maxInsideLength)
+rayparam calcRayParam(v2f_raymarching fi, float maxRayLength, float3 maxInsideLength)
 {
     rayparam rp;
 
@@ -351,7 +351,7 @@ rayparam calcRayParam(v2f_raymarching_shadowcaster fi, float maxRayLength, float
  * @param [in] fi  Input data of fragment shader function.
  * @return Light map coordinate.
  */
-float4 getLightMap(v2f_raymarching_forward fi)
+float4 getLightMap(v2f_raymarching fi)
 {
 #if defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON)
     return fi.lmap;
@@ -368,7 +368,7 @@ float4 getLightMap(v2f_raymarching_forward fi)
  * @param [in] worldPos  Coordinate of the world.
  * @return light attenuation.
  */
-fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos)
+fixed getLightAttenRayMarching(v2f_raymarching fi, float3 worldPos)
 {
     UNITY_LIGHT_ATTENUATION(atten, fi, worldPos);
     return atten;
@@ -380,7 +380,7 @@ fixed getLightAttenRayMarching(v2f_raymarching_forward fi, float3 worldPos)
  * @param [in] fi  Input data of fragment shader for ForwardBase/ForwardAdd pass.
  * @return True if surface facing the camera or facing parameter is not defined, otherwise false.
  */
-bool isFacing(v2f_raymarching_forward fi)
+bool isFacing(v2f_raymarching fi)
 {
 #if defined(_CULL_FRONT)
     return false;

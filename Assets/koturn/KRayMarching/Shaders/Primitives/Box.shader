@@ -194,7 +194,7 @@
             ZWrite On
 
             CGPROGRAM
-            #pragma vertex vertRayMarchingForward
+            #pragma vertex vertRayMarching
             #pragma fragment fragRayMarchingForward
 
             #pragma multi_compile_fwdbase
@@ -217,7 +217,7 @@
             ZWrite Off
 
             CGPROGRAM
-            #pragma vertex vertRayMarchingForward
+            #pragma vertex vertRayMarching
             #pragma fragment fragRayMarchingForward
 
             #pragma multi_compile_fwdadd_fullshadows

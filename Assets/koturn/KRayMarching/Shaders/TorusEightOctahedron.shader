@@ -268,7 +268,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
             ZWrite On
 
             CGPROGRAM
-            #pragma vertex vertRayMarchingForward
+            #pragma vertex vertRayMarching
             #pragma fragment fragRayMarchingForward
 
             #pragma multi_compile_fwdbase
@@ -291,7 +291,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
             ZWrite Off
 
             CGPROGRAM
-            #pragma vertex vertRayMarchingForward
+            #pragma vertex vertRayMarching
             #pragma fragment fragRayMarchingForward
 
             #pragma multi_compile_fwdadd_fullshadows
