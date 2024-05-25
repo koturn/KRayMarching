@@ -230,6 +230,29 @@
 
         Pass
         {
+            Name "DEFERRED"
+            Tags
+            {
+                "LightMode" = "Deferred"
+            }
+
+            Blend Off
+            ZWrite On
+
+            CGPROGRAM
+            #pragma vertex vertRayMarching
+            #pragma fragment fragRayMarchingDeferred
+
+            #pragma exclude_renderers nomrt
+
+            #pragma multi_compile_prepassfinal
+            #pragma shader_feature_local_fragment _ _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
+            #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
+            ENDCG
+        }
+
+        Pass
+        {
             Name "SHADOW_CASTER"
             Tags
             {
