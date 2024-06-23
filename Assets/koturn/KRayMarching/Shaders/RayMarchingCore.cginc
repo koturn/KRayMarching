@@ -369,7 +369,7 @@ result_raymarching rayMarchDefault(rayparam rp)
     float d = r;
 
     // RAYMARCHING_UNROLL_N(RAYMARCHING_UNROLL_LIMIT)
-    for (ro.rayStep = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
+    for (ro.rayStep = 1; r > _MinRayLength && (ro.rayLength + r * marchingFactor) < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
         const float nextRayLength = ro.rayLength + d * marchingFactor;
         const float nextR = RAYMARCHING_SDF(rayOrigin + rayDirVec * nextRayLength);
         if (d <= r + abs(nextR)) {
@@ -389,7 +389,7 @@ result_raymarching rayMarchDefault(rayparam rp)
     float m = -1.0;
 
     // RAYMARCHING_UNROLL_N(RAYMARCHING_UNROLL_LIMIT)
-    for (ro.rayStep = 1; r > _MinRayLength && (ro.rayLength + r) < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
+    for (ro.rayStep = 1; r > _MinRayLength && (ro.rayLength + r * marchingFactor) < rp.maxRayLength && ro.rayStep < maxLoop; ro.rayStep++) {
         const float nextRayLength = ro.rayLength + d * marchingFactor;
         const float nextR = RAYMARCHING_SDF(rayOrigin + rayDirVec * nextRayLength);
         if (d <= r + abs(nextR)) {
