@@ -169,13 +169,13 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
 #    if defined(_CALCSPACE_WORLD)
     const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
     const float3 worldNormal = RAYMARCHING_CALC_NORMAL(worldFinalPos);
-    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(worldFinalPos, worldNormal, ro.rayLength);
+    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(worldFinalPos / _Scales, worldNormal, ro.rayLength);
 #    else
     const float3 localFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
     const float3 worldFinalPos = objectToWorldPos(localFinalPos);
     const float3 localNormal = RAYMARCHING_CALC_NORMAL(localFinalPos);
     const float3 worldNormal = UnityObjectToWorldNormal(localNormal);
-    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(localFinalPos, localNormal, ro.rayLength);
+    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(localFinalPos / _Scales, localNormal, ro.rayLength);
 #    endif  // defined(_CALCSPACE_WORLD)
 
     const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
