@@ -62,13 +62,13 @@ struct v2f_raymarching
 {
     //! Clip space position of the vertex.
     float4 pos : SV_POSITION;
-#if defined(_CALCSPACE_WORLD) || defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#if defined(_CALCSPACE_WORLD) || defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH) || defined(_BACKGROUNDMODE_FIXED_COLOR) && defined(_BACKGROUNDDEPTH_MESH)
     //! Fragment position in object/world space.
     float3 fragPos : TEXCOORD0;
 #else
     //! Unnormalized ray direction in object space.
     float3 rayDirVec : TEXCOORD0;
-#endif  // defined(_CALCSPACE_WORLD) || defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#endif  // defined(_CALCSPACE_WORLD) || defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH) || defined(_BACKGROUNDMODE_FIXED_COLOR) && defined(_BACKGROUNDDEPTH_MESH)
 #ifndef _CALCSPACE_WORLD
     //! Ray origin in object/world space.
     nointerpolation float3 rayOrigin : TEXCOORD1;
@@ -179,11 +179,11 @@ v2f_raymarching vertRayMarching(appdata_raymarching_forward v)
 #else
     const float3 vertPos = v.vertex.xyz;
     o.rayOrigin = worldToObjectPos(_WorldSpaceCameraPos);
-#    if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#    if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH) || defined(_BACKGROUNDMODE_FIXED_COLOR) && defined(_BACKGROUNDDEPTH_MESH)
     o.fragPos = vertPos;
 #    else
     o.rayDirVec = vertPos - o.rayOrigin;
-#    endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#    endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH) || defined(_BACKGROUNDMODE_FIXED_COLOR) && defined(_BACKGROUNDDEPTH_MESH)
 #endif  // defined(_CALCSPACE_WORLD)
 
 #ifdef LIGHTMAP_ON
@@ -279,11 +279,11 @@ rayparam calcRayParam(v2f_raymarching fi, float maxRayLength, float3 maxInsideLe
     const float3 rayDirVec = fi.fragPos - _WorldSpaceCameraPos;
 #else
     rp.rayOrigin = fi.rayOrigin;
-#    if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#    if defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH) || defined(_BACKGROUNDMODE_FIXED_COLOR) && defined(_BACKGROUNDDEPTH_MESH)
     const float3 rayDirVec = fi.fragPos - fi.rayOrigin;
 #    else
     const float3 rayDirVec = fi.rayDirVec;
-#    endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH)
+#    endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH) || defined(_BACKGROUNDMODE_FIXED_COLOR) && defined(_BACKGROUNDDEPTH_MESH)
 #endif  // defined(_CALCSPACE_WORLD)
     rp.rayDir = normalize(rayDirVec);
 

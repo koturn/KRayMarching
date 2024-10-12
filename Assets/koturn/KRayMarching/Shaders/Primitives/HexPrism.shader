@@ -43,6 +43,14 @@
 
         _AutoRelaxFactor ("Coefficient of Automatic Step Size Relaxation", Range(0.0, 1.0)) = 0.78
 
+        [KeywordEnum(Discard, Fixed Color)]
+        _BackgroundMode ("Background mode", Int) = 0
+
+        _BackgroundColor ("Background Color", Color) = (0.0, 0.0, 0.0, 1.0)
+
+        [KeywordEnum(Far Clip, Mesh)]
+        _BackgroundDepth ("Background depth", Int) = 0
+
         [KeywordEnum(None, Step, Ray Length)]
         _DebugView ("Debug view mode", Int) = 0
 
@@ -202,6 +210,8 @@
 
             #pragma multi_compile_fwdbase
             #pragma multi_compile_fog
+            #pragma shader_feature_local _ _BACKGROUNDMODE_FIXED_COLOR
+            #pragma shader_feature_local _ _BACKGROUNDDEPTH_MESH
             #pragma shader_feature_local_fragment _ _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT
             ENDCG
@@ -226,6 +236,8 @@
             #pragma multi_compile_fwdadd_fullshadows
             #pragma multi_compile_fog
             #pragma shader_feature_local _ _NOFORWARDADD_ON
+            #pragma shader_feature_local _ _BACKGROUNDMODE_FIXED_COLOR
+            #pragma shader_feature_local _ _BACKGROUNDDEPTH_MESH
             #pragma shader_feature_local_fragment _ _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT
             ENDCG
@@ -249,6 +261,8 @@
             #pragma exclude_renderers nomrt
 
             #pragma multi_compile_prepassfinal
+            #pragma shader_feature_local _ _BACKGROUNDMODE_FIXED_COLOR
+            #pragma shader_feature_local _ _BACKGROUNDDEPTH_MESH
             #pragma shader_feature_local_fragment _ _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
             ENDCG

@@ -109,6 +109,8 @@ float3 sdfDefaultRaymarching(float3 p);
 half4 getBaseColorDefaultRaymarching(float3 rayOrigin, float3 rayDir, float rayLength);
 
 
+//! Background color.
+uniform half4 _BackgroundColor;
 //! Maximum loop count for ForwardBase.
 uniform int _MaxLoop;
 //! Maximum loop count for ForwardAdd.
@@ -162,7 +164,25 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
     const result_raymarching ro = rayMarchDefault(rp);
 #    if !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
     if (!ro.isHit) {
+#        if defined(_BACKGROUNDMODE_FIXED_COLOR)
+        fout_raymarching fo;
+#            if defined(_CALCSPACE_WORLD)
+        const float4 clipPos = UnityWorldToClipPos(fi.fragPos);
+#            else
+        const float4 clipPos = UnityObjectToClipPos(fi.fragPos);
+#            endif  // defined(_CALCSPACE_WORLD)
+        fo.color = applyFog(clipPos.z, _BackgroundColor);
+#            if !defined(_NODEPTH_ON)
+#                if defined(_BACKGROUNDDEPTH_MESH)
+        fo.depth = getDepth(clipPos);
+#                else
+        fo.depth = kFarClipPlaneDepth;
+#                endif  // defined(_BACKGROUNDDEPTH_MESH)
+#            endif  // !defined(_NODEPTH_ON)
+        return fo;
+#        else
         discard;
+#        endif  // !defined(_BACKGROUND_TEXTURE) && !defined(_BACKGROUND_FIXED_COLOR)
     }
 #    endif  // !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
 
@@ -217,7 +237,28 @@ gbuffer_raymarching fragRayMarchingDeferred(v2f_raymarching fi)
     const result_raymarching ro = rayMarchDefault(rp);
 #if !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
     if (!ro.isHit) {
+#        if defined(_BACKGROUNDMODE_FIXED_COLOR)
+        gbuffer_raymarching gb;
+        UNITY_INITIALIZE_OUTPUT(gbuffer_raymarching, gb);
+#            if defined(_CALCSPACE_WORLD)
+        const float4 clipPos = UnityWorldToClipPos(fi.fragPos);
+#            else
+        const float4 clipPos = UnityObjectToClipPos(fi.fragPos);
+#            endif  // defined(_CALCSPACE_WORLD)
+        gb.diffuse.a = 1.0;
+        // gb.normal.rgb = (0.0).xxx;
+        gb.emission = applyFog(clipPos.z, _BackgroundColor);
+#            if !defined(_NODEPTH_ON)
+#                if defined(_BACKGROUNDDEPTH_MESH)
+        gb.depth = getDepth(clipPos);
+#                else
+        gb.depth = kFarClipPlaneDepth;
+#                endif  // defined(_BACKGROUNDDEPTH_MESH)
+#            endif  // !defined(_NODEPTH_ON)
+        return gb;
+#        else
         discard;
+#        endif  // !defined(_BACKGROUND_TEXTURE) && !defined(_BACKGROUND_FIXED_COLOR)
     }
 #endif  // !defined(_DEBUGVIEW_STEP) && !defined(_DEBUGVIEW_RAY_LENGTH)
 

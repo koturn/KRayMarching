@@ -75,6 +75,18 @@ namespace Koturn.KRayMarching.Inspectors
         /// </summary>
         private const string PropNameAutoRelaxFactor = "_AutoRelaxFactor";
         /// <summary>
+        /// Property name of "_BackgroundMode".
+        /// </summary>
+        private const string PropNameBackgroundMode = "_BackgroundMode";
+        /// <summary>
+        /// Property name of "_BackgroundColor".
+        /// </summary>
+        private const string PropNameBackgroundColor = "_BackgroundColor";
+        /// <summary>
+        /// Property name of "_BackgroundDepth".
+        /// </summary>
+        private const string PropNameBackgroundDepth = "_BackgroundDepth";
+        /// <summary>
         /// Property name of "_DebugView".
         /// </summary>
         private const string PropNameDebugView = "_DebugView";
@@ -278,6 +290,8 @@ namespace Koturn.KRayMarching.Inspectors
                 "_CALCSPACE_OBJECT",
                 "_MAXRAYLENGTHMODE_USE_PROPERTY_VALUE",
                 "_ASSUMEINSIDE_NONE",
+                "_BACKGROUNDMODE_DISCARD",
+                "_BACKGROUNDDEPTH_FAR_CLIP",
                 "_STEPMETHOD_NORMAL ",
                 "_CULL_OFF",
                 "_DEBUGVIEW_NONE",
@@ -369,6 +383,17 @@ namespace Koturn.KRayMarching.Inspectors
                     using (new EditorGUI.DisabledScope(stepMethodIndex != 3))
                     {
                         ShaderProperty(me, mps, PropNameAutoRelaxFactor, false);
+                    }
+                }
+
+                var mpBackgroundMode = FindAndDrawProperty(me, mps, PropNameBackgroundMode, false);
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    var isDrawBackground = mpBackgroundMode == null ? false : ToBool(mpBackgroundMode.floatValue);
+                    using (new EditorGUI.DisabledScope(!isDrawBackground))
+                    {
+                        ShaderProperty(me, mps, PropNameBackgroundColor, false);
+                        ShaderProperty(me, mps, PropNameBackgroundDepth, false);
                     }
                 }
 

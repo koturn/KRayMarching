@@ -37,6 +37,30 @@ half3 rgbAddHue(half3 rgb, half hue);
 #endif  // defined(SHADER_API_D3D11) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (defined(SHADER_TARGET_SURFACE_ANALYSIS) && !defined(SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
 
 
+#if defined(SHADER_API_GLCORE) \
+    || defined(SHADER_API_OPENGL) \
+    || defined(SHADER_API_GLES) \
+    || defined(SHADER_API_GLES3)
+//! Z-coordinate of near clip plane.
+static const float kNearClipPlacePosZ = -1.0;
+//! Z-coordinate of far clip plane.
+static const float kFarClipPlacePosZ = 1.0;
+//! Depth of near clip plane.
+static const float kNearClipPlaneDepth = 0.0;
+//! Depth of far clip plane.
+static const float kFarClipPlaneDepth = 1.0;
+#else
+//! Z-coordinate of near clip plane.
+static const float kNearClipPlacePosZ = 1.0;
+//! Z-coordinate of far clip plane.
+static const float kFarClipPlacePosZ = 0.0;
+//! Depth of near clip plane.
+static const float kNearClipPlaneDepth = 1.0;
+//! Depth of far clip plane.
+static const float kFarClipPlaneDepth = 0.0;
+#endif
+
+
 /*!
  * @brief Convert from world coordinate to local coordinate.
  *
@@ -253,8 +277,14 @@ float getDepth(float4 clipPos)
     || defined(SHADER_API_OPENGL) \
     || defined(SHADER_API_GLES) \
     || defined(SHADER_API_GLES3)
+    // [-1.0, 1.0] -> [0.0, 1.0]
+    // Near: -1.0
+    // Far: -1.0
     return depth * 0.5 + 0.5;
 #else
+    // [0.0, 1.0] -> [0.0, 1.0] (No conversion)
+    // Near: 1.0
+    // Far: 0.0
     return depth;
 #endif
 }
