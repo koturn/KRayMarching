@@ -96,8 +96,11 @@ Shader "koturn/KRayMarching/RecursiveRings"
         [Enum(UnityEngine.Rendering.CullMode)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front
 
-        [HideInInspector]
-        _Mode ("Rendering Mode", Int) = 0
+        [Enum(False, 0, True, 1)]
+        _ZClip ("ZClip", Int) = 1  // Default: True
+
+        _OffsetFactor ("Offset Factor", Range(-1.0, 1.0)) = 0
+        _OffsetUnit ("Offset Units", Range(-1.0, 1.0)) = 0
 
         [ColorMask]
         _ColorMask ("Color Mask", Int) = 15
@@ -143,6 +146,8 @@ Shader "koturn/KRayMarching/RecursiveRings"
         }
 
         Cull [_Cull]
+        ZClip [_ZClip]
+        Offset [_OffsetFactor], [_OffsetUnit]
         ColorMask [_ColorMask]
         AlphaToMask [_AlphaToMask]
 
