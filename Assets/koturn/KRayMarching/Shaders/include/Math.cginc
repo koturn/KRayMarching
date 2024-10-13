@@ -9,6 +9,14 @@ float fmodglsl(float x, float y);
 float2 fmodglsl(float2 x, float2 y);
 float3 fmodglsl(float3 x, float3 y);
 float4 fmodglsl(float4 x, float4 y);
+float rand(float x, float y);
+float2 rand(float2 x, float2 y);
+float3 rand(float3 x, float3 y);
+float4 rand(float4 x, float4 y);
+float rand(float x, float y, float p, float q);
+float2 rand(float2 x, float2 y, float2 p, float2 q);
+float3 rand(float3 x, float3 y, float3 p, float3 q);
+float4 rand(float4 x, float4 y, float4 p, float4 q);
 float atanPos(float x);
 float atanFast(float x);
 float atan2Fast(float x, float y);
@@ -88,6 +96,110 @@ float3 fmodglsl(float3 x, float3 y)
 float4 fmodglsl(float4 x, float4 y)
 {
     return x - y * floor(x / y);
+}
+
+
+/*!
+ * @brief Returns a random value between 0.0 and 1.0.
+ * @param [in] x  First seed value used for generation.
+ * @param [in] y  Second seed value used for generation.
+ * @return Pseudo-random number value between 0.0 and 1.0.
+ */
+float rand(float x, float y)
+{
+    return frac(sin(x * 12.9898 + y * 78.233) * 43758.5453);
+}
+
+
+/*!
+ * @brief Returns a random value between 0.0 and 1.0.
+ * @param [in] x  First seed vector used for generation.
+ * @param [in] y  Second seed vector used for generation.
+ * @return Pseudo-random number vector between 0.0 and 1.0.
+ */
+float2 rand(float2 x, float2 y)
+{
+    return frac(sin(x * 12.9898 + y * 78.233) * 43758.5453);
+}
+
+
+/*!
+ * @brief Returns a random value between 0.0 and 1.0.
+ * @param [in] x  First seed vector used for generation.
+ * @param [in] y  Second seed vector used for generation.
+ * @return Pseudo-random number vector between 0.0 and 1.0.
+ */
+float3 rand(float3 x, float3 y)
+{
+    return frac(sin(x * 12.9898 + y * 78.233) * 43758.5453);
+}
+
+
+/*!
+ * @brief Returns a random value between 0.0 and 1.0.
+ * @param [in] x  First seed vector used for generation.
+ * @param [in] y  Second seed vector used for generation.
+ * @return Pseudo-random number vector between 0.0 and 1.0.
+ */
+float4 rand(float4 x, float4 y)
+{
+    return frac(sin(x * 12.9898 + y * 78.233) * 43758.5453);
+}
+
+
+/*!
+ * @brief Returns a random value between p and q.
+ * @param [in] x  First seed value used for generation.
+ * @param [in] y  Second seed value used for generation.
+ * @param [in] p  Minimum output value.
+ * @param [in] q  Maximum output value.
+ * @return Pseudo-random number value between p and q.
+ */
+float rand(float x, float y, float p, float q)
+{
+    return lerp(p, q, rand(x, y));
+}
+
+
+/*!
+ * @brief Returns a random value between p and q.
+ * @param [in] x  First seed vector used for generation.
+ * @param [in] y  Second seed vector used for generation.
+ * @param [in] p  Minimum output value.
+ * @param [in] q  Maximum output value.
+ * @return Pseudo-random number vector between p and q.
+ */
+float2 rand(float2 x, float2 y, float2 p, float2 q)
+{
+    return lerp(p, q, rand(x, y));
+}
+
+
+/*!
+ * @brief Returns a random value between p and q.
+ * @param [in] x  First seed vector used for generation.
+ * @param [in] y  Second seed vector used for generation.
+ * @param [in] p  Minimum output value.
+ * @param [in] q  Maximum output value.
+ * @return Pseudo-random number vector between p and q.
+ */
+float3 rand(float3 x, float3 y, float3 p, float3 q)
+{
+    return lerp(p, q, rand(x, y));
+}
+
+
+/*!
+ * @brief Returns a random value between p and q.
+ * @param [in] x  First seed vector used for generation.
+ * @param [in] y  Second seed vector used for generation.
+ * @param [in] p  Minimum output value.
+ * @param [in] q  Maximum output value.
+ * @return Pseudo-random number vector between p and q.
+ */
+float4 rand(float4 x, float4 y, float4 p, float4 q)
+{
+    return lerp(p, q, rand(x, y));
 }
 
 
