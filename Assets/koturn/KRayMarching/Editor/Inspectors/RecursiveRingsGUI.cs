@@ -5,9 +5,9 @@ using UnityEngine;
 namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
-    /// Custom editor of RayMarching shaders.
+    /// Custom editor of "koturn/KRayMarching/RecursiveRings" and "koturn/KRayMarching/RecursiveRingsEx".
     /// </summary>
-    public class RecursiveRingsGUI : KRayMarchingBaseGUI
+    public sealed class RecursiveRingsGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_TorusBaseColor".
