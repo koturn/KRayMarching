@@ -3,7 +3,16 @@
     {
       "UnityPackageName": "KRayMarching.unitypackage",
       "VpmName": "jp.koturn.kraymarching",
-      "AssetPath": "Assets/koturn/KRayMarching"
+      "Assets": [
+        {
+          "BasePath": "Assets/koturn/KRayMarching",
+          "RelativePaths": [
+            "Editor",
+            "Shaders",
+            "package.json"
+          ]
+        }
+      ]
     }
   ]
 }

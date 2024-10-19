@@ -41,11 +41,27 @@ namespace Koturn.Tools.KRayMarching
             /// <summary>
             /// Asset path array.
             /// </summary>
-            public string AssetPath;
+            public AssetFileInfo[] Assets;
             /// <summary>
             /// Asset path array.
             /// </summary>
-            public string[] DependAssetPaths;
+            public AssetFileInfo[] DependAssets;
+        }
+
+        /// <summary>
+        /// Asset file path information.
+        /// </summary>
+        [Serializable]
+        class AssetFileInfo
+        {
+            /// <summary>
+            /// Base asset path.
+            /// </summary>
+            public string BasePath;
+            /// <summary>
+            /// Relative asset path.
+            /// </summary>
+            public string[] RelativePaths;
         }
 
 
@@ -68,7 +84,9 @@ namespace Koturn.Tools.KRayMarching
         /// Read configuration file and export packages.
         /// </summary>
         [MenuItem("Assets/koturn/Tool/KRayMarching/Export Packages", false, 9000)]
+#pragma warning disable IDE0051 // Remove unused private members
         private static void ExportPackages()
+#pragma warning restore IDE0051 // Remove unused private members
         {
             var exportDirPath = EditorUtility.SaveFolderPanel(
                 "Select export directory",
@@ -80,10 +98,10 @@ namespace Koturn.Tools.KRayMarching
             }
             _lastExportDirectoryPath = exportDirPath;
 
-            var jsonPath = AssetDatabase.GUIDToAssetPath("9623650fd4dd211439c0a8402231e483");
+            var jsonPath = Path.Combine(Application.dataPath, "koturn/Tools/KRayMarching/Editor/ExportConfig.json");
             if (!File.Exists(jsonPath))
             {
-                Debug.LogError($"Configuration json file is not exists: {jsonPath}");
+                Debug.LogError("Configuration json file is not exists: " + jsonPath);
                 return;
             }
 
@@ -94,13 +112,17 @@ namespace Koturn.Tools.KRayMarching
 
             foreach (var package in jsonData.Packages)
             {
+                if (package.Assets == null)
+                {
+                    Debug.Log("!!NULL!!");
+                }
                 ExportAsUnityPackage(
                     Path.Combine(exportDirPath, package.UnityPackageName),
-                    package.AssetPath,
-                    package.DependAssetPaths);
+                    package.Assets,
+                    package.DependAssets);
                 ExportAsZipArchive(
                     Path.Combine(exportDirPath, $"{package.VpmName}-{GetAssemblyVersionStringForExport()}.zip"),
-                    package.AssetPath);
+                    package.Assets);
             }
         }
 
@@ -110,67 +132,184 @@ namespace Koturn.Tools.KRayMarching
         /// <param name="unityPackagePath">Unitypackage file path for export.</param>
         /// <param name="assetPath">Target asset path.</param>
         /// <param name="dependAssetPaths">Dependent asset paths.</param>
-        private static void ExportAsUnityPackage(string unityPackagePath, string assetPath, string[] dependAssetPaths)
+        private static void ExportAsUnityPackage(string unityPackagePath, AssetFileInfo[] assets, AssetFileInfo[] dependAssets)
         {
             if (!unityPackagePath.EndsWith(".unitypackage"))
             {
                 unityPackagePath += ".unitypackage";
             }
 
-            if (dependAssetPaths is null || dependAssetPaths.Length == 0)
-            {
-                AssetDatabase.ExportPackage(
-                    assetPath,
-                    unityPackagePath,
-                    ExportPackageOptions.Recurse);
-            }
-            else
-            {
-                var assetPaths = new string[dependAssetPaths.Length + 1];
-                assetPaths[0] = assetPath;
-                Array.Copy(dependAssetPaths, 0, assetPaths, 1, dependAssetPaths.Length);
+            AssetDatabase.ExportPackage(
+                ToAssetPaths(ConcatArray(assets, dependAssets)),
+                unityPackagePath,
+                ExportPackageOptions.Recurse);
 
-                AssetDatabase.ExportPackage(
-                    assetPaths,
-                    unityPackagePath,
-                    ExportPackageOptions.Recurse);
+            Debug.Log("Exported " +  unityPackagePath);
+        }
+
+        /// <summary>
+        /// Concatinate two arrays.
+        /// </summary>
+        /// <param name="array1">First array.</param>
+        /// <param name="array2">Second array.</param>
+        /// <returns>Concatinated array.</returns>
+        private static T[] ConcatArray<T>(T[] array1, T[] array2)
+        {
+            var length1 = array1 == null ? 0 : array1.Length;
+            var length2 = array2 == null ? 0 : array2.Length;
+
+            var newArray = new T[length1 + length2];
+
+            if (length1 > 0)
+            {
+                Array.Copy(array1, 0, newArray, 0, length1);
+            }
+            if (length2 > 0)
+            {
+                Array.Copy(array2, 0, newArray, length1, length2);
             }
 
-            Debug.Log($"Exported {unityPackagePath}");
+            return newArray;
+        }
+
+        /// <summary>
+        /// Get asset paths from <see cref="AssetFileInfo"/>.
+        /// </summary>
+        /// <param name="assets">Asset file path information.</param>
+        /// <returns>Asset paths.</returns>
+        private static string[] ToAssetPaths(AssetFileInfo[] assets)
+        {
+            var count = 0;
+            foreach (var asset in assets)
+            {
+                if (asset.RelativePaths == null || asset.RelativePaths.Length == 0)
+                {
+                    count++;
+                }
+                else
+                {
+                    count += asset.RelativePaths.Length;
+                }
+            }
+            var assetPaths = new string[count];
+
+            var index = 0;
+            foreach (var asset in assets)
+            {
+                var basePath = asset.BasePath;
+
+                if (asset.RelativePaths == null || asset.RelativePaths.Length == 0)
+                {
+                    assetPaths[index] = basePath;
+                    index++;
+                    continue;
+                }
+                foreach (var relativePath in asset.RelativePaths)
+                {
+                    if (!basePath.EndsWith("/"))
+                    {
+                        basePath += "/";
+                    }
+                    assetPaths[index] = basePath + relativePath;
+                    index++;
+                }
+            }
+
+            return assetPaths;
         }
 
         /// <summary>
         /// Export asset as zip archive for VPM.
         /// </summary>
         /// <param name="zipFilePath">Zip file path for export.</param>
-        /// <param name="assetPath">Target asset path.</param>
-        private static void ExportAsZipArchive(string zipFilePath, string assetPath)
+        /// <param name="assets">Asset file path infomation array.</param>
+        private static void ExportAsZipArchive(string zipFilePath, AssetFileInfo[] assets)
         {
             File.Delete(zipFilePath);
 
-            if (!assetPath.EndsWith("/"))
-            {
-                assetPath += "/";
-            }
-
             using (var zipArchive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
             {
-                var absAssetPath = AssetPathToAbsPath(assetPath);
-                foreach (var filePath in Directory.EnumerateFiles(absAssetPath, "*", SearchOption.AllDirectories))
+                foreach (var asset in assets)
                 {
-                    var data = File.ReadAllBytes(filePath);
-                    var entry = zipArchive.CreateEntry(
-                        filePath.Substring(absAssetPath.Length).Replace("\\", "/"),
-                        System.IO.Compression.CompressionLevel.Optimal);
-                    using (var zs = entry.Open())
+                    var baseAssetPath = asset.BasePath;
+                    if (!baseAssetPath.EndsWith("/"))
                     {
-                        zs.Write(data, 0, data.Length);
+                        baseAssetPath += "/";
+                    }
+                    var absBasePath = AssetPathToAbsPath(baseAssetPath);
+
+                    if (asset.RelativePaths == null || asset.RelativePaths.Length == 0)
+                    {
+                        foreach (var filePath in Directory.EnumerateFiles(absBasePath, "*", SearchOption.AllDirectories))
+                        {
+                            WriteToArchive(
+                                zipArchive,
+                                filePath,
+                                filePath.Substring(absBasePath.Length).Replace("\\", "/"));
+                        }
+                    }
+                    else
+                    {
+                        foreach (var relativePath in asset.RelativePaths)
+                        {
+                            var absPath = Path.Combine(absBasePath, relativePath);
+                            var metaFilePath = absPath + ".meta";
+                            if (File.Exists(absPath))
+                            {
+                                WriteToArchive(
+                                    zipArchive,
+                                    absPath,
+                                    absPath.Substring(absBasePath.Length).Replace("\\", "/"));
+                                WriteToArchive(
+                                    zipArchive,
+                                    metaFilePath,
+                                    metaFilePath.Substring(absBasePath.Length).Replace("\\", "/"));
+                            }
+                            else if (Directory.Exists(absPath))
+                            {
+                                WriteToArchive(
+                                    zipArchive,
+                                    metaFilePath,
+                                    metaFilePath.Substring(absBasePath.Length).Replace("\\", "/"));
+                                foreach (var filePath in Directory.EnumerateFiles(absPath, "*", SearchOption.AllDirectories))
+                                {
+                                    WriteToArchive(
+                                        zipArchive,
+                                        filePath,
+                                        filePath.Substring(absBasePath.Length).Replace("\\", "/"));
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogError("File or directory not found: " + absPath);
+                            }
+                        }
                     }
                 }
             }
-
-            Debug.Log($"Exported {zipFilePath}");
         }
+
+        /// <summary>
+        /// Write file data as zip archibe.
+        /// </summary>
+        /// <param name="zipArchive">Zip archive to write.</param>
+        /// <param name="filePath">File path.</param>
+        /// <param name="entryName">Zip entry name.</param>
+        private static void WriteToArchive(ZipArchive zipArchive, string filePath, string entryName)
+        {
+#if NET6_0_OR_GREATER
+            const System.IO.Compression.CompressionLevel compLevel = System.IO.Compression.CompressionLevel.SmallestSize;
+#else
+            const System.IO.Compression.CompressionLevel compLevel = System.IO.Compression.CompressionLevel.Optimal;
+#endif  // NET6_0_OR_GREATER
+            var data = File.ReadAllBytes(filePath);
+            var entry = zipArchive.CreateEntry(entryName, compLevel);
+            using (var zs = entry.Open())
+            {
+                zs.Write(data, 0, data.Length);
+            }
+        }
+
 
         /// <summary>
         /// Convert from Assets path to Absolute path.
@@ -183,7 +322,7 @@ namespace Koturn.Tools.KRayMarching
             return assetPath.Replace("Assets", Application.dataPath).Replace("/", "\\");
 #else
             return assetPath.Replace("Assets", Application.dataPath);
-#endif
+#endif  // UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
         }
 
         /// <summary>
