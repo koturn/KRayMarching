@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/Box",
+    /// CustomEditor for "koturn/KRayMarching/Primitives/Box",
     /// "koturn/KRayMarching/Primitives/RoundBox" and "koturn/KRayMarching/Primitives/BoxFrame"
     /// </summary>
     public class BoxGUI : KRayMarchingBaseGUI

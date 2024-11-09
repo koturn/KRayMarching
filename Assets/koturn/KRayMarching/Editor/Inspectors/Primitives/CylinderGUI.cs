@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/Cylinder",
+    /// CustomEditor for "koturn/KRayMarching/Primitives/Cylinder",
     /// </summary>
     public class CylinderGUI : KRayMarchingBaseGUI
     {

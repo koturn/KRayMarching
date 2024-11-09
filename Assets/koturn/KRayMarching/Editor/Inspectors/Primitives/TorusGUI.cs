@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/Torus",
+    /// CustomEditor for "koturn/KRayMarching/Primitives/Torus",
     /// </summary>
     public class TorusGUI : KRayMarchingBaseGUI
     {

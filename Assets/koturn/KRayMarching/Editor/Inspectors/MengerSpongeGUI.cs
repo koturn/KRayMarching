@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
-    /// Custom editor of "koturn/KRayMarching/MengerSponge".
+    /// CustomEditor of "koturn/KRayMarching/MengerSponge".
     /// </summary>
     public sealed class MengerSpongeGUI : KRayMarchingBaseGUI
     {

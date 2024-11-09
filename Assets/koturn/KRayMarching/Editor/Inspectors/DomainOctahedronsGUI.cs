@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
-    /// Custom editor of "koturn/KRayMarching/DomainOctahedrons".
+    /// CustomEditor of "koturn/KRayMarching/DomainOctahedrons".
     /// </summary>
     public sealed class DomainOctahedronsGUI : KRayMarchingBaseGUI
     {

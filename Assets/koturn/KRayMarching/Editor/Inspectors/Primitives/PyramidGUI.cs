@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/Pyramid",
+    /// CustomEditor for "koturn/KRayMarching/Primitives/Pyramid",
     /// </summary>
     public class PyramidGUI : KRayMarchingBaseGUI
     {

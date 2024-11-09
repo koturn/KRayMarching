@@ -206,6 +206,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         /*!
          * @brief SDF (Signed Distance Function) of objects.
          * @param [in] p  Position of the tip of the ray.
+         * @param [out] color  Color of object.
          * @return Signed Distance to the objects.
          */
         float map(float3 p, out half4 color)

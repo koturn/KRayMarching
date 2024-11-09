@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Koturn.KRayMarching.Inspectors;
@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/ArbitaryCapsule"
+    /// CustomEditor for "koturn/KRayMarching/Primitives/ArbitaryCapsule"
     /// and "koturn/KRayMarching/Primitives/ArbitaryCappedCylinder".
     /// </summary>
     public class ArbitaryCapsuleCylinderGUI : KRayMarchingBaseGUI

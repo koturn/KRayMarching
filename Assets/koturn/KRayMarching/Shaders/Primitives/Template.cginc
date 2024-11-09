@@ -6,7 +6,7 @@
 #define RAYMARCHING_GET_BASE_COLOR getBaseColor
 
 float map(float3 p);
-half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength);
+half4 getBaseColor(float3 p, float3 normal, float rayLength);
 
 #include "../RayMarchingCore.cginc"
 
@@ -19,12 +19,12 @@ uniform half4 _Color;
 
 /*!
  * @brief Get color of the object.
- * @param [in] rayOrigin  Object/World space ray origin.
- * @param [in] rayDir  Object/World space ray direction.
- * @param [in] rayLength  Object/World space Ray length.
+ * @param [in] p  Object/World space position.
+ * @param [in] normal  Object/World space normal.
+ * @param [in] rayLength  Ray length.
  * @return Base color of the object.
  */
-half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength)
+half4 getBaseColor(float3 p, float3 normal, float rayLength)
 {
     return _Color;
     // return SAMPLE_TEX2D_TRIPLANAR(_MainTex, worldFinalPos, worldNormal) * _Color;

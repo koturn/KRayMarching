@@ -10,7 +10,7 @@ using Koturn.KRayMarching.Enums;
 namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
-    /// Custom editor of RAyMarching shaders.
+    /// Base CustomEditor of KRayMarching shaders.
     /// </summary>
     public class KRayMarchingBaseGUI : ShaderGUI
     {

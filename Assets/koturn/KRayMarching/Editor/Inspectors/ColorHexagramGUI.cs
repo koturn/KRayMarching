@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
-    /// Custom editor of RAyMarching shaders.
+    /// CustomEditor of "koturn/KRayMarching/ColorHexagram".
     /// </summary>
     public class ColorHexagramGUI : KRayMarchingBaseGUI
     {

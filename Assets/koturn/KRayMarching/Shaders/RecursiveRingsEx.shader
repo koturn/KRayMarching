@@ -320,7 +320,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
         /*!
          * @brief SDF (Signed Distance Function) of objects.
          * @param [in] p  Position of the tip of the ray.
-         * @param [in] p  Position of the tip of the ray.
+         * @param [out] hueOffset  Offset of hue.
          * @return Signed Distance to the objects.
          */
         float map(float3 p, out float hueOffset)

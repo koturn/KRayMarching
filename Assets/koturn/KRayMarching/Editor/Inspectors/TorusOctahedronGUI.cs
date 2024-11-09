@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
-    /// Custom editor of RAyMarching shaders.
+    /// CustomEditor of "koturn/KRayMarching/TorusSixOctahedron" and "koturn/KRayMarching/TorusEightOctahedron".
     /// </summary>
     public class TorusOctahedronGUI : KRayMarchingBaseGUI
     {

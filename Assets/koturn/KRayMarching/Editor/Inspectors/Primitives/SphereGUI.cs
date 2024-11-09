@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/Sphere",
+    /// CustomEditor for "koturn/KRayMarching/Primitives/Sphere",
     /// "koturn/KRayMarching/Primitives/CutSphere"
     /// and "koturn/KRayMarching/Primitives/CutHollowSphere".
     /// </summary>

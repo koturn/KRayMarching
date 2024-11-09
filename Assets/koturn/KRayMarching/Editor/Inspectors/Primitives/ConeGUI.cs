@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/Cone",
+    /// CustomEditor for "koturn/KRayMarching/Primitives/Cone",
     /// "koturn/KRayMarching/Primitives/InfinityCone",
     /// and "koturn/KRayMarching/Primitives/SolidAngle".
     /// </summary>

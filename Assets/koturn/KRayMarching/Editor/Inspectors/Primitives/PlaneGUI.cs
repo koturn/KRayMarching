@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/Plane".
+    /// CustomEditor for "koturn/KRayMarching/Primitives/Plane".
     /// </summary>
     public class PlaneGUI : KRayMarchingBaseGUI
     {

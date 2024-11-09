@@ -168,7 +168,7 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
         #define RAYMARCHING_GET_BASE_COLOR getBaseColor
 
         float map(float3 p);
-        float map(float3 p, out float hueOffset);
+        float map(float3 p, out float colorIndex);
         half4 getBaseColor(float3 p, float3 normal, float rayLength);
 
         #include "RayMarchingCore.cginc"

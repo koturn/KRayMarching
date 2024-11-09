@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
-    /// Custom editor of "koturn/KRayMarching/Beads" and "koturn/KRayMarching/CrossBeads".
+    /// CustomEditor of "koturn/KRayMarching/Beads" and "koturn/KRayMarching/CrossBeads".
     /// </summary>
     public sealed class BeadsGUI : KRayMarchingBaseGUI
     {

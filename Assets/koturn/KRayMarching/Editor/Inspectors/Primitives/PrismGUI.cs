@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/HexPrism"
+    /// CustomEditor for "koturn/KRayMarching/Primitives/HexPrism"
     /// and "koturn/KRayMarching/Primitives/TriPrism".
     /// </summary>
     public class PrismGUI : KRayMarchingBaseGUI

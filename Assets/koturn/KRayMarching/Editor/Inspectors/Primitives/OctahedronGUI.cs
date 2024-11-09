@@ -7,7 +7,7 @@ using Koturn.KRayMarching.Inspectors;
 namespace Koturn.KRayMarching.Inspectors.Primitives
 {
     /// <summary>
-    /// Custom editor for "koturn/KRayMarching/Primitives/Octahedron".
+    /// CustomEditor for "koturn/KRayMarching/Primitives/Octahedron".
     /// </summary>
     public class OctahedronGUI : KRayMarchingBaseGUI
     {

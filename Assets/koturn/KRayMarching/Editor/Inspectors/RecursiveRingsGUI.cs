@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Koturn.KRayMarching.Inspectors
 {
     /// <summary>
-    /// Custom editor of "koturn/KRayMarching/RecursiveRings" and "koturn/KRayMarching/RecursiveRingsEx".
+    /// CustomEditor of "koturn/KRayMarching/RecursiveRings" and "koturn/KRayMarching/RecursiveRingsEx".
     /// </summary>
     public sealed class RecursiveRingsGUI : KRayMarchingBaseGUI
     {

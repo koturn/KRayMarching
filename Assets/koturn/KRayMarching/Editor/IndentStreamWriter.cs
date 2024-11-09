@@ -56,7 +56,7 @@ namespace Koturn.KRayMarching
 
         /// <summary>
         /// Initializes a new instance of the <see cref="IndentStreamWriter"/> class for the specified stream
-        /// by using UTF-8 encoding and the default buffer size. 
+        /// by using UTF-8 encoding and the default buffer size.
         /// </summary>
         /// <param name="stream">The stream to write to.</param>
         /// <param name="indentString">Indent string.</param>
@@ -362,7 +362,7 @@ namespace Koturn.KRayMarching
         /// using the same semantics as the <see cref="string.Format(string, object[])"/> method.
         /// </summary>
         /// <param name="format">A composite format string.</param>
-        /// <param name="arg">An object array that contains zero or more objects to format and write.</param> 
+        /// <param name="arg">An object array that contains zero or more objects to format and write.</param>
         public override void Write(string format, params object[] arg)
         {
             base.Write(format, arg);
