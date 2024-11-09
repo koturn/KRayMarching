@@ -193,14 +193,14 @@ v2f_raymarching vertRayMarching(appdata_raymarching_forward v)
     o.lmap.zw = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
 #endif  // defined(DYNAMICLIGHTMAP_ON)
 
-    UNITY_TRANSFER_LIGHTING(o, v.texcoord1);
-
     o.pos = UnityObjectToClipPos(v.vertex);
 
 #if defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
     o.screenPos = ComputeNonStereoScreenPos(o.pos);
     COMPUTE_EYEDEPTH(o.screenPos.z);
 #endif  // defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
+
+    UNITY_TRANSFER_LIGHTING(o, v.texcoord1);
 
     return o;
 }
