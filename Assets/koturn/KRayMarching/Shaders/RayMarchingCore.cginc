@@ -570,4 +570,4 @@ half4 getBaseColorDefaultRaymarching(float3 p, float3 normal, float rayLength)
 }
 
 
-#endif  // RAYMARCHING_CORE_INCLUDED
+#endif  // !defined(RAYMARCHING_CORE_INCLUDED)

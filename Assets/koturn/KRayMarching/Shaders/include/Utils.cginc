@@ -394,4 +394,4 @@ half3 rgbAddHue(half3 rgb, half hue)
 }
 
 
-#endif  // UTILS_INCLUDED
+#endif  // !defined(UTILS_INCLUDED)

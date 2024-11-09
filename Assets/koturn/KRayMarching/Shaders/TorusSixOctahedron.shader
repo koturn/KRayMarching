@@ -173,9 +173,9 @@ Shader "koturn/KRayMarching/TorusSixOctahedron"
 
         #include "RayMarchingCore.cginc"
 
-        #ifdef _USE_FAST_INVTRIFUNC_ON
+        #if defined(_USE_FAST_INVTRIFUNC_ON)
         #    define atan2(x, y)  atan2Fast(x, y)
-        #endif  // _USE_FAST_INVTRIFUNC_ON
+        #endif  // defined(_USE_FAST_INVTRIFUNC_ON)
 
 
         //! Radius of Torus.

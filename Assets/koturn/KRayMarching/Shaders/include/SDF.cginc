@@ -1,5 +1,5 @@
-#ifndef SDFPRIMITIVES_INCLUDED
-#define SDFPRIMITIVES_INCLUDED
+#ifndef SDF_INCLUDED
+#define SDF_INCLUDED
 
 
 float sdSphere(float3 p, float r);
@@ -781,4 +781,4 @@ float sdPyramid(float3 p, float height)
 }
 
 
-#endif  // SDFPRIMITIVES_INCLUDED
+#endif  // !defined(SDF_INCLUDED)

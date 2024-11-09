@@ -27,7 +27,7 @@ float3 BoxProjectedCubemapDirectionAlt(float3 worldRefDir, float3 worldPos, floa
 {
     // UNITY_SPECCUBE_BOX_PROJECTION is defined if
     // "Reflection Probes Box Projection" of GraphicsSettings is enabled.
-#ifdef UNITY_SPECCUBE_BOX_PROJECTION
+#if defined(UNITY_SPECCUBE_BOX_PROJECTION)
     // probePos.w == 1.0 if Box Projection is enabled.
     UNITY_BRANCH
     if (probePos.w > 0.0) {
@@ -38,8 +38,8 @@ float3 BoxProjectedCubemapDirectionAlt(float3 worldRefDir, float3 worldPos, floa
     }
 #else
     return worldRefDir;
-#endif  // UNITY_SPECCUBE_BOX_PROJECTION
+#endif  // defined(UNITY_SPECCUBE_BOX_PROJECTION)
 }
 
 
-#endif  // ALT_UNITY_STANDARD_UTILS_INCLUDED
+#endif  // !defined(ALT_UNITY_STANDARD_UTILS_INCLUDED)

@@ -7,7 +7,7 @@ half4 calcLightingUnity(half4 color, float3 worldPos, float3 worldNormal, half a
 half4 calcLightingUnityDeferred(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, out half4 diffuse, out half4 specular, out half4 normal);
 half4 calcLightingUnityDeferred(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient, out half4 diffuse, out half4 specular, out half4 normal);
 
-#ifndef LIGHTINGUTILS_OMIT_OLD_LIGHTING
+#if !defined(LIGHTINGUTILS_OMIT_OLD_LIGHTING)
 #include "Lighting.cginc"
 half4 calcLightingUnityLambert(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
 half4 calcLightingUnityLambert(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient);
@@ -17,9 +17,9 @@ half4 calcLightingUnityBlinnPhong(half4 color, float3 worldPos, float3 worldNorm
 half4 calcLightingUnityBlinnPhong(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient);
 half4 calcLightingUnityBlinnPhongDeferred(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, out half4 diffuse, out half4 specular, out half4 normal);
 half4 calcLightingUnityBlinnPhongDeferred(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient, out half4 diffuse, out half4 specular, out half4 normal);
-#endif  // LIGHTINGUTILS_OMIT_OLD_LIGHTING
+#endif  // !defined(LIGHTINGUTILS_OMIT_OLD_LIGHTING)
 
-#ifndef LIGHTINGUTILS_OMIT_PBS_LIGHTING
+#if !defined(LIGHTINGUTILS_OMIT_PBS_LIGHTING)
 #include "UnityPBSLighting.cginc"
 half4 calcLightingUnityStandard(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
 half4 calcLightingUnityStandard(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient);
@@ -29,7 +29,7 @@ half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 wor
 half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient);
 half4 calcLightingUnityStandardSpecularDeferred(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, out half4 diffuse, out half4 specular, out half4 normal);
 half4 calcLightingUnityStandardSpecularDeferred(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient, out half4 diffuse, out half4 specular, out half4 normal);
-#endif  // LIGHTINGUTILS_OMIT_PBS_LIGHTING
+#endif  // !defined(LIGHTINGUTILS_OMIT_PBS_LIGHTING)
 
 #include "UnityLightingCommon.cginc"
 
@@ -38,10 +38,10 @@ UnityGI getGI(float3 worldPos, half atten);
 UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, float3 worldViewDir, half atten, float4 lmap, half3 ambient);
 
 
-#ifndef UNITY_LIGHTING_COMMON_INCLUDED
+#if !defined(UNITY_LIGHTING_COMMON_INCLUDED)
 //! Color of light.
 uniform fixed4 _LightColor0;
-#endif  // UNITY_LIGHTING_COMMON_INCLUDED
+#endif  // !defined(UNITY_LIGHTING_COMMON_INCLUDED)
 
 #if !defined(UNITY_LIGHTING_COMMON_INCLUDED) && !defined(UNITY_STANDARD_SHADOW_INCLUDED)
 //! Specular color.
@@ -170,7 +170,7 @@ half4 calcLightingUnityDeferred(half4 color, float3 worldPos, float3 worldNormal
 }
 
 
-#ifndef LIGHTINGUTILS_OMIT_OLD_LIGHTING
+#if !defined(LIGHTINGUTILS_OMIT_OLD_LIGHTING)
 /*!
  * Calculate lighting with Lambert Reflection Model, same as Surface Shader with Lambert.
  * @param [in] color  Base color.
@@ -209,14 +209,14 @@ half4 calcLightingUnityLambert(half4 color, float3 worldPos, float3 worldNormal,
 
     UnityGI gi = getGI(worldPos, atten);
 
-#ifdef UNITY_PASS_FORWARDBASE
+#if defined(UNITY_PASS_FORWARDBASE)
     const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
 #    if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #    endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     UnityGIInput giInput = getGIInput(gi.light, worldPos, worldNormal, worldViewDir, atten, lmap, ambient);
     LightingLambert_GI(so, giInput, gi);
-#endif  // UNITY_PASS_FORWARDBASE
+#endif  // defined(UNITY_PASS_FORWARDBASE)
 
     half4 outColor = LightingLambert(so, gi);
     outColor.rgb += so.Emission;
@@ -324,13 +324,13 @@ half4 calcLightingUnityBlinnPhong(half4 color, float3 worldPos, float3 worldNorm
     UnityGI gi = getGI(worldPos, atten);
 
     const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
-#ifdef UNITY_PASS_FORWARDBASE
+#if defined(UNITY_PASS_FORWARDBASE)
 #    if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #    endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     UnityGIInput giInput = getGIInput(gi.light, worldPos, worldNormal, worldViewDir, atten, lmap, ambient);
     LightingBlinnPhong_GI(so, giInput, gi);
-#endif  // UNITY_PASS_FORWARDBASE
+#endif  // defined(UNITY_PASS_FORWARDBASE)
 
     half4 outColor = LightingBlinnPhong(so, worldViewDir, gi);
     outColor.rgb += so.Emission;
@@ -397,10 +397,10 @@ half4 calcLightingUnityBlinnPhongDeferred(half4 color, float3 worldPos, float3 w
 
     return emission;
 }
-#endif  // LIGHTINGUTILS_OMIT_OLD_LIGHTING
+#endif  // !defined(LIGHTINGUTILS_OMIT_OLD_LIGHTING)
 
 
-#ifndef LIGHTINGUTILS_OMIT_PBS_LIGHTING
+#if !defined(LIGHTINGUTILS_OMIT_PBS_LIGHTING)
 /*!
  * Calculate lighting with Unity PBS, same as Surface Shader with UnityStandard.
  * @param [in] color  Base color.
@@ -441,13 +441,13 @@ half4 calcLightingUnityStandard(half4 color, float3 worldPos, float3 worldNormal
     UnityGI gi = getGI(worldPos, atten);
 
     const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
-#ifdef UNITY_PASS_FORWARDBASE
+#if defined(UNITY_PASS_FORWARDBASE)
 #    if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #    endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     UnityGIInput giInput = getGIInput(gi.light, worldPos, worldNormal, worldViewDir, atten, lmap, ambient);
     LightingStandard_GI(so, giInput, gi);
-#endif  // UNITY_PASS_FORWARDBASE
+#endif  // defined(UNITY_PASS_FORWARDBASE)
 
     half4 outColor = LightingStandard(so, worldViewDir, gi);
     outColor.rgb += so.Emission;
@@ -557,13 +557,13 @@ half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 wor
     UnityGI gi = getGI(worldPos, atten);
 
     const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
-#ifdef UNITY_PASS_FORWARDBASE
+#if defined(UNITY_PASS_FORWARDBASE)
 #    if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #    endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     UnityGIInput giInput = getGIInput(gi.light, worldPos, worldNormal, worldViewDir, atten, lmap, ambient);
     LightingStandardSpecular_GI(so, giInput, gi);
-#endif  // UNITY_PASS_FORWARDBASE
+#endif  // defined(UNITY_PASS_FORWARDBASE)
 
     half4 outColor = LightingStandardSpecular(so, worldViewDir, gi);
     outColor.rgb += so.Emission;
@@ -631,7 +631,7 @@ half4 calcLightingUnityStandardSpecularDeferred(half4 color, float3 worldPos, fl
 
     return emission;
 }
-#endif  // LIGHTINGUTILS_OMIT_PBS_LIGHTING
+#endif  // !defined(LIGHTINGUTILS_OMIT_PBS_LIGHTING)
 
 
 /*!
@@ -644,7 +644,7 @@ half3 calcAmbient(float3 worldPos, float3 worldNormal)
 {
 #if !defined(LIGHTMAP_ON) && UNITY_SHOULD_SAMPLE_SH && !UNITY_SAMPLE_FULL_SH_PER_PIXEL
     // Approximated illumination from non-important point lights
-#    ifdef VERTEXLIGHT_ON
+#    if defined(VERTEXLIGHT_ON)
     const half3 ambient = Shade4PointLights(
         unity_4LightPosX0,
         unity_4LightPosY0,
@@ -658,11 +658,11 @@ half3 calcAmbient(float3 worldPos, float3 worldNormal)
         worldNormal);
 #    else
     const half3 ambient = half3(0.0, 0.0, 0.0);
-#    endif
+#    endif  // defined(VERTEXLIGHT_ON)
     return ShadeSHPerVertex(worldNormal, ambient);
 #else
     return half3(0.0, 0.0, 0.0);
-#endif
+#endif  // !defined(LIGHTMAP_ON) && UNITY_SHOULD_SAMPLE_SH && !UNITY_SAMPLE_FULL_SH_PER_PIXEL
 }
 
 
@@ -730,7 +730,7 @@ UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, f
     giInput.ambient = ambient;
 #else
     giInput.ambient = half3(0.0, 0.0, 0.0);
-#endif
+#endif  // UNITY_SHOULD_SAMPLE_SH && !UNITY_SAMPLE_FULL_SH_PER_PIXEL
 
 #if !defined(_LIGHTING_UNITY_LAMBERT) && !defined(_LIGHTING_UNITY_BLINN_PHONG)
     giInput.probeHDR[0] = unity_SpecCube0_HDR;
@@ -738,17 +738,17 @@ UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, f
 #    if defined(UNITY_SPECCUBE_BLENDING) || defined(UNITY_SPECCUBE_BOX_PROJECTION)
     giInput.boxMin[0] = unity_SpecCube0_BoxMin;
 #    endif  // defined(UNITY_SPECCUBE_BLENDING) || defined(UNITY_SPECCUBE_BOX_PROJECTION)
-#    ifdef UNITY_SPECCUBE_BOX_PROJECTION
+#    if defined(UNITY_SPECCUBE_BOX_PROJECTION)
     giInput.boxMax[0] = unity_SpecCube0_BoxMax;
     giInput.probePosition[0] = unity_SpecCube0_ProbePosition;
     giInput.boxMax[1] = unity_SpecCube1_BoxMax;
     giInput.boxMin[1] = unity_SpecCube1_BoxMin;
     giInput.probePosition[1] = unity_SpecCube1_ProbePosition;
-#    endif  // UNITY_SPECCUBE_BOX_PROJECTION
+#    endif  // defined(UNITY_SPECCUBE_BOX_PROJECTION)
 #endif  // !defined(_LIGHTING_UNITY_LAMBERT) && !defined(_LIGHTING_UNITY_BLINN_PHONG)
 
     return giInput;
 }
 
 
-#endif  // LIGHTINGUTILS_INCLUDED
+#endif  // !defined(LIGHTINGUTILS_INCLUDED)

@@ -189,11 +189,11 @@
          */
         float map(float3 p)
         {
-        #ifdef _EXACT_ON
+        #if defined(_EXACT_ON)
             return sdConeExact(p, _Angle, _Height);
         #else
             return sdCone(p, _Angle, _Height);
-        #endif  // _NOT_EXACT_ON
+        #endif  // defined(_EXACT_ON)
         }
         ENDCG
 

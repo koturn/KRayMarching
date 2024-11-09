@@ -158,9 +158,9 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
         #include "include/SDF.cginc"
         #include "include/VertCommon.cginc"
 
-        #ifdef _USE_FAST_INVTRIFUNC_ON
+        #if defined(_USE_FAST_INVTRIFUNC_ON)
         #    define atan2(x, y)  atan2Fast(x, y)
-        #endif  // _USE_FAST_INVTRIFUNC_ON
+        #endif  // defined(_USE_FAST_INVTRIFUNC_ON)
 
 
         /*!
@@ -248,7 +248,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
                 discard;
             }
 
-        #ifdef _CALCSPACE_WORLD
+        #if defined(_CALCSPACE_WORLD)
             const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
             const float3 worldNormal = getNormal(worldFinalPos);
         #else
@@ -268,7 +268,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
 
             fout fo;
             fo.color = applyFog(clipPos.z, color);
-        #ifndef _SVDEPTH_OFF
+        #if !defined(_SVDEPTH_OFF)
             fo.depth = getDepth(clipPos);
         #endif  // !defined(_SVDEPTH_OFF)
 
@@ -496,7 +496,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
                     discard;
                 }
 
-            #ifdef _CALCSPACE_WORLD
+            #if defined(_CALCSPACE_WORLD)
                 const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
             #else
                 const float3 localFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
@@ -520,11 +520,11 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
                 //
                 fout fo;
                 fo.color = float4(0.0, 0.0, 0.0, 0.0);
-            #    ifndef _SVDEPTH_OFF
+            #    if !defined(_SVDEPTH_OFF)
                 //
                 // TRANSFER_SHADOW_CASTER_NORMALOFFSET
                 //
-            #        ifdef _CALCSPACE_WORLD
+            #        if defined(_CALCSPACE_WORLD)
                 const float3 worldNormal = getNormal(worldFinalPos);
             #        else
                 const float3 worldNormal = UnityObjectToWorldNormal(getNormal(localFinalPos));

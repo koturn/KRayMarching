@@ -29,14 +29,14 @@ struct appdata_raymarching_forward
 {
     //! Local position of the vertex.
     float4 vertex : POSITION;
-#ifdef LIGHTMAP_ON
+#if defined(LIGHTMAP_ON)
     //! Lightmap coordinate.
     float2 texcoord1 : TEXCOORD1;
-#endif  // LIGHTMAP_ON
-#ifdef DYNAMICLIGHTMAP_ON
+#endif  // defined(LIGHTMAP_ON)
+#if defined(DYNAMICLIGHTMAP_ON)
     //! Dynamic Lightmap coordinate.
     float2 texcoord2 : TEXCOORD2;
-#endif  // DYNAMICLIGHTMAP_ON
+#endif  // defined(DYNAMICLIGHTMAP_ON)
     //! instanceID for single pass instanced rendering.
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
@@ -69,11 +69,11 @@ struct v2f_raymarching
     //! Unnormalized ray direction in object space.
     float3 rayDirVec : TEXCOORD0;
 #endif  // defined(_CALCSPACE_WORLD) || defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH) || defined(_BACKGROUNDMODE_FIXED_COLOR) && defined(_BACKGROUNDDEPTH_MESH)
-#ifndef _CALCSPACE_WORLD
+#if !defined(_CALCSPACE_WORLD)
     //! Ray origin in object/world space.
     nointerpolation float3 rayOrigin : TEXCOORD1;
 #endif  // !defined(_CALCSPACE_WORLD)
-#ifdef _MAXRAYLENGTHMODE_DEPTH_TEXTURE
+#if defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
     float4 screenPos : TEXCOORD2;
 #endif  // defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
     //! Lighting and shadowing parameters.
@@ -174,7 +174,7 @@ v2f_raymarching vertRayMarching(appdata_raymarching_forward v)
     UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-#ifdef _CALCSPACE_WORLD
+#if defined(_CALCSPACE_WORLD)
     o.fragPos = objectToWorldPos(v.vertex.xyz);
 #else
     const float3 vertPos = v.vertex.xyz;
@@ -186,18 +186,18 @@ v2f_raymarching vertRayMarching(appdata_raymarching_forward v)
 #    endif  // defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH) || defined(_BACKGROUNDMODE_FIXED_COLOR) && defined(_BACKGROUNDDEPTH_MESH)
 #endif  // defined(_CALCSPACE_WORLD)
 
-#ifdef LIGHTMAP_ON
+#if defined(LIGHTMAP_ON)
     o.lmap.xy = v.texcoord1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
-#endif  // LIGHTMAP_ON
-#ifdef DYNAMICLIGHTMAP_ON
+#endif  // defined(LIGHTMAP_ON)
+#if defined(DYNAMICLIGHTMAP_ON)
     o.lmap.zw = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
-#endif  // DYNAMICLIGHTMAP_ON
+#endif  // defined(DYNAMICLIGHTMAP_ON)
 
     UNITY_TRANSFER_LIGHTING(o, v.texcoord1);
 
     o.pos = UnityObjectToClipPos(v.vertex);
 
-#ifdef _MAXRAYLENGTHMODE_DEPTH_TEXTURE
+#if defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
     o.screenPos = ComputeNonStereoScreenPos(o.pos);
     COMPUTE_EYEDEPTH(o.screenPos.z);
 #endif  // defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
@@ -231,7 +231,7 @@ v2f_raymarching_shadowcaster vertRayMarchingShadowCaster(appdata_raymarching_sha
     float4 screenPos = ComputeNonStereoScreenPos(o.pos);
     COMPUTE_EYEDEPTH(screenPos.z);
 
-#ifdef _CALCSPACE_WORLD
+#if defined(_CALCSPACE_WORLD)
     o.rayOrigin = objectToWorldPos(v.vertex.xyz);
 #    if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
     o.rayDirVec = getCameraDirVec(screenPos);
@@ -274,7 +274,7 @@ rayparam calcRayParam(v2f_raymarching fi, float maxRayLength, float maxInsideLen
 {
     rayparam rp;
 
-#ifdef _CALCSPACE_WORLD
+#if defined(_CALCSPACE_WORLD)
     rp.rayOrigin = _WorldSpaceCameraPos;
     const float3 rayDirVec = fi.fragPos - _WorldSpaceCameraPos;
 #else
@@ -290,12 +290,12 @@ rayparam calcRayParam(v2f_raymarching fi, float maxRayLength, float maxInsideLen
 #if !defined(_MAXRAYLENGTHMODE_FAR_CLIP) && !defined(_MAXRAYLENGTHMODE_DEPTH_TEXTURE)
     const float clipRayLength = maxRayLength;
 #else
-#    ifdef _CALCSPACE_WORLD
+#    if defined(_CALCSPACE_WORLD)
     const float rdv = dot(rp.rayDir, getCameraForward());
 #    else
     const float rdv = dot(mul((float3x3)unity_ObjectToWorld, rp.rayDir), getCameraForward());
 #    endif  // defined(_CALCSPACE_WORLD)
-#    ifdef _MAXRAYLENGTHMODE_FAR_CLIP
+#    if defined(_MAXRAYLENGTHMODE_FAR_CLIP)
     const float linearDepth = _ProjectionParams.z;
 #    else
     const float linearDepth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, fi.screenPos));
@@ -306,7 +306,7 @@ rayparam calcRayParam(v2f_raymarching fi, float maxRayLength, float maxInsideLen
     const bool isFace = isFacing(fi);
 
 #if defined(_ASSUMEINSIDE_MAX_LENGTH)
-#    ifdef _CALCSPACE_WORLD
+#    if defined(_CALCSPACE_WORLD)
     maxInsideLength = maxInsideLength / length(mul((float3x3)unity_WorldToObject, rp.rayDir));
 #    endif  // defined(_CALCSPACE_WORLD)
     const float rayDirVecLength = length(rayDirVec);
@@ -432,4 +432,4 @@ bool isFacing(face_t facing)
 }
 
 
-#endif  // VERT_COMMON_INCLUDED
+#endif  // !defined(VERT_COMMON_INCLUDED)

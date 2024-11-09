@@ -498,4 +498,4 @@ float getPmodIndexFast(float2 p, float r)
 }
 
 
-#endif  // MATH_INCLUDED
+#endif  // !defined(MATH_INCLUDED)

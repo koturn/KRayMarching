@@ -31,4 +31,4 @@ half4 getBaseColor(float3 rayOrigin, float3 rayDir, float rayLength)
 }
 
 
-#endif  // PRIMITIVE_TEMPLATE_INCLUDED
+#endif  // !defined(PRIMITIVE_TEMPLATE_INCLUDED)

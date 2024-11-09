@@ -96,4 +96,4 @@ float3 boxProj1(float3 worldRefDir, float3 worldPos)
 }
 
 
-#endif  // REFPROBE_INCLUDED
+#endif  // !defined(REFPROBE_INCLUDED)

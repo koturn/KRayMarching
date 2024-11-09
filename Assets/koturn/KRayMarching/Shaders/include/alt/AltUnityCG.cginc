@@ -31,4 +31,4 @@ half3 decodeHDRAlt(half4 data, half4 hdr)
 }
 
 
-#endif  // ALT_UNITYCG_INCLUDED
+#endif  // !defined(ALT_UNITYCG_INCLUDED)
