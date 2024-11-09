@@ -210,7 +210,7 @@ half4 calcLightingUnityLambert(half4 color, float3 worldPos, float3 worldNormal,
     UnityGI gi = getGI(worldPos, atten);
 
 #if defined(UNITY_PASS_FORWARDBASE)
-    const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
+    const float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 #    if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #    endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
@@ -269,7 +269,7 @@ half4 calcLightingUnityLambertDeferred(half4 color, float3 worldPos, float3 worl
 
     UnityGI gi = getGI(worldPos, atten);
 
-    const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
+    const float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 #if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
@@ -323,7 +323,7 @@ half4 calcLightingUnityBlinnPhong(half4 color, float3 worldPos, float3 worldNorm
 
     UnityGI gi = getGI(worldPos, atten);
 
-    const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
+    const float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 #if defined(UNITY_PASS_FORWARDBASE)
 #    if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
@@ -383,7 +383,7 @@ half4 calcLightingUnityBlinnPhongDeferred(half4 color, float3 worldPos, float3 w
 
     UnityGI gi = getGI(worldPos, atten);
 
-    const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
+    const float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 #if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
@@ -440,7 +440,7 @@ half4 calcLightingUnityStandard(half4 color, float3 worldPos, float3 worldNormal
 
     UnityGI gi = getGI(worldPos, atten);
 
-    const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
+    const float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 #if defined(UNITY_PASS_FORWARDBASE)
 #    if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
@@ -501,7 +501,7 @@ half4 calcLightingUnityStandardDeferred(half4 color, float3 worldPos, float3 wor
 
     UnityGI gi = getGI(worldPos, atten);
 
-    const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
+    const float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 #if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
@@ -556,7 +556,7 @@ half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 wor
 
     UnityGI gi = getGI(worldPos, atten);
 
-    const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
+    const float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 #if defined(UNITY_PASS_FORWARDBASE)
 #    if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
@@ -617,7 +617,7 @@ half4 calcLightingUnityStandardSpecularDeferred(half4 color, float3 worldPos, fl
 
     UnityGI gi = getGI(worldPos, atten);
 
-    const float3 worldViewDir = normalizedWorldSpaceViewDir(worldPos);
+    const float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 #if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
@@ -685,8 +685,13 @@ UnityGI getGI(float3 worldPos, half atten)
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 #if defined(UNITY_PASS_DEFERRED)
     gi.light.dir = half3(0.0, 1.0, 0.0);
+#elif !defined(USING_LIGHT_MULTI_COMPILE)
+    gi.light.dir = normalize(_WorldSpaceLightPos0.xyz - worldPos * _WorldSpaceLightPos0.w);
+#elif defined(USING_DIRECTIONAL_LIGHT)
+    // Avoid normalize() because _WorldSpaceLightPos0 is already normalized for DirectionalLight.
+    gi.light.dir = _WorldSpaceLightPos0.xyz;
 #else
-    gi.light.dir = normalizedWorldSpaceLightDir(worldPos);
+    gi.light.dir = normalize(_WorldSpaceLightPos0.xyz - worldPos);
 #endif  // defined(UNITY_PASS_DEFERRED)
     gi.indirect.diffuse = half3(0.0, 0.0, 0.0);
     gi.indirect.specular = half3(0.0, 0.0, 0.0);
