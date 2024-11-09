@@ -151,13 +151,13 @@ namespace Koturn.KRayMarching.Inspectors
         /// </summary>
         private const string PropNameNormalCalcOptimize = "_NormalCalcOptimize";
         /// <summary>
-        /// Property name of "_NoDepth".
+        /// Property name of "_SvDepth".
         /// </summary>
-        private const string PropNameNoDepth = "_NoDepth";
+        private const string PropNameSvDepth = "_SvDepth";
         /// <summary>
-        /// Property name of "_NoForwardAdd".
+        /// Property name of "_ForwardAdd".
         /// </summary>
-        private const string PropNameNoForwardAdd = "_NoForwardAdd";
+        private const string PropNameForwardAdd = "_ForwardAdd";
         /// <summary>
         /// Property name of "_Cull".
         /// </summary>
@@ -340,14 +340,14 @@ namespace Koturn.KRayMarching.Inspectors
                 return;
             }
 
-            var mpNoForwardAdd = FindProperty(PropNameNoForwardAdd, mps, false);
+            var mpForwardAdd = FindProperty(PropNameForwardAdd, mps, false);
 
             EditorGUILayout.LabelField("Ray Marching Parameters", EditorStyles.boldLabel);
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
                 ShaderProperty(me, mps, PropNameMaxLoop, false);
-                using (new EditorGUI.DisabledScope(mpNoForwardAdd != null && ToBool(mpNoForwardAdd.floatValue)))
+                using (new EditorGUI.DisabledScope(mpForwardAdd != null && !ToBool(mpForwardAdd.floatValue)))
                 {
                     ShaderProperty(me, mps, PropNameMaxLoopForwardAdd, false);
                 }
@@ -479,8 +479,8 @@ namespace Koturn.KRayMarching.Inspectors
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(GUI.skin.box))
             {
-                ShaderProperty(me, mps, PropNameNoDepth, false);
-                ShaderProperty(me, mpNoForwardAdd);
+                ShaderProperty(me, mps, PropNameSvDepth, false);
+                ShaderProperty(me, mpForwardAdd);
                 ShaderProperty(me, mps, PropNameCull, false);
                 DrawRenderingMode(me, mps);
                 ShaderProperty(me, mps, PropNameZTest, false);

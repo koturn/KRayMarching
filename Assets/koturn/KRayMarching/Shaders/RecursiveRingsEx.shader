@@ -66,11 +66,11 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
         [Space(8)]
-        [Toggle(_NODEPTH_ON)]
-        _NoDepth ("Disable depth ouput", Int) = 0
+        [ToggleOff(_SVDEPTH_OFF)]
+        _SvDepth ("Enable depth output", Int) = 1
 
-        [Toggle(_NOFORWARDADD_ON)]
-        _NoForwardAdd ("Disable ForwardAdd", Int) = 0
+        [ToggleOff(_FORWARDADD_OFF)]
+        _ForwardAdd ("Enable ForwardAdd path", Int) = 1
 
         [Enum(UnityEngine.Rendering.CullMode)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front
@@ -145,7 +145,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
         #pragma target 3.0
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
-        #pragma shader_feature_local_fragment _ _NODEPTH_ON
+        #pragma shader_feature_local_fragment _ _SVDEPTH_OFF
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
 
         #include "include/alt/AltUnityCG.cginc"
@@ -170,10 +170,10 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
         {
             //! Output color of the pixel.
             half4 color : SV_Target;
-        #if (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)) && !defined(_NODEPTH_ON)
+        #if (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)) && !defined(_SVDEPTH_OFF)
             //! Depth of the pixel.
             float depth : SV_Depth;
-        #endif  // !defined(_NODEPTH_ON)
+        #endif  // !defined(_SVDEPTH_OFF)
         };
 
         /*!
@@ -268,9 +268,9 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
 
             fout fo;
             fo.color = applyFog(clipPos.z, color);
-        #ifndef _NODEPTH_ON
+        #ifndef _SVDEPTH_OFF
             fo.depth = getDepth(clipPos);
-        #endif  // !defined(_NODEPTH_ON)
+        #endif  // !defined(_SVDEPTH_OFF)
 
             return fo;
         }
@@ -435,11 +435,11 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
 
             #pragma multi_compile_fwdadd_fullshadows
             #pragma multi_compile_fog
-            #pragma shader_feature_local _ _NOFORWARDADD_ON
+            #pragma shader_feature_local _ _FORWARDADD_OFF
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT
 
 
-            #if defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
+            #if defined(_FORWARDADD_OFF) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
             /*!
              * @brief Fragment shader function.
              * @param [in] fi  Input data from vertex shader
@@ -459,7 +459,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
             {
                 return frag(fi);
             }
-            #endif  // defined(_NOFORWARDADD_ON) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
+            #endif  // defined(_FORWARDADD_OFF) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH) || defined(_LIGHTING_UNLIT)
             ENDCG
         }
 
@@ -520,7 +520,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
                 //
                 fout fo;
                 fo.color = float4(0.0, 0.0, 0.0, 0.0);
-            #    ifndef _NODEPTH_ON
+            #    ifndef _SVDEPTH_OFF
                 //
                 // TRANSFER_SHADOW_CASTER_NORMALOFFSET
                 //
@@ -531,7 +531,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
             #        endif  // defined(_CALCSPACE_WORLD)
                 const float4 clipPos = UnityApplyLinearShadowBias(UnityWorldToClipPos(applyShadowBias(worldFinalPos, worldNormal)));
                 fo.depth = getDepth(clipPos);
-            #    endif  // !defined(_NODEPTH_ON)
+            #    endif  // !defined(_SVDEPTH_OFF)
                 return fo;
             #endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
             }

@@ -57,10 +57,10 @@ struct fout_raymarching
 {
     //! Output color of the pixel.
     half4 color : SV_Target;
-#if (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)) && !defined(_NODEPTH_ON)
+#if (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)) && !defined(_SVDEPTH_OFF)
     //! Depth of the pixel.
     float depth : SV_Depth;
-#endif  // !defined(_NODEPTH_ON)
+#endif  // !defined(_SVDEPTH_OFF)
 };
 
 /*!
@@ -77,10 +77,10 @@ struct gbuffer_raymarching
     half4 normal : SV_Target2;
     //! Emission. (rgb: emission, a: unused)
     half4 emission : SV_Target3;
-#if !defined(_NODEPTH_ON)
+#if !defined(_SVDEPTH_OFF)
     //! Depth of the pixel.
     float depth : SV_Depth;
-#endif  // !defined(_NODEPTH_ON)
+#endif  // !defined(_SVDEPTH_OFF)
 };
 
 
@@ -139,7 +139,7 @@ uniform float _DebugStepDiv;
 uniform float _DebugRayLengthDiv;
 
 
-#if defined(UNITY_PASS_FORWARDADD) && (defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
+#if defined(UNITY_PASS_FORWARDADD) && (defined(_FORWARDADD_OFF) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
 /*!
  * @brief Fragment shader function.
  * @param [in] fi  Input data from vertex shader
@@ -172,13 +172,13 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
         const float4 clipPos = UnityObjectToClipPos(fi.fragPos);
 #            endif  // defined(_CALCSPACE_WORLD)
         fo.color = applyFog(clipPos.z, _BackgroundColor);
-#            if !defined(_NODEPTH_ON)
+#            if !defined(_SVDEPTH_OFF)
 #                if defined(_BACKGROUNDDEPTH_MESH)
         fo.depth = getDepth(clipPos);
 #                else
         fo.depth = kFarClipPlaneDepth;
 #                endif  // defined(_BACKGROUNDDEPTH_MESH)
-#            endif  // !defined(_NODEPTH_ON)
+#            endif  // !defined(_SVDEPTH_OFF)
         return fo;
 #        else
         discard;
@@ -214,13 +214,13 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
         getLightMap(fi));
     fo.color = applyFog(clipPos.z, color);
 #    endif
-#    if !defined(_NODEPTH_ON)
+#    if !defined(_SVDEPTH_OFF)
     fo.depth = getDepth(clipPos);
-#    endif  // !defined(_NODEPTH_ON)
+#    endif  // !defined(_SVDEPTH_OFF)
 
     return fo;
 }
-#endif  // defined(UNITY_PASS_FORWARDADD) && (defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
+#endif  // defined(UNITY_PASS_FORWARDADD) && (defined(_FORWARDADD_OFF) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
 
 
 /*!
@@ -248,13 +248,13 @@ gbuffer_raymarching fragRayMarchingDeferred(v2f_raymarching fi)
         gb.diffuse.a = 1.0;
         // gb.normal.rgb = (0.0).xxx;
         gb.emission = applyFog(clipPos.z, _BackgroundColor);
-#            if !defined(_NODEPTH_ON)
+#            if !defined(_SVDEPTH_OFF)
 #                if defined(_BACKGROUNDDEPTH_MESH)
         gb.depth = getDepth(clipPos);
 #                else
         gb.depth = kFarClipPlaneDepth;
 #                endif  // defined(_BACKGROUNDDEPTH_MESH)
-#            endif  // !defined(_NODEPTH_ON)
+#            endif  // !defined(_SVDEPTH_OFF)
         return gb;
 #        else
         discard;
@@ -295,10 +295,10 @@ gbuffer_raymarching fragRayMarchingDeferred(v2f_raymarching fi)
         /* out */ gb.specular,
         /* out */ gb.normal);
 #endif  // defined(_DEBUGVIEW_STEP)
-#if !defined(_NODEPTH_ON)
+#if !defined(_SVDEPTH_OFF)
     const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
     gb.depth = getDepth(clipPos);
-#endif  // !defined(_NODEPTH_ON)
+#endif  // !defined(_SVDEPTH_OFF)
 
     return gb;
 }
@@ -344,7 +344,7 @@ fout_raymarching fragRayMarchingShadowCaster(v2f_raymarching_shadowcaster fi)
     //
     fout_raymarching fo;
     fo.color = float4(0.0, 0.0, 0.0, 0.0);
-#    if !defined(_NODEPTH_ON)
+#    if !defined(_SVDEPTH_OFF)
     //
     // TRANSFER_SHADOW_CASTER_NORMALOFFSET
     //
@@ -356,7 +356,7 @@ fout_raymarching fragRayMarchingShadowCaster(v2f_raymarching_shadowcaster fi)
 #        endif  // defined(_CALCSPACE_WORLD)
     const float4 clipPos = UnityApplyLinearShadowBias(UnityWorldToClipPos(applyShadowBias(worldFinalPos, worldNormal)));
     fo.depth = getDepth(clipPos);
-#    endif  // !defined(_NODEPTH_ON)
+#    endif  // !defined(_SVDEPTH_OFF)
     return fo;
 #endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
 }

@@ -91,11 +91,11 @@ Shader "koturn/KRayMarching/DomainOctrahedrons"
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
         [Space(8)]
-        [Toggle(_NODEPTH_ON)]
-        _NoDepth ("Disable depth ouput", Int) = 0
+        [ToggleOff(_SVDEPTH_OFF)]
+        _SvDepth ("Enable depth output", Int) = 1
 
-        [Toggle(_NOFORWARDADD_ON)]
-        _NoForwardAdd ("Disable ForwardAdd", Int) = 0
+        [ToggleOff(_FORWARDADD_OFF)]
+        _ForwardAdd ("Enable ForwardAdd path", Int) = 1
 
         [Enum(UnityEngine.Rendering.CullMode)]
         _Cull ("Culling Mode", Int) = 1  // Default: Front
@@ -172,7 +172,7 @@ Shader "koturn/KRayMarching/DomainOctrahedrons"
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
         #pragma shader_feature_local_fragment _ _STEPMETHOD_OVER_RELAX _STEPMETHOD_ACCELARATION _STEPMETHOD_AUTO_RELAX
-        #pragma shader_feature_local_fragment _ _NODEPTH_ON
+        #pragma shader_feature_local_fragment _ _SVDEPTH_OFF
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
 
         #define RAYMARCHING_SDF map
@@ -280,7 +280,7 @@ Shader "koturn/KRayMarching/DomainOctrahedrons"
 
             #pragma multi_compile_fwdadd_fullshadows
             #pragma multi_compile_fog
-            #pragma shader_feature_local _ _NOFORWARDADD_ON
+            #pragma shader_feature_local _ _FORWARDADD_OFF
             #pragma shader_feature_local _ _BACKGROUNDMODE_FIXED_COLOR
             #pragma shader_feature_local _ _BACKGROUNDDEPTH_MESH
             #pragma shader_feature_local_fragment _ _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH

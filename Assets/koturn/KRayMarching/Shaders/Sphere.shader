@@ -92,11 +92,11 @@ Shader "koturn/KRayMarching/Sphere"
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
         [Space(8)]
-        [Toggle(_NODEPTH_ON)]
-        _NoDepth ("Disable depth ouput", Int) = 0
+        [ToggleOff(_SVDEPTH_OFF)]
+        _SvDepth ("Enable depth output", Int) = 1
 
-        [Toggle(_NOFORWARDADD_ON)]
-        _NoForwardAdd ("Disable ForwardAdd", Int) = 0
+        [ToggleOff(_FORWARDADD_OFF)]
+        _ForwardAdd ("Enable ForwardAdd path", Int) = 1
 
         // [Enum(UnityEngine.Rendering.CullMode)]
         [KeywordEnum(Off, Front, Back)]
@@ -203,7 +203,7 @@ Shader "koturn/KRayMarching/Sphere"
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
         #pragma shader_feature_local_fragment _ _STEPMETHOD_OVER_RELAX _STEPMETHOD_ACCELARATION _STEPMETHOD_AUTO_RELAX
-        #pragma shader_feature_local_fragment _ _NODEPTH_ON
+        #pragma shader_feature_local_fragment _ _SVDEPTH_OFF
         #pragma shader_feature_local_fragment _ _CULL_FRONT _CULL_BACK
         #pragma shader_feature_local_fragment _NORMALCALCMETHOD_CENTRAL_DIFFERENCE _NORMALCALCMETHOD_FOREARD_DIFFERENCE _NORMALCALCMETHOD_TETRAHEDRON
         #pragma shader_feature_local_fragment _NORMALCALCOPTIMIZE_UNROLL _NORMALCALCOPTIMIZE_LOOP _NORMALCALCOPTIMIZE_LOOP_WITHOUT_LUT
@@ -446,7 +446,7 @@ Shader "koturn/KRayMarching/Sphere"
             //   FOG_EXP
             //   FOG_EXP2
             #pragma multi_compile_fog
-            #pragma shader_feature_local _ _NOFORWARDADD_ON
+            #pragma shader_feature_local _ _FORWARDADD_OFF
             #pragma shader_feature_local_fragment _DEBUGVIEW_NONE _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT _LIGHTING_CUSTOM
             #pragma shader_feature_local_fragment _DIFFUSEMODE_NONE _DIFFUSEMODE_LAMBERT _DIFFUSEMODE_HALF_LAMBERT _DIFFUSEMODE_SQUARED_HALF_LAMBERT

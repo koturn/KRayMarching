@@ -150,7 +150,7 @@ bool isFacing(v2f_raymarching_shadowcaster fi);
 bool isFacing(face_t facing);
 
 
-#if defined(UNITY_PASS_FORWARDADD) && (defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
+#if defined(UNITY_PASS_FORWARDADD) && (defined(_FORWARDADD_OFF) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
 /*!
  * @brief Vertex shader function for disabling ForwardAdd Pass.
  * @return NaN vertex.
@@ -204,7 +204,7 @@ v2f_raymarching vertRayMarching(appdata_raymarching_forward v)
 
     return o;
 }
-#endif  // defined(UNITY_PASS_FORWARDADD) && (defined(_NOFORWARDADD_ON) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
+#endif  // defined(UNITY_PASS_FORWARDADD) && (defined(_FORWARDADD_OFF) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
 
 /*!
  * @brief Vertex shader function for ShadowCaster Pass.
@@ -386,7 +386,7 @@ bool isFacing(v2f_raymarching fi)
     return false;
 #elif defined(_CULL_BACK)
     return true;
-#elif defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#elif defined(_FORWARDADD_OFF) && defined(UNITY_PASS_FORWARDADD)
     // Unused dummy value.
     return true;
 #elif defined(SHADER_STAGE_FRAGMENT) && (defined(_ASSUMEINSIDE_SIMPLE) || defined(_ASSUMEINSIDE_MAX_LENGTH))
@@ -394,7 +394,7 @@ bool isFacing(v2f_raymarching fi)
 #else
     // Unused dummy value.
     return true;
-#endif  // defined(_NOFORWARDADD_ON) && defined(UNITY_PASS_FORWARDADD)
+#endif  // defined(_FORWARDADD_OFF) && defined(UNITY_PASS_FORWARDADD)
 }
 
 
