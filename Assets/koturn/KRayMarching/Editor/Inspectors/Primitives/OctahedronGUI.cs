@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// <summary>
     /// CustomEditor for "koturn/KRayMarching/Primitives/Octahedron".
     /// </summary>
-    public class OctahedronGUI : KRayMarchingBaseGUI
+    public sealed class OctahedronGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Size".

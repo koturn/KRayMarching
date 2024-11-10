@@ -11,7 +11,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// "koturn/KRayMarching/Primitives/InfinityCone",
     /// and "koturn/KRayMarching/Primitives/SolidAngle".
     /// </summary>
-    public class ConeGUI : KRayMarchingBaseGUI
+    public sealed class ConeGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Angle".

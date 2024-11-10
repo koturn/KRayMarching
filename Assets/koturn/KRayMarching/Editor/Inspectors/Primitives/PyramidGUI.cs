@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// <summary>
     /// CustomEditor for "koturn/KRayMarching/Primitives/Pyramid",
     /// </summary>
-    public class PyramidGUI : KRayMarchingBaseGUI
+    public sealed class PyramidGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Height".

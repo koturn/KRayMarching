@@ -10,7 +10,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// CustomEditor for "koturn/KRayMarching/Primitives/ArbitaryCapsule"
     /// and "koturn/KRayMarching/Primitives/ArbitaryCappedCylinder".
     /// </summary>
-    public class ArbitaryCapsuleCylinderGUI : KRayMarchingBaseGUI
+    public sealed class ArbitaryCapsuleCylinderGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Position1".

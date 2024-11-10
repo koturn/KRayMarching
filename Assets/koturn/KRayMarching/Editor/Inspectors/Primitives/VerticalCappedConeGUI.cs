@@ -10,7 +10,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// CustomEditor for "koturn/KRayMarching/Primitives/VerticalCappedCone"
     /// and "koturn/KRayMarching/Primitives/VerticalRoundCone".
     /// </summary>
-    public class VerticalCappedConeGUI : KRayMarchingBaseGUI
+    public sealed class VerticalCappedConeGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Height".

@@ -10,7 +10,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// CustomEditor for "koturn/KRayMarching/Primitives/HexPrism"
     /// and "koturn/KRayMarching/Primitives/TriPrism".
     /// </summary>
-    public class PrismGUI : KRayMarchingBaseGUI
+    public sealed class PrismGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Size".

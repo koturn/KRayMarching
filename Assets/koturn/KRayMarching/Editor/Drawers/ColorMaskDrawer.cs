@@ -7,7 +7,7 @@ namespace Koturn.KRayMarching.Drawers
     /// <summary>
     /// Custom material property for ColorMask.
     /// </summary>
-    public class ColorMaskDrawer : MaterialPropertyDrawer
+    public sealed class ColorMaskDrawer : MaterialPropertyDrawer
     {
         private static readonly string[] ColorMasks = { "None", "A", "B", "BA", "G", "GA", "GB", "GBA", "R", "RA", "RB", "RBA", "RG", "RGA", "RGB", "RGBA" };
 

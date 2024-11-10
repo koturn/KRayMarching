@@ -7,7 +7,7 @@ namespace Koturn.KRayMarching.Drawers
     /// <summary>
     /// Custom material property for 2D vector.
     /// </summary>
-    public class Vector2Drawer : MaterialPropertyDrawer
+    public sealed class Vector2Drawer : MaterialPropertyDrawer
     {
         /// <summary>
         /// <param name="position">Rectangle on the screen to use for the property GUI.</param>

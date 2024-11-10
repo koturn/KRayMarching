@@ -11,7 +11,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// "koturn/KRayMarching/Primitives/CutSphere"
     /// and "koturn/KRayMarching/Primitives/CutHollowSphere".
     /// </summary>
-    public class SphereGUI : KRayMarchingBaseGUI
+    public sealed class SphereGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Radius".

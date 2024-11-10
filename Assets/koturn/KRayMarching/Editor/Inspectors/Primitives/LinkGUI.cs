@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// <summary>
     /// CustomEditor for "koturn/KRayMarching/Primitives/Link",
     /// </summary>
-    public class LinkGUI : KRayMarchingBaseGUI
+    public sealed class LinkGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Height".

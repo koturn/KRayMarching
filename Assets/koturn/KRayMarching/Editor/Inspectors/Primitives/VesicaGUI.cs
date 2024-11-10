@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// <summary>
     /// CustomEditor for "koturn/KRayMarching/Primitives/Vesica".
     /// </summary>
-    public class VesicaGUI : KRayMarchingBaseGUI
+    public sealed class VesicaGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Position1".

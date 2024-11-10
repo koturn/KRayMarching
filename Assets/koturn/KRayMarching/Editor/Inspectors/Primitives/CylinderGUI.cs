@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// <summary>
     /// CustomEditor for "koturn/KRayMarching/Primitives/Cylinder",
     /// </summary>
-    public class CylinderGUI : KRayMarchingBaseGUI
+    public sealed class CylinderGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Center".

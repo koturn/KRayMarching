@@ -11,7 +11,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// "koturn/KRayMarching/Primitives/VerticalCappedCylinder"
     /// and "koturn/KRayMarching/Primitives/RoundedCappedCylinder".
     /// </summary>
-    public class VerticalCapsuleCylinderGUI : KRayMarchingBaseGUI
+    public sealed class VerticalCapsuleCylinderGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Height".

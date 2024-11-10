@@ -7,7 +7,7 @@ namespace Koturn.KRayMarching.Inspectors
     /// <summary>
     /// CustomEditor of "koturn/KRayMarching/TorusSixOctahedron" and "koturn/KRayMarching/TorusEightOctahedron".
     /// </summary>
-    public class TorusOctahedronGUI : KRayMarchingBaseGUI
+    public sealed class TorusOctahedronGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_TorusRadius".

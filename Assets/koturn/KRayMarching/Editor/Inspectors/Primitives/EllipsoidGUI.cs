@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// <summary>
     /// CustomEditor for "koturn/KRayMarching/Primitives/Ellipsoid".
     /// </summary>
-    public class EllipsoidGUI : KRayMarchingBaseGUI
+    public sealed class EllipsoidGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Radiuses".

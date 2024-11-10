@@ -7,7 +7,7 @@ namespace Koturn.KRayMarching.Inspectors
     /// <summary>
     /// CustomEditor of "koturn/KRayMarching/ColorHexagram".
     /// </summary>
-    public class ColorHexagramGUI : KRayMarchingBaseGUI
+    public sealed class ColorHexagramGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_TorusRadius".

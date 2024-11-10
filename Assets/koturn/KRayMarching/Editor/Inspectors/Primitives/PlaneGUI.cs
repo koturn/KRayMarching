@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// <summary>
     /// CustomEditor for "koturn/KRayMarching/Primitives/Plane".
     /// </summary>
-    public class PlaneGUI : KRayMarchingBaseGUI
+    public sealed class PlaneGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Normal".

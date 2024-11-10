@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching
     /// <summary>
     /// TextWriter with indenting.
     /// </summary>
-    public class IndentStreamWriter : StreamWriter
+    public sealed class IndentStreamWriter : StreamWriter
     {
         /// <summary>
         /// Default indent string.

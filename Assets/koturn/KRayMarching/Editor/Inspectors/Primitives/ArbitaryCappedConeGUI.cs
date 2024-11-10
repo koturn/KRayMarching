@@ -10,7 +10,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// CustomEditor for "koturn/KRayMarching/Primitives/ArbitaryCappedCone"
     /// and "koturn/KRayMarching/Primitives/ArbitaryRoundCone".
     /// </summary>
-    public class ArbitaryCappedConeGUI : KRayMarchingBaseGUI
+    public sealed class ArbitaryCappedConeGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Position1".

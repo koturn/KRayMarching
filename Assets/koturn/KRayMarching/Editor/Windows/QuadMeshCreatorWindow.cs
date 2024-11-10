@@ -11,7 +11,7 @@ namespace Koturn.KRayMarching.Windows
     /// <summary>
     /// Quad mesh/
     /// </summary>
-    public class QuadMeshCreatorWindow : EditorWindow
+    public sealed class QuadMeshCreatorWindow : EditorWindow
     {
         /// <summary>
         /// Target <see cref="GameObject"/>.

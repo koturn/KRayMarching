@@ -11,7 +11,7 @@ namespace Koturn.KRayMarching.Windows
     /// <summary>
     /// Cube mesh/
     /// </summary>
-    public class CubeMeshCreatorWindow : EditorWindow
+    public sealed class CubeMeshCreatorWindow : EditorWindow
     {
         /// <summary>
         /// Target <see cref="GameObject"/>.

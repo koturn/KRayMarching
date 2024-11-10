@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// <summary>
     /// CustomEditor for "koturn/KRayMarching/Primitives/Torus",
     /// </summary>
-    public class TorusGUI : KRayMarchingBaseGUI
+    public sealed class TorusGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Radius".

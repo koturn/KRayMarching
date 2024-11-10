@@ -9,7 +9,7 @@ namespace Koturn.KRayMarching.Inspectors.Primitives
     /// <summary>
     /// CustomEditor for "koturn/KRayMarching/Primitives/Rhombus".
     /// </summary>
-    public class RhombusGUI : KRayMarchingBaseGUI
+    public sealed class RhombusGUI : KRayMarchingBaseGUI
     {
         /// <summary>
         /// Property name of "_Size".

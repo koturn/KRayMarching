@@ -11,7 +11,7 @@ namespace Koturn.KRayMarching.Windows
     /// <summary>
     /// Mesh Analyzer Window.
     /// </summary>
-    public class MeshExporterWindow : EditorWindow
+    public sealed class MeshExporterWindow : EditorWindow
     {
         /// <summary>
         /// Target object.
