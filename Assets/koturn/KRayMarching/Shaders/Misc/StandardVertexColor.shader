@@ -15,7 +15,7 @@ Shader "koturn/KRayMarching/Misc/StandardVertexColor"
 
         CGPROGRAM
         #pragma surface surf Standard fullforwardshadows vertex:vert
-        #pragma target 3.0
+        #pragma target 5.0
 
         /*!
          * @brief Input of surface shader function.

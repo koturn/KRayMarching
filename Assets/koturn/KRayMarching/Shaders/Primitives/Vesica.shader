@@ -169,7 +169,7 @@
         }
 
         CGINCLUDE
-        #pragma target 3.0
+        #pragma target 5.0
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH

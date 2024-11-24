@@ -78,8 +78,13 @@ struct gbuffer_raymarching
     //! Emission. (rgb: emission, a: unused)
     half4 emission : SV_Target3;
 #if !defined(_SVDEPTH_OFF)
+#    if SHADER_TARGET >= 45
+    //! Depth of the pixel.
+    float depth : SV_DepthLessEqual;
+#    else
     //! Depth of the pixel.
     float depth : SV_Depth;
+#    endif  // SV_DepthLessEqual
 #endif  // !defined(_SVDEPTH_OFF)
 };
 

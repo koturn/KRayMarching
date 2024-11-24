@@ -21,7 +21,7 @@ Shader "koturn/KRayMarching/Misc/UnlitVertexColor"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 3.0
+            #pragma target 5.0
             #pragma multi_compile_fog
 
             #include "UnityCG.cginc"
