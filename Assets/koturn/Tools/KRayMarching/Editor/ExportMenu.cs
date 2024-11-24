@@ -11,59 +11,16 @@ namespace Koturn.Tools.KRayMarching
     /// <summary>
     /// A window class which replace lilToon shaders to optimized ones.
     /// </summary>
-    public static class ExportTool
+    public static class ExportMenu
     {
         /// <summary>
-        /// Entire json data.
+        /// GUID of ExportConfig.json.
         /// </summary>
-        class JsonData
-        {
-            /// <summary>
-            /// Package infomation array.
-            /// </summary>
-            public PackageInfo[] Packages;
-        }
-
+        private const string ProductName = "KRayMarching";
         /// <summary>
-        /// Package information.
+        /// GUID of ExportConfig.json.
         /// </summary>
-        [Serializable]
-        class PackageInfo
-        {
-            /// <summary>
-            /// Unity package name for export.
-            /// </summary>
-            public string UnityPackageName;
-            /// <summary>
-            /// VPM name.
-            /// </summary>
-            public string VpmName;
-            /// <summary>
-            /// Asset path array.
-            /// </summary>
-            public AssetFileInfo[] Assets;
-            /// <summary>
-            /// Asset path array.
-            /// </summary>
-            public AssetFileInfo[] DependAssets;
-        }
-
-        /// <summary>
-        /// Asset file path information.
-        /// </summary>
-        [Serializable]
-        class AssetFileInfo
-        {
-            /// <summary>
-            /// Base asset path.
-            /// </summary>
-            public string BasePath;
-            /// <summary>
-            /// Relative asset path.
-            /// </summary>
-            public string[] RelativePaths;
-        }
-
+        private const string ConfigJsonGuid = "9623650fd4dd211439c0a8402231e483";
 
         /// <summary>
         /// Last export directory path.
@@ -74,7 +31,7 @@ namespace Koturn.Tools.KRayMarching
         /// <summary>
         /// Initialize all members.
         /// </summary>
-        static ExportTool()
+        static ExportMenu()
         {
             _lastExportDirectoryPath = string.Empty;
         }
@@ -83,7 +40,7 @@ namespace Koturn.Tools.KRayMarching
         /// <summary>
         /// Read configuration file and export packages.
         /// </summary>
-        [MenuItem("Assets/koturn/Tool/KRayMarching/Export Packages", false, 9000)]
+        [MenuItem("Assets/koturn/Tools/" + ProductName + "/Export Packages", false, 9000)]
 #pragma warning disable IDE0051 // Remove unused private members
         private static void ExportPackages()
 #pragma warning restore IDE0051 // Remove unused private members
@@ -98,7 +55,8 @@ namespace Koturn.Tools.KRayMarching
             }
             _lastExportDirectoryPath = exportDirPath;
 
-            var jsonPath = Path.Combine(Application.dataPath, "koturn/Tools/KRayMarching/Editor/ExportConfig.json");
+            var jsonAssetPath = AssetDatabase.GUIDToAssetPath(ConfigJsonGuid);
+            var jsonPath = AssetPathToAbsPath(jsonAssetPath);
             if (!File.Exists(jsonPath))
             {
                 Debug.LogError("Configuration json file is not exists: " + jsonPath);
@@ -112,10 +70,6 @@ namespace Koturn.Tools.KRayMarching
 
             foreach (var package in jsonData.Packages)
             {
-                if (package.Assets == null)
-                {
-                    Debug.Log("!!NULL!!");
-                }
                 ExportAsUnityPackage(
                     Path.Combine(exportDirPath, package.UnityPackageName),
                     package.Assets,
@@ -144,7 +98,7 @@ namespace Koturn.Tools.KRayMarching
                 unityPackagePath,
                 ExportPackageOptions.Recurse);
 
-            Debug.Log("Exported " +  unityPackagePath);
+            Debug.Log("Exported " + unityPackagePath);
         }
 
         /// <summary>
@@ -287,6 +241,8 @@ namespace Koturn.Tools.KRayMarching
                     }
                 }
             }
+
+            Debug.Log("Exported " + zipFilePath);
         }
 
         /// <summary>
@@ -333,6 +289,58 @@ namespace Koturn.Tools.KRayMarching
         {
             var ver = Assembly.GetExecutingAssembly().GetName().Version;
             return $"{ver.Major}.{ver.Minor}.{ver.Build}";
+        }
+
+
+        /// <summary>
+        /// Entire json data.
+        /// </summary>
+        class JsonData
+        {
+            /// <summary>
+            /// Package infomation array.
+            /// </summary>
+            public PackageInfo[] Packages;
+        }
+
+        /// <summary>
+        /// Package information.
+        /// </summary>
+        [Serializable]
+        class PackageInfo
+        {
+            /// <summary>
+            /// Unity package name for export.
+            /// </summary>
+            public string UnityPackageName;
+            /// <summary>
+            /// VPM name.
+            /// </summary>
+            public string VpmName;
+            /// <summary>
+            /// Asset path array.
+            /// </summary>
+            public AssetFileInfo[] Assets;
+            /// <summary>
+            /// Asset path array.
+            /// </summary>
+            public AssetFileInfo[] DependAssets;
+        }
+
+        /// <summary>
+        /// Asset file path information.
+        /// </summary>
+        [Serializable]
+        class AssetFileInfo
+        {
+            /// <summary>
+            /// Base asset path.
+            /// </summary>
+            public string BasePath;
+            /// <summary>
+            /// Relative asset path.
+            /// </summary>
+            public string[] RelativePaths;
         }
     }
 }
