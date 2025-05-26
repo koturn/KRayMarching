@@ -91,6 +91,12 @@
         _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 1.0)
         _SpecPower ("Specular Power", Range(0.0, 128.0)) = 5.0
 
+        [KeywordEnum(Off, On, Additive Only)]
+        _VRCLightVolumes ("VRC Light Volumes", Int) = 1
+
+        [KeywordEnum(Off, On, Dominant Dir)]
+        _VRCLightVolumesSpecular ("VRC Light Volumes Specular", Int) = 0
+
 
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
@@ -224,6 +230,8 @@
             #pragma shader_feature_local _ _BACKGROUNDDEPTH_MESH
             #pragma shader_feature_local_fragment _ _DEBUGVIEW_STEP _DEBUGVIEW_RAY_LENGTH
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT
+            #pragma shader_feature_local_fragment _VRCLIGHTVOLUMES_OFF _VRCLIGHTVOLUMES_ON _VRCLIGHTVOLUMES_ADDITIVE_ONLY
+            #pragma shader_feature_local_fragment _VRCLIGHTVOLUMESSPECULAR_OFF _VRCLIGHTVOLUMESSPECULAR_ON _VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR
             ENDCG
         }
 

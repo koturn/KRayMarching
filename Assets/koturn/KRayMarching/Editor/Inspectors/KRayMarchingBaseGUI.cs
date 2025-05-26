@@ -150,6 +150,16 @@ namespace Koturn.KRayMarching.Inspectors
         /// Property name of "_NormalCalcOptimize".
         /// </summary>
         private const string PropNameNormalCalcOptimize = "_NormalCalcOptimize";
+#if VRC_SDK_VRCSDK3
+        /// <summary>
+        /// Property name of "_VRCLightVolumes".
+        /// </summary>
+        private const string PropNameVRCLightVolumes = "_VRCLightVolumes";
+        /// <summary>
+        /// Property name of "_VRCLightVolumesSpecular".
+        /// </summary>
+        private const string PropNameVRCLightVolumesSpecular = "_VRCLightVolumesSpecular";
+#endif  // VRC_SDK_VRCSDK3
         /// <summary>
         /// Property name of "_SvDepth".
         /// </summary>
@@ -469,6 +479,14 @@ namespace Koturn.KRayMarching.Inspectors
                         ShaderProperty(me, mpNormalCalcOptimize);
                     }
                 }
+
+#if VRC_SDK_VRCSDK3
+                ShaderProperty(me, mps, PropNameVRCLightVolumes, false);
+                using (new EditorGUI.DisabledScope(lightingMethod == LightingMethod.UnityLambert || lightingMethod == LightingMethod.Unlit))
+                {
+                    ShaderProperty(me, mps, PropNameVRCLightVolumesSpecular, false);
+                }
+#endif  // VRC_SDK_VRCSDK3
             }
 
             DrawCustomProperties(me, mps);

@@ -88,6 +88,12 @@ Shader "koturn/KRayMarching/Sphere"
         [KeywordEnum(Unroll, Loop, Loop Without LUT)]
         _NormalCalcOptimize ("Normal Calculation Optimization", Int) = 1
 
+        [KeywordEnum(Off, On, Additive Only)]
+        _VRCLightVolumes ("VRC Light Volumes", Int) = 1
+
+        [KeywordEnum(Off, On, Dominant Dir)]
+        _VRCLightVolumesSpecular ("VRC Light Volumes Specular", Int) = 0
+
 
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
@@ -409,6 +415,8 @@ Shader "koturn/KRayMarching/Sphere"
             #pragma shader_feature_local_fragment _ _SPECULARMODE_ORIGINAL _SPECULARMODE_HALF_VECTOR
             #pragma shader_feature_local_fragment _ _AMBIENTMODE_LEGACY _AMBIENTMODE_SH
             #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
+            #pragma shader_feature_local_fragment _VRCLIGHTVOLUMES_OFF _VRCLIGHTVOLUMES_ON _VRCLIGHTVOLUMES_ADDITIVE_ONLY
+            #pragma shader_feature_local_fragment _VRCLIGHTVOLUMESSPECULAR_OFF _VRCLIGHTVOLUMESSPECULAR_ON _VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR
             ENDCG
         }
 

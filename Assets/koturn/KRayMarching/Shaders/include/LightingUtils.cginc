@@ -32,10 +32,18 @@ half4 calcLightingUnityStandardSpecularDeferred(half4 color, float3 worldPos, fl
 #endif  // !defined(LIGHTINGUTILS_OMIT_PBS_LIGHTING)
 
 #include "UnityLightingCommon.cginc"
+#if defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
+// #    include "LightVolumes.cginc"
+#    include "LightVolumes.cginc"
+#endif  // defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
 
 half3 calcAmbient(float3 worldPos, float3 worldNormal);
 UnityGI getGI(float3 worldPos, half atten);
 UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, float3 worldViewDir, half atten, float4 lmap, half3 ambient);
+
+#if defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
+half3 calcLightVolumeAmbientAndSpecular(half3 albedo, float3 worldPos, float3 worldNormal, float3 worldViewDir);
+#endif  // defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
 
 
 #if !defined(UNITY_LIGHTING_COMMON_INCLUDED)
@@ -202,15 +210,15 @@ half4 calcLightingUnityLambert(half4 color, float3 worldPos, float3 worldNormal,
     UNITY_INITIALIZE_OUTPUT(SurfaceOutput, so);
     so.Albedo = color.rgb;
     so.Normal = worldNormal;
-    so.Emission = half3(0.0, 0.0, 0.0);
+    so.Emission = fixed3(0.0, 0.0, 0.0);
     // so.Specular = 0.0;  // Unused
     // so.Gloss = 0.0;  // Unused
     so.Alpha = color.a;
 
     UnityGI gi = getGI(worldPos, atten);
 
-#if defined(UNITY_PASS_FORWARDBASE)
     const float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
+#if defined(UNITY_PASS_FORWARDBASE)
 #    if !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
     lmap = float4(0.0, 0.0, 0.0, 0.0);
 #    endif  // !defined(LIGHTMAP_ON) && !defined(DYNAMICLIGHTMAP_ON)
@@ -218,8 +226,22 @@ half4 calcLightingUnityLambert(half4 color, float3 worldPos, float3 worldNormal,
     LightingLambert_GI(so, giInput, gi);
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 
+#if (defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && UNITY_SHOULD_SAMPLE_SH && !defined(LIGHTMAP_ON)
+    half3 emission;
+    if (_UdonLightVolumeEnabled && _UdonLightVolumeCount != 0) {
+        gi.indirect.diffuse = 0;
+        emission = calcLightVolumeAmbientAndSpecular(color.rgb, worldPos, worldNormal, worldViewDir);
+    } else {
+        emission = half3(0.0, 0.0, 0.0);
+    }
+#else
+    const half3 emission = half3(0.0, 0.0, 0.0);
+#endif  // (defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && UNITY_SHOULD_SAMPLE_SH && !defined(LIGHTMAP_ON)
+
     half4 outColor = LightingLambert(so, gi);
-    outColor.rgb += so.Emission;
+#if defined(UNITY_PASS_FORWARDBASE)
+    outColor.rgb += so.Emission + emission;
+#endif  // defined(UNITY_PASS_FORWARDBASE)
 
     return outColor;
 }
@@ -262,7 +284,7 @@ half4 calcLightingUnityLambertDeferred(half4 color, float3 worldPos, float3 worl
     UNITY_INITIALIZE_OUTPUT(SurfaceOutput, so);
     so.Albedo = color.rgb;
     so.Normal = worldNormal;
-    so.Emission = half3(0.0, 0.0, 0.0);
+    so.Emission = fixed3(0.0, 0.0, 0.0);
     // so.Specular = 0.0;  // Unused
     // so.Gloss = 0.0;  // Unused
     so.Alpha = color.a;
@@ -316,7 +338,7 @@ half4 calcLightingUnityBlinnPhong(half4 color, float3 worldPos, float3 worldNorm
     UNITY_INITIALIZE_OUTPUT(SurfaceOutput, so);
     so.Albedo = color.rgb;
     so.Normal = worldNormal;
-    so.Emission = half3(0.0, 0.0, 0.0);
+    so.Emission = fixed3(0.0, 0.0, 0.0);
     so.Specular = _SpecPower / 128.0;
     so.Gloss = _Glossiness;
     so.Alpha = color.a;
@@ -332,8 +354,22 @@ half4 calcLightingUnityBlinnPhong(half4 color, float3 worldPos, float3 worldNorm
     LightingBlinnPhong_GI(so, giInput, gi);
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 
+#if (defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && UNITY_SHOULD_SAMPLE_SH && !defined(LIGHTMAP_ON)
+    half3 emission;
+    if (_UdonLightVolumeEnabled && _UdonLightVolumeCount != 0) {
+        gi.indirect.diffuse = 0;
+        emission = calcLightVolumeAmbientAndSpecular(color.rgb, worldPos, worldNormal, worldViewDir);
+    } else {
+        emission = half3(0.0, 0.0, 0.0);
+    }
+#else
+    const half3 emission = half3(0.0, 0.0, 0.0);
+#endif  // (defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && UNITY_SHOULD_SAMPLE_SH && !defined(LIGHTMAP_ON)
+
     half4 outColor = LightingBlinnPhong(so, worldViewDir, gi);
-    outColor.rgb += so.Emission;
+#if defined(UNITY_PASS_FORWARDBASE)
+    outColor.rgb += so.Emission + emission;
+#endif  // defined(UNITY_PASS_FORWARDBASE)
 
     return outColor;
 }
@@ -376,7 +412,7 @@ half4 calcLightingUnityBlinnPhongDeferred(half4 color, float3 worldPos, float3 w
     UNITY_INITIALIZE_OUTPUT(SurfaceOutput, so);
     so.Albedo = color.rgb;
     so.Normal = worldNormal;
-    so.Emission = half3(0.0, 0.0, 0.0);
+    so.Emission = fixed3(0.0, 0.0, 0.0);
     so.Specular = _SpecPower / 128.0;
     so.Gloss = _Glossiness;
     so.Alpha = color.a;
@@ -449,8 +485,22 @@ half4 calcLightingUnityStandard(half4 color, float3 worldPos, float3 worldNormal
     LightingStandard_GI(so, giInput, gi);
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 
+#if (defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && UNITY_SHOULD_SAMPLE_SH && !defined(LIGHTMAP_ON)
+    half3 emission;
+    if (_UdonLightVolumeEnabled && _UdonLightVolumeCount != 0) {
+        gi.indirect.diffuse = 0;
+        emission = calcLightVolumeAmbientAndSpecular(color.rgb, worldPos, worldNormal, worldViewDir);
+    } else {
+        emission = half3(0.0, 0.0, 0.0);
+    }
+#else
+    const half3 emission = half3(0.0, 0.0, 0.0);
+#endif  // (defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && UNITY_SHOULD_SAMPLE_SH && !defined(LIGHTMAP_ON)
+
     half4 outColor = LightingStandard(so, worldViewDir, gi);
-    outColor.rgb += so.Emission;
+#if defined(UNITY_PASS_FORWARDBASE)
+    outColor.rgb += so.Emission + emission;
+#endif  // defined(UNITY_PASS_FORWARDBASE)
 
     return outColor;
 }
@@ -565,8 +615,22 @@ half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 wor
     LightingStandardSpecular_GI(so, giInput, gi);
 #endif  // defined(UNITY_PASS_FORWARDBASE)
 
+#if (defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && UNITY_SHOULD_SAMPLE_SH && !defined(LIGHTMAP_ON)
+    half3 emission;
+    if (_UdonLightVolumeEnabled && _UdonLightVolumeCount != 0) {
+        gi.indirect.diffuse = 0;
+        emission = calcLightVolumeAmbientAndSpecular(color.rgb, worldPos, worldNormal, worldViewDir);
+    } else {
+        emission = half3(0.0, 0.0, 0.0);
+    }
+#else
+    const half3 emission = half3(0.0, 0.0, 0.0);
+#endif  // (defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && UNITY_SHOULD_SAMPLE_SH && !defined(LIGHTMAP_ON)
+
     half4 outColor = LightingStandardSpecular(so, worldViewDir, gi);
-    outColor.rgb += so.Emission;
+#if defined(UNITY_PASS_FORWARDBASE)
+    outColor.rgb += so.Emission + emission;
+#endif  // defined(UNITY_PASS_FORWARDBASE)
 
     return outColor;
 }
@@ -754,6 +818,84 @@ UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, f
 
     return giInput;
 }
+
+
+void calcSHComponents(float3 worldPos, out float3 L0, out float3 L1r, out float3 L1g, out float3 L1b)
+{
+#if defined(_VRCLIGHTVOLUMES_ON)
+    LightVolumeSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b);
+#elif defined(_VRCLIGHTVOLUMES_ADDITIVE)
+    LightVolumeAdditiveSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b);
+#else
+    L0 = float3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w);
+    L1r = unity_SHAr.xyz;
+    L1g = unity_SHAg.xyz;
+    L1b = unity_SHAb.xyz;
+#endif  // defined(_VRCLIGHTVOLUMES_ON)
+}
+
+
+#if defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
+/*!
+ * @brief Calculate ambient and specular of VRC Light Volumes.
+ * @param [in] albedo  Albedo.
+ * @param [in] worldPos  World coordinate.
+ * @param [in] worldNormal  Normal in world space.
+ * @param [in] worldViewDir  View direction in world space.
+ * @return Ambient color.
+ */
+half3 calcLightVolumeAmbientAndSpecular(half3 albedo, float3 worldPos, float3 worldNormal, float3 worldViewDir)
+{
+    half3 emission;
+
+#    if defined(_VRCLIGHTVOLUMES_ADDITIVE)
+    float3 L0, L1r, L1g, L1b;
+    LightVolumeAdditiveSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b);
+#    elif defined(_VRCLIGHTVOLUMES_ON)
+    float3 L0, L1r, L1g, L1b;
+    LightVolumeSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b);
+#    else
+    const float3 L0 = float3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w);
+    const float3 L1r = unity_SHAr.xyz;
+    const float3 L1g = unity_SHAg.xyz;
+    const float3 L1b = unity_SHAb.xyz;
+#    endif  // defined(_VRCLIGHTVOLUMES_ADDITIVE)
+
+    const float3 indirect = LightVolumeEvaluate(worldNormal, L0, L1r, L1g, L1b) * albedo;
+#    if defined(_LIGHTING_UNITY_STANDARD)
+    const float metallic = _Metallic * _Metallic;
+    emission = indirect * (1.0 - metallic);
+#    else
+    const float metallic = 0.0;
+    emission = indirect;
+#    endif  // defined(_LIGHTING_UNITY_STANDARD)
+
+#    if (defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && (defined(_LIGHTING_UNITY_STANDARD) || defined(_LIGHTING_UNITY_STANDARD_SPECULAR) || defined(_LIGHTING_UNITY_BLINN_PHONG))
+#        if defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
+    emission += LightVolumeSpecularDominant(albedo, _Glossiness, metallic, worldNormal, worldViewDir, L0, L1r, L1g, L1b);
+#        else
+    emission += LightVolumeSpecular(albedo, _Glossiness, metallic, worldNormal, worldViewDir, L0, L1r, L1g, L1b);
+#        endif  // defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
+#    endif  // (defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && (defined(_LIGHTING_UNITY_STANDARD) || defined(_LIGHTING_UNITY_STANDARD_SPECULAR) || defined(_LIGHTING_UNITY_BLINN_PHONG))
+
+    return emission;
+}
+
+#else
+
+/*!
+ * @brief Calculate ambient and specular of VRC Light Volumes.
+ * @param [in] albedo  Albedo (not used).
+ * @param [in] worldPos  World coordinate (not used).
+ * @param [in] worldNormal  Normal in world space (not used).
+ * @param [in] worldViewDir  View direction in world space (not used).
+ * @return Ambient color (Zero-Vector).
+ */
+half3 calcLightVolumeAmbientAndSpecular(half3 albedo, float3 worldPos, float3 worldNormal, float3 worldViewDir)
+{
+    return half3(0.0, 0.0, 0.0);
+}
+#endif  // defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
 
 
 #endif  // !defined(LIGHTINGUTILS_INCLUDED)
