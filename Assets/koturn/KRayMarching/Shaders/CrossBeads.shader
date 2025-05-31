@@ -85,6 +85,9 @@ Shader "koturn/KRayMarching/CrossBeads"
         [KeywordEnum(Off, On, Dominant Dir)]
         _VRCLightVolumesSpecular ("VRC Light Volumes Specular", Int) = 0
 
+        [Toggle(_LTCGI_ON)]
+        _LTCGI ("LTCGI", Int) = 0
+
 
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
@@ -145,6 +148,7 @@ Shader "koturn/KRayMarching/CrossBeads"
             "DisableBatching" = "True"
             "IgnoreProjector" = "True"
             "VRCFallback" = "Hidden"
+            "LTCGI" = "_LTCGI"
         }
 
         Cull [_Cull]
@@ -311,6 +315,7 @@ Shader "koturn/KRayMarching/CrossBeads"
             #pragma shader_feature_local_fragment _LIGHTING_UNITY_LAMBERT _LIGHTING_UNITY_BLINN_PHONG _LIGHTING_UNITY_STANDARD _LIGHTING_UNITY_STANDARD_SPECULAR _LIGHTING_UNLIT
             #pragma shader_feature_local_fragment _VRCLIGHTVOLUMES_OFF _VRCLIGHTVOLUMES_ON _VRCLIGHTVOLUMES_ADDITIVE_ONLY
             #pragma shader_feature_local_fragment _VRCLIGHTVOLUMESSPECULAR_OFF _VRCLIGHTVOLUMESSPECULAR_ON _VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR
+            #pragma shader_feature_local_fragment _ _LTCGI_ON
             ENDCG
         }
 

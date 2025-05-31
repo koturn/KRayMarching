@@ -94,6 +94,9 @@ Shader "koturn/KRayMarching/Sphere"
         [KeywordEnum(Off, On, Dominant Dir)]
         _VRCLightVolumesSpecular ("VRC Light Volumes Specular", Int) = 0
 
+        [Toggle(_LTCGI_ON)]
+        _LTCGI ("LTCGI", Int) = 0
+
 
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
@@ -182,6 +185,7 @@ Shader "koturn/KRayMarching/Sphere"
             "DisableBatching" = "True"
             "IgnoreProjector" = "True"
             "VRCFallback" = "Hidden"
+            "LTCGI" = "_LTCGI"
         }
 
         Cull [_Cull]
@@ -420,6 +424,7 @@ Shader "koturn/KRayMarching/Sphere"
             #pragma shader_feature_local_fragment _ _ENABLE_REFLECTION_PROBE
             #pragma shader_feature_local_fragment _VRCLIGHTVOLUMES_OFF _VRCLIGHTVOLUMES_ON _VRCLIGHTVOLUMES_ADDITIVE_ONLY
             #pragma shader_feature_local_fragment _VRCLIGHTVOLUMESSPECULAR_OFF _VRCLIGHTVOLUMESSPECULAR_ON _VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR
+            #pragma shader_feature_local_fragment _ _LTCGI_ON
             ENDCG
         }
 
