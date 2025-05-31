@@ -48,6 +48,23 @@
 #        define RAYMARCHING_UNROLL_N
 #    endif  // !defined(RAYMARCHING_UNROLL_N)
 #endif  // defined(RAYMARCHING_PREFER_UNROLL) && defined(UNITY_COMPILER_HLSL)
+#if !defined(RAYMARCHING_DEPTH_SEMANTICS)
+#    if defined(_SVDEPTH_GREATEREQUAL)
+#        if SHADER_TARGET >= 45
+#            define RAYMARCHING_DEPTH_SEMANTICS SV_DepthGreaterEqual
+#        else
+#            define RAYMARCHING_DEPTH_SEMANTICS SV_Depth
+#        endif  // SHADER_TARGET >= 45
+#    elif defined(_SVDEPTH_LESSEQUAL)
+#        if SHADER_TARGET >= 45
+#            define RAYMARCHING_DEPTH_SEMANTICS SV_DepthLessEqual
+#        else
+#            define RAYMARCHING_DEPTH_SEMANTICS SV_Depth
+#        endif  // SHADER_TARGET >= 45
+#    else  // Assume _SVDEPTH_OFF and _SVDEPTH_ON
+#        define RAYMARCHING_DEPTH_SEMANTICS SV_Depth
+#    endif  // defined(_SVDEPTH_ON)
+#endif  // !defined(RAYMARCHING_DEPTH_SEMANTICS)
 
 
 /*!
@@ -57,10 +74,10 @@ struct fout_raymarching
 {
     //! Output color of the pixel.
     half4 color : SV_Target;
-#if (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX)) && !defined(_SVDEPTH_OFF)
+#if (defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)) && (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX))
     //! Depth of the pixel.
-    float depth : SV_Depth;
-#endif  // !defined(_SVDEPTH_OFF)
+    float depth : RAYMARCHING_DEPTH_SEMANTICS;
+#endif  // (defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)) && (!defined(SHADOWS_CUBE) || defined(SHADOWS_CUBE_IN_DEPTH_TEX))
 };
 
 /*!
@@ -77,15 +94,10 @@ struct gbuffer_raymarching
     half4 normal : SV_Target2;
     //! Emission. (rgb: emission, a: unused)
     half4 emission : SV_Target3;
-#if !defined(_SVDEPTH_OFF)
-#    if SHADER_TARGET >= 45
+#if defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
     //! Depth of the pixel.
-    float depth : SV_DepthLessEqual;
-#    else
-    //! Depth of the pixel.
-    float depth : SV_Depth;
-#    endif  // SV_DepthLessEqual
-#endif  // !defined(_SVDEPTH_OFF)
+    float depth : RAYMARCHING_DEPTH_SEMANTICS;
+#endif  // defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
 };
 
 
@@ -177,13 +189,13 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
         const float4 clipPos = UnityObjectToClipPos(fi.fragPos);
 #            endif  // defined(_CALCSPACE_WORLD)
         fo.color = applyFog(clipPos.z, _BackgroundColor);
-#            if !defined(_SVDEPTH_OFF)
+#            if defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
 #                if defined(_BACKGROUNDDEPTH_MESH)
         fo.depth = getDepth(clipPos);
 #                else
         fo.depth = kFarClipPlaneDepth;
 #                endif  // defined(_BACKGROUNDDEPTH_MESH)
-#            endif  // !defined(_SVDEPTH_OFF)
+#            endif  // defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
         return fo;
 #        else
         discard;
@@ -219,9 +231,9 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
         getLightMap(fi));
     fo.color = applyFog(clipPos.z, color);
 #    endif
-#    if !defined(_SVDEPTH_OFF)
+#    if defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
     fo.depth = getDepth(clipPos);
-#    endif  // !defined(_SVDEPTH_OFF)
+#    endif  // defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
 
     return fo;
 }
@@ -253,13 +265,13 @@ gbuffer_raymarching fragRayMarchingDeferred(v2f_raymarching fi)
         gb.diffuse.a = 1.0;
         // gb.normal.rgb = (0.0).xxx;
         gb.emission = applyFog(clipPos.z, _BackgroundColor);
-#            if !defined(_SVDEPTH_OFF)
+#            if defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
 #                if defined(_BACKGROUNDDEPTH_MESH)
         gb.depth = getDepth(clipPos);
 #                else
         gb.depth = kFarClipPlaneDepth;
 #                endif  // defined(_BACKGROUNDDEPTH_MESH)
-#            endif  // !defined(_SVDEPTH_OFF)
+#            endif  // defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
         return gb;
 #        else
         discard;
@@ -300,10 +312,10 @@ gbuffer_raymarching fragRayMarchingDeferred(v2f_raymarching fi)
         /* out */ gb.specular,
         /* out */ gb.normal);
 #endif  // defined(_DEBUGVIEW_STEP)
-#if !defined(_SVDEPTH_OFF)
+#if defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
     const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
     gb.depth = getDepth(clipPos);
-#endif  // !defined(_SVDEPTH_OFF)
+#endif  // defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
 
     return gb;
 }
@@ -349,7 +361,7 @@ fout_raymarching fragRayMarchingShadowCaster(v2f_raymarching_shadowcaster fi)
     //
     fout_raymarching fo;
     fo.color = float4(0.0, 0.0, 0.0, 0.0);
-#    if !defined(_SVDEPTH_OFF)
+#    if defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
     //
     // TRANSFER_SHADOW_CASTER_NORMALOFFSET
     //
@@ -361,7 +373,7 @@ fout_raymarching fragRayMarchingShadowCaster(v2f_raymarching_shadowcaster fi)
 #        endif  // defined(_CALCSPACE_WORLD)
     const float4 clipPos = UnityApplyLinearShadowBias(UnityWorldToClipPos(applyShadowBias(worldFinalPos, worldNormal)));
     fo.depth = getDepth(clipPos);
-#    endif  // !defined(_SVDEPTH_OFF)
+#    endif  // defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
     return fo;
 #endif  // defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
 }

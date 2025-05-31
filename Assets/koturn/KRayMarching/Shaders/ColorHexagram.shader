@@ -87,8 +87,8 @@ Shader "koturn/KRayMarching/ColorHexagram"
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
         [Space(8)]
-        [ToggleOff(_SVDEPTH_OFF)]
-        _SvDepth ("Enable depth output", Int) = 1
+        [KeywordEnum(Off, On, LessEqual, GreaterEqual)]
+        _SvDepth ("Depth output", Int) = 3
 
         [ToggleOff(_FORWARDADD_OFF)]
         _ForwardAdd ("Enable ForwardAdd path", Int) = 1
@@ -169,7 +169,7 @@ Shader "koturn/KRayMarching/ColorHexagram"
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
         #pragma shader_feature_local_fragment _ _STEPMETHOD_OVER_RELAX _STEPMETHOD_ACCELARATION _STEPMETHOD_AUTO_RELAX
-        #pragma shader_feature_local_fragment _ _SVDEPTH_OFF
+        #pragma shader_feature_local_fragment _SVDEPTH_OFF _SVDEPTH_ON _SVDEPTH_LESSEQUAL _SVDEPTH_GREATEREQUAL
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
 
         #define RAYMARCHING_SDF map

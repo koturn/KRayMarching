@@ -72,8 +72,8 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
         // ---------------------------------------------------------------------
         [Header(Rendering Parameters)]
         [Space(8)]
-        [ToggleOff(_SVDEPTH_OFF)]
-        _SvDepth ("Enable depth output", Int) = 1
+        [KeywordEnum(Off, On, LessEqual, GreaterEqual)]
+        _SvDepth ("Depth output", Int) = 3
 
         [ToggleOff(_FORWARDADD_OFF)]
         _ForwardAdd ("Enable ForwardAdd path", Int) = 1
@@ -151,7 +151,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
         #pragma target 5.0
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
-        #pragma shader_feature_local_fragment _ _SVDEPTH_OFF
+        #pragma shader_feature_local_fragment _SVDEPTH_OFF _SVDEPTH_ON _SVDEPTH_LESSEQUAL _SVDEPTH_GREATEREQUAL
         #pragma shader_feature_local_fragment _ _USE_FAST_INVTRIFUNC_ON
 
         #include "include/alt/AltUnityCG.cginc"
