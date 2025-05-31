@@ -159,6 +159,10 @@ namespace Koturn.KRayMarching.Inspectors
         /// Property name of "_VRCLightVolumesSpecular".
         /// </summary>
         private const string PropNameVRCLightVolumesSpecular = "_VRCLightVolumesSpecular";
+        /// <summary>
+        /// Property name of "_LTCGI".
+        /// </summary>
+        private const string PropNameLTCGI = "_LTCGI";
 #endif  // VRC_SDK_VRCSDK3
         /// <summary>
         /// Property name of "_SvDepth".
@@ -486,6 +490,7 @@ namespace Koturn.KRayMarching.Inspectors
                 {
                     ShaderProperty(me, mps, PropNameVRCLightVolumesSpecular, false);
                 }
+                ShaderProperty(me, mps, PropNameLTCGI, false);
 #endif  // VRC_SDK_VRCSDK3
             }
 
