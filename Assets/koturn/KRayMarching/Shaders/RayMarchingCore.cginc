@@ -66,6 +66,35 @@
 #    endif  // defined(_SVDEPTH_ON)
 #endif  // !defined(RAYMARCHING_DEPTH_SEMANTICS)
 
+#if !defined(RAYMARCHING_BUFFER_NAME)
+#    define RAYMARCHING_BUFFER_NAME RayMarchingProps
+#endif  // !defined(RAYMARCHING_BUFFER_NAME)
+
+#if defined(RAYMARCHING_DISABLE_INSTANCING)
+#    define RAYMARCHING_INSTANCING_BUFFER_START
+#    define RAYMARCHING_INSTANCING_BUFFER_END
+#    define RAYMARCHING_DEFINE_INSTANCED_PROP(type, var) uniform type var;
+#    define RAYMARCHING_ACCESS_INSTANCED_PROP(var) var
+#else
+#    define RAYMARCHING_INSTANCING_BUFFER_START UNITY_INSTANCING_BUFFER_START(RAYMARCHING_BUFFER_NAME)
+#    define RAYMARCHING_INSTANCING_BUFFER_END UNITY_INSTANCING_BUFFER_END(RAYMARCHING_BUFFER_NAME)
+#    define RAYMARCHING_DEFINE_INSTANCED_PROP(type, var) UNITY_DEFINE_INSTANCED_PROP(type, var)
+#    define RAYMARCHING_ACCESS_INSTANCED_PROP(var) UNITY_ACCESS_INSTANCED_PROP(RAYMARCHING_BUFFER_NAME, var)
+#endif  // defined(RAYMARCHING_DISABLE_INSTANCING)
+
+#if !defined(RAYMARCHING_VARNAME_SCALES)
+#    define RAYMARCHING_VARNAME_SCALES _Scales
+#endif  // !defined(RAYMARCHING_VARNAME_SCALES)
+#if !defined(RAYMARCHING_SCALES)
+#    define RAYMARCHING_SCALES RAYMARCHING_ACCESS_INSTANCED_PROP(RAYMARCHING_VARNAME_SCALES)
+#endif  // !defined(RAYMARCHING_SCALES)
+#if !defined(RAYMARCHING_VARNAME_BACKGROUND_COLOR)
+#    define RAYMARCHING_VARNAME_BACKGROUND_COLOR _BackgroundColor
+#endif  // !defined(RAYMARCHING_VARNAME_BACKGROUND_COLOR)
+#if !defined(RAYMARCHING_BACKGROUND_COLOR)
+#    define RAYMARCHING_BACKGROUND_COLOR RAYMARCHING_ACCESS_INSTANCED_PROP(RAYMARCHING_VARNAME_BACKGROUND_COLOR)
+#endif  // !defined(RAYMARCHING_BACKGROUND_COLOR)
+
 
 /*!
  * @brief Output of fragment shader.
@@ -126,8 +155,6 @@ float3 sdfDefaultRaymarching(float3 p);
 half4 getBaseColorDefaultRaymarching(float3 rayOrigin, float3 rayDir, float rayLength);
 
 
-//! Background color.
-uniform half4 _BackgroundColor;
 //! Maximum loop count for ForwardBase.
 uniform int _MaxLoop;
 //! Maximum loop count for ForwardAdd.
@@ -138,8 +165,6 @@ uniform int _MaxLoopShadowCaster;
 uniform float _MinRayLength;
 //! Maximum length of the ray.
 uniform float _MaxRayLength;
-//! Scale vector.
-uniform float3 _Scales;
 //! Maximum length inside an object.
 uniform float _MaxInsideLength;
 //! Marching Factor.
@@ -154,6 +179,13 @@ uniform float _AutoRelaxFactor;
 uniform float _DebugStepDiv;
 //! Divisor of ray length for debug view.
 uniform float _DebugRayLengthDiv;
+
+RAYMARCHING_INSTANCING_BUFFER_START
+//! Scale vector.
+RAYMARCHING_DEFINE_INSTANCED_PROP(float3, _Scales)
+//! Background color.
+RAYMARCHING_DEFINE_INSTANCED_PROP(half4, _BackgroundColor)
+RAYMARCHING_INSTANCING_BUFFER_END
 
 
 #if defined(UNITY_PASS_FORWARDADD) && (defined(_FORWARDADD_OFF) || defined(_LIGHTING_UNLIT) || defined(_DEBUGVIEW_STEP) || defined(_DEBUGVIEW_RAY_LENGTH))
@@ -188,7 +220,7 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
 #            else
         const float4 clipPos = UnityObjectToClipPos(fi.fragPos);
 #            endif  // defined(_CALCSPACE_WORLD)
-        fo.color = applyFog(clipPos.z, _BackgroundColor);
+        fo.color = applyFog(clipPos.z, RAYMARCHING_BACKGROUND_COLOR);
 #            if defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
 #                if defined(_BACKGROUNDDEPTH_MESH)
         fo.depth = getDepth(clipPos);
@@ -206,13 +238,19 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
 #    if defined(_CALCSPACE_WORLD)
     const float3 worldFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
     const float3 worldNormal = RAYMARCHING_CALC_NORMAL(worldFinalPos);
-    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(worldFinalPos / _Scales, worldNormal, ro.rayLength);
+    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(
+        worldFinalPos / RAYMARCHING_SCALES,
+        worldNormal,
+        ro.rayLength);
 #    else
     const float3 localFinalPos = rp.rayOrigin + rp.rayDir * ro.rayLength;
     const float3 worldFinalPos = objectToWorldPos(localFinalPos);
     const float3 localNormal = RAYMARCHING_CALC_NORMAL(localFinalPos);
     const float3 worldNormal = UnityObjectToWorldNormal(localNormal);
-    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(localFinalPos / _Scales, localNormal, ro.rayLength);
+    const half4 baseColor = RAYMARCHING_GET_BASE_COLOR(
+        localFinalPos / RAYMARCHING_SCALES,
+        localNormal,
+        ro.rayLength);
 #    endif  // defined(_CALCSPACE_WORLD)
 
     const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
@@ -264,7 +302,7 @@ gbuffer_raymarching fragRayMarchingDeferred(v2f_raymarching fi)
 #            endif  // defined(_CALCSPACE_WORLD)
         gb.diffuse.a = 1.0;
         // gb.normal.rgb = (0.0).xxx;
-        gb.emission = applyFog(clipPos.z, _BackgroundColor);
+        gb.emission = applyFog(clipPos.z, RAYMARCHING_BACKGROUND_COLOR);
 #            if defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
 #                if defined(_BACKGROUNDDEPTH_MESH)
         gb.depth = getDepth(clipPos);
@@ -395,7 +433,7 @@ result_raymarching rayMarchDefault(rayparam rp)
     const int maxLoop = _MaxLoop;
 #endif  // defined(UNITY_PASS_FORWARDADD)
 
-    const float3 rcpScales = rcp(_Scales);
+    const float3 rcpScales = rcp(RAYMARCHING_SCALES);
     const float3 rayOrigin = rp.rayOrigin * rcpScales;
     const float3 rayDirVec = rp.rayDir * rcpScales;
 
@@ -487,7 +525,7 @@ float3 calcNormalRayMarching(float3 p)
     static const float2 s = float2(1.0, -1.0);  // used only for generating k.
     static const float3 k[4] = {s.xyy, s.yxy, s.yyx, s.xxx};
 
-    const float3 rcpScales = rcp(_Scales);
+    const float3 rcpScales = rcp(RAYMARCHING_SCALES);
 
     float3 normal = float3(0.0, 0.0, 0.0);
 
@@ -515,7 +553,7 @@ float3 calcNormalCentralDiffRayMarching(float3 p)
     static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
     static const float3 k[6] = {s.xzz, s.yzz, s.zxz, s.zyz, s.zzx, s.zzy};
 
-    const float3 rcpScales = rcp(_Scales);
+    const float3 rcpScales = rcp(RAYMARCHING_SCALES);
 
     float3 normal = float3(0.0, 0.0, 0.0);
 
@@ -545,7 +583,7 @@ float3 calcNormalForwardDiffRayMarching(float3 p)
     static const float3 s = float3(1.0, -1.0, 0.0);  // used only for generating k.
     static const float3 k[3] = {s.xzz, s.zxz, s.zzx};
 
-    const float3 rcpScales = rcp(_Scales);
+    const float3 rcpScales = rcp(RAYMARCHING_SCALES);
 
     float3 normal = (-RAYMARCHING_SDF(p * rcpScales)).xxx;
 

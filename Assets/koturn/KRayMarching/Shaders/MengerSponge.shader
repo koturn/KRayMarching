@@ -162,6 +162,7 @@
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -178,12 +179,14 @@
 
         #include "RayMarchingCore.cginc"
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Iteration of menger sponge.
-        uniform int _Iteration;
+        UNITY_DEFINE_INSTANCED_PROP(int, _Iteration)
         //! Offset.
-        uniform float3 _Offset;
+        UNITY_DEFINE_INSTANCED_PROP(float3, _Offset)
         //! Decay scale.
-        uniform float _DecayScale;
+        UNITY_DEFINE_INSTANCED_PROP(float, _DecayScale)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -193,14 +196,18 @@
          */
         float map(float3 p)
         {
-            return sdMengerSponge(p, _Offset, _DecayScale);
+            return sdMengerSponge(
+                p,
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Offset),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _DecayScale));
         }
 
 
         float sdMengerSponge(float3 p, float3 offset, float scale)
         {
             float4 z = float4(p, 1.0);
-            for (int i = 0; i < _Iteration; i++) {
+            const int iteration = UNITY_ACCESS_INSTANCED_PROP(Props, _Iteration);
+            for (int i = 0; i < iteration; i++) {
                 z = abs(z);
                 if (z.x < z.y) z.xy = z.yx;
                 if (z.x < z.z) z.xz = z.zx;

@@ -174,18 +174,22 @@
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
         #pragma shader_feature_local_fragment _ _STEPMETHOD_OVER_RELAX _STEPMETHOD_ACCELARATION _STEPMETHOD_AUTO_RELAX
         #pragma shader_feature_local_fragment _SVDEPTH_OFF _SVDEPTH_ON _SVDEPTH_LESSEQUAL _SVDEPTH_GREATEREQUAL
         #pragma shader_feature_local_fragment _ _EXACT_ON
+
         #include "Template.cginc"
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Angle of the Cone.
-        uniform float _Angle;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Angle)
         //! Height of the Cone.
-        uniform float _Height;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Height)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -196,9 +200,15 @@
         float map(float3 p)
         {
         #if defined(_EXACT_ON)
-            return sdConeExact(p, _Angle, _Height);
+            return sdConeExact(
+                p,
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Angle),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Height));
         #else
-            return sdCone(p, _Angle, _Height);
+            return sdCone(
+                p,
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Angle),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Height));
         #endif  // defined(_EXACT_ON)
         }
         ENDCG

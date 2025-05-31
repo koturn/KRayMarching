@@ -149,6 +149,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
         #pragma shader_feature_local_fragment _SVDEPTH_OFF _SVDEPTH_ON _SVDEPTH_LESSEQUAL _SVDEPTH_GREATEREQUAL
@@ -218,24 +219,26 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
         //! Maximum length inside an object.
         uniform float _MaxInsideLength;
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Base color of torus.
-        uniform float3 _TorusBaseColor;
+        UNITY_DEFINE_INSTANCED_PROP(float3, _TorusBaseColor)
         //! Number of recursion.
-        uniform int _TorusRecursion;
+        UNITY_DEFINE_INSTANCED_PROP(int, _TorusRecursion)
         //! Number of divisions.
-        uniform float _TorusNumber;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusNumber)
         //! Thickness of torus.
-        uniform float _TorusThickness;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusThickness)
         //! Radius of torus.
-        uniform float _TorusRadius;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusRadius)
         //! Animation speed.
-        uniform float _TorusAnimSpeed;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusAnimSpeed)
         //! Decay rate of radius per one recursion.
-        uniform float _TorusRadiusDecay;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusRadiusDecay)
         //! Decay rate of thickness per one recursion.
-        uniform float _TorusThicknessDecay;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusThicknessDecay)
         //! Decay rate of animation speed per one recursion.
-        uniform float _TorusAnimDecay;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusAnimDecay)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -331,8 +334,12 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
          */
         float map(float3 p, out float hueOffset)
         {
-            float2 rt = float2(_TorusRadius, _TorusThickness);
-            float2 rtDecay = float2(_TorusRadiusDecay, _TorusThicknessDecay);
+            float2 rt = float2(
+                UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRadius),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _TorusThickness));
+            const float2 rtDecay = float2(
+                UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRadiusDecay),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _TorusThicknessDecay));
 
             // hueOffset = 1000.0;
             float minDist = 1000.0;
@@ -348,14 +355,14 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
 
                 float2 rt2 = rt;
                 float3 p2 = p;
-                float rotAngle = _Time.y * _TorusAnimSpeed;
+                float rotAngle = _Time.y * UNITY_ACCESS_INSTANCED_PROP(Props, _TorusAnimSpeed);
                 s *= -1.0;
-                for (int j = 0; j < _TorusRecursion; j++) {
+                for (int j = 0; j < UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRecursion); j++) {
                     p2.xy = rotate2D(p2.xy, s * rotAngle);
 
                     float angle = atan2(p2.y, p2.x);
                     float pIndex;
-                    p2 = float3(pmod(p2.xy, angle, _TorusNumber) - float2(rt2.x, 0.0), p2.z);
+                    p2 = float3(pmod(p2.xy, angle, UNITY_ACCESS_INSTANCED_PROP(Props, _TorusNumber)) - float2(rt2.x, 0.0), p2.z);
 
                     rt2 *= rtDecay;
 
@@ -367,7 +374,7 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
                     }
 
                     p2.xyz = p2.zxy;
-                    rotAngle *= _TorusAnimDecay;
+                    rotAngle *= UNITY_ACCESS_INSTANCED_PROP(Props, _TorusAnimDecay);
                 }
 
                 rt.x *= _TorusBaseRadiusDecay;

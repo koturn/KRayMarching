@@ -13,8 +13,11 @@ half4 getBaseColor(float3 p, float3 normal, float rayLength);
 
 //! Main texture.
 UNITY_DECLARE_TEX2D(_MainTex);
+
+UNITY_INSTANCING_BUFFER_START(TemplateProps)
 //! Tint color for main texture.
-uniform half4 _Color;
+UNITY_DEFINE_INSTANCED_PROP(half4, _Color)
+UNITY_INSTANCING_BUFFER_END(TemplateProps)
 
 
 /*!
@@ -26,8 +29,8 @@ uniform half4 _Color;
  */
 half4 getBaseColor(float3 p, float3 normal, float rayLength)
 {
-    return _Color;
-    // return SAMPLE_TEX2D_TRIPLANAR(_MainTex, worldFinalPos, worldNormal) * _Color;
+    return UNITY_ACCESS_INSTANCED_PROP(TemplateProps, _Color);
+    // return SAMPLE_TEX2D_TRIPLANAR(_MainTex, worldFinalPos, worldNormal) * UNITY_ACCESS_INSTANCED_PROP(TemplateProps, _Color);
 }
 
 

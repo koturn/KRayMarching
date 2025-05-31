@@ -166,6 +166,7 @@ Shader "koturn/KRayMarching/CrossBeads"
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -187,18 +188,20 @@ Shader "koturn/KRayMarching/CrossBeads"
         #endif  // defined(_USE_FAST_INVTRIFUNC_ON)
 
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Base color of torus.
-        uniform float3 _BeadsBaseColor;
+        UNITY_DEFINE_INSTANCED_PROP(float3, _BeadsBaseColor)
         //! Number of divisions.
-        uniform float _BeadsNumber;
+        UNITY_DEFINE_INSTANCED_PROP(float, _BeadsNumber)
         //! Thickness of torus.
-        uniform float _TorusThickness;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusThickness)
         //! Radius of torus.
-        uniform float _TorusRadius;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusRadius)
         //! Animation speed.
-        uniform float _AnimSpeed;
+        UNITY_DEFINE_INSTANCED_PROP(float, _AnimSpeed)
         //! Animation speed.
-        uniform float _BeadsSize;
+        UNITY_DEFINE_INSTANCED_PROP(float, _BeadsSize)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -222,43 +225,47 @@ Shader "koturn/KRayMarching/CrossBeads"
         {
             hueOffset = 1000.0;
 
-            float minDist = sdTorus(p.xzy, _TorusRadius, _TorusThickness);
-            // 0.5 * cos(UNITY_TWO_PI * t / _BeadsNumber) + 0.5;
-            // 0.5 * cos(UNITY_HALF_PI * t / _BeadsNumber) + 0.5;
+            const float torusRadius = UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRadius);
+            const float torusThickness = UNITY_ACCESS_INSTANCED_PROP(Props, _TorusThickness);
+            float minDist = sdTorus(p.xzy, torusRadius, torusThickness);
+            // 0.5 * cos(UNITY_TWO_PI * t / UNITY_ACCESS_INSTANCED_PROP(Props, _BeadsNumber)) + 0.5;
+            // 0.5 * cos(UNITY_HALF_PI * t / UNITY_ACCESS_INSTANCED_PROP(Props, _BeadsNumber)) + 0.5;
 
             /// _Time.y = 0.0;
 
-            const float rotUnit = UNITY_HALF_PI - UNITY_HALF_PI / _BeadsNumber;
-            const float t = _Time.y * _AnimSpeed;
+            const float beadsNumber = UNITY_ACCESS_INSTANCED_PROP(Props, _BeadsNumber);
+            const float rotUnit = UNITY_HALF_PI - UNITY_HALF_PI / beadsNumber;
+            const float t = _Time.y * UNITY_ACCESS_INSTANCED_PROP(Props, _AnimSpeed);
+            const float beadsSize = UNITY_ACCESS_INSTANCED_PROP(Props, _BeadsSize);
             for (uint i = 0; i < 2; i++) {
                 const float s = i % 2 == 0 ? 1.0 : -1.0;
-                const float rotInvertOffset = (UNITY_PI * i) / _BeadsNumber;
+                const float rotInvertOffset = (UNITY_PI * i) / beadsNumber;
 
                 float3 p1 = p;
                 p1.xy = rotate2D(p1.xy, s * t + rotInvertOffset - rotUnit);
 
                 float pIndex;
-                p1.xy = pmod(p1.xy, atan2Fast(p1.y, p1.x), _BeadsNumber, /* out */ pIndex);
+                p1.xy = pmod(p1.xy, atan2Fast(p1.y, p1.x), beadsNumber, /* out */ pIndex);
 
-                const float c = 0.5 * sin(_BeadsNumber * t + (UNITY_PI * i)) + 0.5;
+                const float c = 0.5 * sin(beadsNumber * t + (UNITY_PI * i)) + 0.5;
 
-                const float beadsSize1 = _BeadsSize * 0.9;
-                const float beadsSize2 = _BeadsSize;
+                const float beadsSize1 = beadsSize * 0.9;
+                const float beadsSize2 = beadsSize;
 
-                const float d1 = sdSphere(p1 - float3(_TorusRadius, 0.0, 0.0), beadsSize1);
-                const float d2 = sdTorus(p1.zyx - float3(0.0, 0.0, _TorusRadius), beadsSize2, _TorusThickness);
+                const float d1 = sdSphere(p1 - float3(torusRadius, 0.0, 0.0), beadsSize1);
+                const float d2 = sdTorus(p1.zyx - float3(0.0, 0.0, torusRadius), beadsSize2, torusThickness);
 
-                // float c2 = 0.5 * sin(_BeadsNumber * t + (UNITY_PI * i)) + 0.5;
+                // float c2 = 0.5 * sin(beadsNumber * t + (UNITY_PI * i)) + 0.5;
                 // c2 = 0.5 * c2 + 0.5;
-                // const float d1 = sdSphere(p1 - float3(_TorusRadius, 0.0, 0.0), lerp(beadsSize2, beadsSize1, c2));
-                // const float d2 = sdTorus(p1.zyx - float3(0.0, 0.0, _TorusRadius), lerp(beadsSize1, beadsSize2, c2), _TorusThickness);
+                // const float d1 = sdSphere(p1 - float3(torusRadius, 0.0, 0.0), lerp(beadsSize2, beadsSize1, c2));
+                // const float d2 = sdTorus(p1.zyx - float3(0.0, 0.0, torusRadius), lerp(beadsSize1, beadsSize2, c2), torusThickness);
 
                 const float d = lerp(d1, d2, c);
 
                 UNITY_FLATTEN
                 if (d < minDist) {
                     minDist = d;
-                    hueOffset = frac((pIndex + _BeadsNumber + i / 2.0) / _BeadsNumber);
+                    hueOffset = frac((pIndex + beadsNumber + i / 2.0) / beadsNumber);
                 }
             }
 
@@ -276,7 +283,9 @@ Shader "koturn/KRayMarching/CrossBeads"
         {
             float hueOffset;
             map(p, /* out */ hueOffset);
-            return half4(hueOffset == 1000.0 ? float3(0.8, 0.8, 0.8) : rgbAddHue(_BeadsBaseColor, hueOffset), 1.0);
+            return half4(hueOffset == 1000.0
+                ? float3(0.8, 0.8, 0.8)
+                : rgbAddHue(UNITY_ACCESS_INSTANCED_PROP(Props, _BeadsBaseColor), hueOffset), 1.0);
         }
         ENDCG
 

@@ -173,6 +173,7 @@
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -181,8 +182,12 @@
 
         #include "Template.cginc"
 
-        uniform float2 _Center;
-        uniform float _Radius;
+        UNITY_INSTANCING_BUFFER_START(Props)
+        //! Center of Cylinder.
+        UNITY_DEFINE_INSTANCED_PROP(float2, _Center)
+        //! Radius of Cylinder.
+        UNITY_DEFINE_INSTANCED_PROP(float, _Radius)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -192,7 +197,10 @@
          */
         float map(float3 p)
         {
-            return sdCylinder(p, _Center, _Radius);
+            return sdCylinder(
+                p,
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Center),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Radius));
         }
         ENDCG
 

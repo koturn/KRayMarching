@@ -173,6 +173,7 @@
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -181,10 +182,12 @@
 
         #include "Template.cginc"
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Size of the box.
-        uniform float3 _Size;
+        UNITY_DEFINE_INSTANCED_PROP(float3, _Size)
         //! Size of the frame of the box.
-        uniform float _FrameSize;
+        UNITY_DEFINE_INSTANCED_PROP(float, _FrameSize)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -194,7 +197,10 @@
          */
         float map(float3 p)
         {
-            return sdBoxFrame(p, _Size, _FrameSize);
+            return sdBoxFrame(
+                p,
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Size),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _FrameSize));
         }
         ENDCG
 

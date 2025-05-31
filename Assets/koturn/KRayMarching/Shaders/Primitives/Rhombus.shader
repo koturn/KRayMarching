@@ -175,6 +175,7 @@
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -183,12 +184,14 @@
 
         #include "Template.cginc"
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Size in XZ-axis direction.
-        uniform float2 _Size;
+        UNITY_DEFINE_INSTANCED_PROP(float2, _Size)
         //! Height of Rhombus.
-        uniform float _Height;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Height)
         //! Round of Rhombus.
-        uniform float _Round;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Round)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -198,7 +201,11 @@
          */
         float map(float3 p)
         {
-            return sdRhombus(p, _Size, _Height, _Round);
+            return sdRhombus(
+                p,
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Size),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Height),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Round));
         }
         ENDCG
 

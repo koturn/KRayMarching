@@ -163,6 +163,7 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -184,14 +185,16 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         #endif  // defined(_USE_FAST_INVTRIFUNC_ON)
 
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Radius of Torus.
-        uniform float _TorusRadius;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusRadius)
         //! Radius Amplitude of Torus.
-        uniform float _TorusRadiusAmp;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusRadiusAmp)
         //! Width of Torus.
-        uniform float _TorusWidth;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusWidth)
         //! Size of Octahedron.
-        uniform float _OctahedronSize;
+        UNITY_DEFINE_INSTANCED_PROP(float, _OctahedronSize)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -215,16 +218,19 @@ Shader "koturn/KRayMarching/TorusEightOctahedron"
         {
             static const float kQuarterPi = UNITY_PI / 4.0;
 
-            const float radius = _TorusRadius + _SinTime.w * _TorusRadiusAmp;
+            const float radius = UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRadius) + _SinTime.w * UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRadiusAmp);
 
-            float minDist = sdTorus(p.xzy, float2(radius, _TorusWidth));
+            float minDist = sdTorus(p.xzy, float2(radius, UNITY_ACCESS_INSTANCED_PROP(Props, _TorusWidth)));
             colorIndex = 4.0;
 
             p.xy = rotate2D(p.xy, _Time.y);
             const float rotUnit = floor(-atan2(p.y, p.x) / kQuarterPi);
             p.xy = rotate2D(p.xy, kQuarterPi * rotUnit + kQuarterPi / 2.0);
 
-            const float d = sdOctahedron(p - float3(radius, 0.0, 0.0), _OctahedronSize, float3(0.5, 2.0, 2.0));
+            const float d = sdOctahedron(
+                p - float3(radius, 0.0, 0.0),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _OctahedronSize),
+                float3(0.5, 2.0, 2.0));
             if (minDist > d) {
                 minDist = d;
                 colorIndex = rotUnit;

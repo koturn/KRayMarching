@@ -174,6 +174,7 @@
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -182,12 +183,14 @@
 
         #include "Template.cginc"
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Height of Cylinder.
-        uniform float _Height;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Height)
         //! Radius of Cylinder.
-        uniform float _Radius;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Radius)
         //! Round of Cylinder.
-        uniform float _Round;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Round)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -197,7 +200,11 @@
          */
         float map(float3 p)
         {
-            return sdRoundedCylinder(p, _Height, _Radius, _Round);
+            return sdRoundedCylinder(
+                p,
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Height),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Radius),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Round));
         }
         ENDCG
 

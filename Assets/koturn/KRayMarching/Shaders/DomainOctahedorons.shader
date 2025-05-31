@@ -174,6 +174,7 @@ Shader "koturn/KRayMarching/DomainOctrahedrons"
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -194,16 +195,18 @@ Shader "koturn/KRayMarching/DomainOctrahedrons"
         #endif  // defined(_USE_FAST_INVTRIFUNC_ON)
 
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Base color of Octahedrons.
-        uniform float3 _Color;
+        UNITY_DEFINE_INSTANCED_PROP(float3, _Color)
         //! Grid size.
-        uniform float _GridSize;
+        UNITY_DEFINE_INSTANCED_PROP(float, _GridSize)
         //! Size of Octahedrons.
-        uniform float _OctahedronSize;
+        UNITY_DEFINE_INSTANCED_PROP(float, _OctahedronSize)
         //! Animation speed.
-        uniform float _AnimSpeed;
+        UNITY_DEFINE_INSTANCED_PROP(float, _AnimSpeed)
         //! Spin speed range.
-        uniform float _SpinSpeedRange;
+        UNITY_DEFINE_INSTANCED_PROP(float, _SpinSpeedRange)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -213,18 +216,20 @@ Shader "koturn/KRayMarching/DomainOctrahedrons"
          */
         float map(float3 p)
         {
-            p.y += _Time.y * _AnimSpeed;
-            float3 gridIndice = floor(p / _GridSize.xxx);
+            p.y += _Time.y * UNITY_ACCESS_INSTANCED_PROP(Props, _AnimSpeed);
+            const float gridSize = UNITY_ACCESS_INSTANCED_PROP(Props, _GridSize);
+            float3 gridIndice = floor(p / gridSize.xxx);
             p.xyz += (rand(rand(gridIndice.xyz, gridIndice.yzx), gridIndice.zxy) * 2.0 - 1.0).xyz * 0.2;
-            gridIndice = floor(p / _GridSize.xxx);
+            gridIndice = floor(p / gridSize.xxx);
 
 
-            p = fmodglsl(p, _GridSize.xxx);
-            p -= (_GridSize * 0.5).xxx;
+            p = fmodglsl(p, gridSize.xxx);
+            p -= (gridSize * 0.5).xxx;
 
-            p.xz = rotate2D(p.xz, rand(gridIndice.z, gridIndice.x, -_SpinSpeedRange, _SpinSpeedRange) * _Time.y);
+            const float spinSpeedRange = UNITY_ACCESS_INSTANCED_PROP(Props, _SpinSpeedRange);
+            p.xz = rotate2D(p.xz, rand(gridIndice.z, gridIndice.x, -spinSpeedRange, spinSpeedRange) * _Time.y);
 
-            return sdOctahedron(p, _OctahedronSize);
+            return sdOctahedron(p, UNITY_ACCESS_INSTANCED_PROP(Props, _OctahedronSize));
         }
 
         /*!
@@ -236,10 +241,10 @@ Shader "koturn/KRayMarching/DomainOctrahedrons"
          */
         half4 getBaseColor(float3 p, float3 normal, float rayLength)
         {
-            p.y += _Time.y * _AnimSpeed;
-            const float3 gridIndice = floor(p / _GridSize.xxx);
+            p.y += _Time.y * UNITY_ACCESS_INSTANCED_PROP(Props, _AnimSpeed);
+            const float3 gridIndice = floor(p / UNITY_ACCESS_INSTANCED_PROP(Props, _GridSize).xxx);
             const float hueOffset = rand(rand(gridIndice.x, gridIndice.z), gridIndice.y);
-            return half4(rgbAddHue(_Color, hueOffset), 1.0);
+            return half4(rgbAddHue(UNITY_ACCESS_INSTANCED_PROP(Props, _Color), hueOffset), 1.0);
         }
         ENDCG
 

@@ -174,6 +174,7 @@
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -182,12 +183,14 @@
 
         #include "Template.cginc"
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Radius of the Torus.
-        uniform float _Radius;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Radius)
         //! Thickness of the Torus.
-        uniform float _Thickness;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Thickness)
         //! Angle of the Torus (in degrees).
-        uniform float _Angle;
+        UNITY_DEFINE_INSTANCED_PROP(float, _Angle)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -197,7 +200,11 @@
          */
         float map(float3 p)
         {
-            return sdCappedTorus(p, radians(_Angle), _Radius, _Thickness);
+            return sdCappedTorus(
+                p,
+                radians(UNITY_ACCESS_INSTANCED_PROP(Props, _Angle)),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Radius),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _Thickness));
         }
         ENDCG
 

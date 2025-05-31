@@ -205,6 +205,7 @@ Shader "koturn/KRayMarching/Sphere"
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -258,8 +259,10 @@ Shader "koturn/KRayMarching/Sphere"
         #include "include/RefProbe.cginc"
 
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Color of the objects.
-        uniform half4 _Color;
+        UNITY_DEFINE_INSTANCED_PROP(half4, _Color)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -375,7 +378,7 @@ Shader "koturn/KRayMarching/Sphere"
          */
         half4 getBaseColor(float3 p, float3 normal, float rayLength)
         {
-            return _Color;
+            return UNITY_ACCESS_INSTANCED_PROP(Props, _Color);
         }
         ENDCG
 

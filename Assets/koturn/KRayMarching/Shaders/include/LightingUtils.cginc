@@ -2,6 +2,42 @@
 #define LIGHTINGUTILS_INCLUDED
 
 
+#if !defined(LIGHTINGUTILS_BUFFER_NAME)
+#    define LIGHTINGUTILS_BUFFER_NAME LightingUtilsProps
+#endif  // !defined(LIGHTINGUTILS_BUFFER_NAME)
+
+#if defined(LIGHTINGUTILS_DISABLE_INSTANCING)
+#    define LIGHTINGUTILS_INSTANCING_BUFFER_START
+#    define LIGHTINGUTILS_INSTANCING_BUFFER_END
+#    define LIGHTINGUTILS_DEFINE_INSTANCED_PROP(type, var) uniform type var;
+#    define LIGHTINGUTILS_ACCESS_INSTANCED_PROP(var) var
+#else
+#    define LIGHTINGUTILS_INSTANCING_BUFFER_START UNITY_INSTANCING_BUFFER_START(LIGHTINGUTILS_BUFFER_NAME)
+#    define LIGHTINGUTILS_INSTANCING_BUFFER_END UNITY_INSTANCING_BUFFER_END(LIGHTINGUTILS_BUFFER_NAME)
+#    define LIGHTINGUTILS_DEFINE_INSTANCED_PROP(type, var) UNITY_DEFINE_INSTANCED_PROP(type, var)
+#    define LIGHTINGUTILS_ACCESS_INSTANCED_PROP(var) UNITY_ACCESS_INSTANCED_PROP(LIGHTINGUTILS_BUFFER_NAME, var)
+#endif  // defined(LIGHTINGUTILS_DISABLE_INSTANCING)
+
+#if !defined(LIGHTINGUTILS_VARNAME_SPEC_POWER)
+#    define LIGHTINGUTILS_VARNAME_SPEC_POWER _SpecPower
+#endif  // !defined(LIGHTINGUTILS_VARNAME_SPEC_POWER)
+#if !defined(LIGHTINGUTILS_SPEC_POWER)
+#    define LIGHTINGUTILS_SPEC_POWER LIGHTINGUTILS_ACCESS_INSTANCED_PROP(LIGHTINGUTILS_VARNAME_SPEC_POWER)
+#endif  // !defined(LIGHTINGUTILS_SPEC_POWER)
+#if !defined(LIGHTINGUTILS_VARNAME_GLOSSINESS)
+#    define LIGHTINGUTILS_VARNAME_GLOSSINESS _Glossiness
+#endif  // !defined(LIGHTINGUTILS_VARNAME_GLOSSINESS)
+#if !defined(LIGHTINGUTILS_GLOSSINESS)
+#    define LIGHTINGUTILS_GLOSSINESS LIGHTINGUTILS_ACCESS_INSTANCED_PROP(LIGHTINGUTILS_VARNAME_GLOSSINESS)
+#endif  // !defined(LIGHTINGUTILS_GLOSSINESS)
+#if !defined(LIGHTINGUTILS_VARNAME_METALLIC)
+#    define LIGHTINGUTILS_VARNAME_METALLIC _Metallic
+#endif  // !defined(LIGHTINGUTILS_VARNAME_METALLIC)
+#if !defined(LIGHTINGUTILS_METALLIC)
+#    define LIGHTINGUTILS_METALLIC LIGHTINGUTILS_ACCESS_INSTANCED_PROP(LIGHTINGUTILS_VARNAME_METALLIC)
+#endif  // !defined(LIGHTINGUTILS_METALLIC)
+
+
 half4 calcLightingUnity(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
 half4 calcLightingUnity(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient);
 half4 calcLightingUnityDeferred(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, out half4 diffuse, out half4 specular, out half4 normal);
@@ -56,12 +92,14 @@ uniform fixed4 _LightColor0;
 uniform half4 _SpecColor;
 #endif  // !defined(UNITY_LIGHTING_COMMON_INCLUDED) && !defined(UNITY_STANDARD_SHADOW_INCLUDED)
 
+LIGHTINGUTILS_INSTANCING_BUFFER_START
 //! Specular power.
-uniform float _SpecPower;
+LIGHTINGUTILS_DEFINE_INSTANCED_PROP(float, LIGHTINGUTILS_VARNAME_SPEC_POWER)
 //! Value of smoothness.
-uniform half _Glossiness;
+LIGHTINGUTILS_DEFINE_INSTANCED_PROP(half, LIGHTINGUTILS_VARNAME_GLOSSINESS)
 //! Value of Metallic.
-uniform half _Metallic;
+LIGHTINGUTILS_DEFINE_INSTANCED_PROP(half, LIGHTINGUTILS_VARNAME_METALLIC)
+LIGHTINGUTILS_INSTANCING_BUFFER_END
 
 
 /*!
@@ -339,8 +377,8 @@ half4 calcLightingUnityBlinnPhong(half4 color, float3 worldPos, float3 worldNorm
     so.Albedo = color.rgb;
     so.Normal = worldNormal;
     so.Emission = fixed3(0.0, 0.0, 0.0);
-    so.Specular = _SpecPower / 128.0;
-    so.Gloss = _Glossiness;
+    so.Specular = LIGHTINGUTILS_SPEC_POWER / 128.0;
+    so.Gloss = LIGHTINGUTILS_GLOSSINESS;
     so.Alpha = color.a;
 
     UnityGI gi = getGI(worldPos, atten);
@@ -413,8 +451,8 @@ half4 calcLightingUnityBlinnPhongDeferred(half4 color, float3 worldPos, float3 w
     so.Albedo = color.rgb;
     so.Normal = worldNormal;
     so.Emission = fixed3(0.0, 0.0, 0.0);
-    so.Specular = _SpecPower / 128.0;
-    so.Gloss = _Glossiness;
+    so.Specular = LIGHTINGUTILS_SPEC_POWER / 128.0;
+    so.Gloss = LIGHTINGUTILS_GLOSSINESS;
     so.Alpha = color.a;
 
     UnityGI gi = getGI(worldPos, atten);
@@ -469,8 +507,8 @@ half4 calcLightingUnityStandard(half4 color, float3 worldPos, float3 worldNormal
     so.Albedo = color.rgb;
     so.Normal = worldNormal;
     so.Emission = half3(0.0, 0.0, 0.0);
-    so.Metallic = _Metallic;
-    so.Smoothness = _Glossiness;
+    so.Metallic = LIGHTINGUTILS_METALLIC;
+    so.Smoothness = LIGHTINGUTILS_GLOSSINESS;
     so.Occlusion = 1.0;
     so.Alpha = color.a;
 
@@ -544,8 +582,8 @@ half4 calcLightingUnityStandardDeferred(half4 color, float3 worldPos, float3 wor
     so.Albedo = color.rgb;
     so.Normal = worldNormal;
     so.Emission = half3(0.0, 0.0, 0.0);
-    so.Metallic = _Metallic;
-    so.Smoothness = _Glossiness;
+    so.Metallic = LIGHTINGUTILS_METALLIC;
+    so.Smoothness = LIGHTINGUTILS_GLOSSINESS;
     so.Occlusion = 1.0;
     so.Alpha = color.a;
 
@@ -600,7 +638,7 @@ half4 calcLightingUnityStandardSpecular(half4 color, float3 worldPos, float3 wor
     so.Specular = _SpecColor.rgb;
     so.Normal = worldNormal;
     so.Emission = half3(0.0, 0.0, 0.0);
-    so.Smoothness = _Glossiness;
+    so.Smoothness = LIGHTINGUTILS_GLOSSINESS;
     so.Occlusion = 1.0;
     so.Alpha = color.a;
 
@@ -675,7 +713,7 @@ half4 calcLightingUnityStandardSpecularDeferred(half4 color, float3 worldPos, fl
     so.Specular = _SpecColor.rgb;
     so.Normal = worldNormal;
     so.Emission = half3(0.0, 0.0, 0.0);
-    so.Smoothness = _Glossiness;
+    so.Smoothness = LIGHTINGUTILS_GLOSSINESS;
     so.Occlusion = 1.0;
     so.Alpha = color.a;
 
@@ -863,7 +901,8 @@ half3 calcLightVolumeAmbientAndSpecular(half3 albedo, float3 worldPos, float3 wo
 
     const float3 indirect = LightVolumeEvaluate(worldNormal, L0, L1r, L1g, L1b) * albedo;
 #    if defined(_LIGHTING_UNITY_STANDARD)
-    const float metallic = _Metallic * _Metallic;
+    float metallic = LIGHTINGUTILS_METALLIC;
+    metallic *= metallic;
     emission = indirect * (1.0 - metallic);
 #    else
     const float metallic = 0.0;
@@ -871,10 +910,11 @@ half3 calcLightVolumeAmbientAndSpecular(half3 albedo, float3 worldPos, float3 wo
 #    endif  // defined(_LIGHTING_UNITY_STANDARD)
 
 #    if (defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && (defined(_LIGHTING_UNITY_STANDARD) || defined(_LIGHTING_UNITY_STANDARD_SPECULAR) || defined(_LIGHTING_UNITY_BLINN_PHONG))
+    const float glossiness = LIGHTINGUTILS_GLOSSINESS;
 #        if defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
-    emission += LightVolumeSpecularDominant(albedo, _Glossiness, metallic, worldNormal, worldViewDir, L0, L1r, L1g, L1b);
+    emission += LightVolumeSpecularDominant(albedo, glossiness, metallic, worldNormal, worldViewDir, L0, L1r, L1g, L1b);
 #        else
-    emission += LightVolumeSpecular(albedo, _Glossiness, metallic, worldNormal, worldViewDir, L0, L1r, L1g, L1b);
+    emission += LightVolumeSpecular(albedo, glossiness, metallic, worldNormal, worldViewDir, L0, L1r, L1g, L1b);
 #        endif  // defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
 #    endif  // (defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && (defined(_LIGHTING_UNITY_STANDARD) || defined(_LIGHTING_UNITY_STANDARD_SPECULAR) || defined(_LIGHTING_UNITY_BLINN_PHONG))
 

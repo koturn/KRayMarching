@@ -171,6 +171,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -192,24 +193,26 @@ Shader "koturn/KRayMarching/RecursiveRings"
         #endif  // defined(_USE_FAST_INVTRIFUNC_ON)
 
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Base color of torus.
-        uniform float3 _TorusBaseColor;
+        UNITY_DEFINE_INSTANCED_PROP(float3, _TorusBaseColor)
         //! Number of recursion.
-        uniform int _TorusRecursion;
+        UNITY_DEFINE_INSTANCED_PROP(int, _TorusRecursion)
         //! Number of divisions.
-        uniform float _TorusNumber;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusNumber)
         //! Thickness of torus.
-        uniform float _TorusThickness;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusThickness)
         //! Radius of torus.
-        uniform float _TorusRadius;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusRadius)
         //! Animation speed.
-        uniform float _TorusAnimSpeed;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusAnimSpeed)
         //! Decay rate of radius per one recursion.
-        uniform float _TorusRadiusDecay;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusRadiusDecay)
         //! Decay rate of thickness per one recursion.
-        uniform float _TorusThicknessDecay;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusThicknessDecay)
         //! Decay rate of animation speed per one recursion.
-        uniform float _TorusAnimDecay;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusAnimDecay)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -231,21 +234,28 @@ Shader "koturn/KRayMarching/RecursiveRings"
          */
         float map(float3 p, out float hueOffset)
         {
-            float2 rt = float2(_TorusRadius, _TorusThickness);
-            float2 rtDecay = float2(_TorusRadiusDecay, _TorusThicknessDecay);
-            float rotAngle = _Time.y * _TorusAnimSpeed;
+            float2 rt = float2(
+                UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRadius),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _TorusThickness));
+            const float2 rtDecay = float2(
+                UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRadiusDecay),
+                UNITY_ACCESS_INSTANCED_PROP(Props, _TorusThicknessDecay));
+            float rotAngle = _Time.y * UNITY_ACCESS_INSTANCED_PROP(Props, _TorusAnimSpeed);
 
             float minDist = sdTorus(p.xzy, rt.x, rt.y);
             hueOffset = 1000.0;
 
             float s = 1.0;
-            for (int i = 0; i < _TorusRecursion; i++) {
+            const int torusRecursion = UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRecursion);
+            const float torusNumber = UNITY_ACCESS_INSTANCED_PROP(Props, _TorusNumber);
+            const float torusAnimDecay = UNITY_ACCESS_INSTANCED_PROP(Props, _TorusAnimDecay);
+            for (int i = 0; i < torusRecursion; i++) {
                 p.xy = rotate2D(p.xy, rotAngle * s);
 
                 float angle = atan2(p.y, p.x);
                 float pIndex;
-                p.xy = float2(pmod(p.xy, angle, _TorusNumber, /* out */ pIndex) - float2(rt.x, 0.0));
-                s = (uint(pIndex + _TorusNumber + 1.0) & 1) == 0 ? 1.0 : -1.0;
+                p.xy = float2(pmod(p.xy, angle, torusNumber, /* out */ pIndex) - float2(rt.x, 0.0));
+                s = (uint(pIndex + torusNumber + 1.0) & 1) == 0 ? 1.0 : -1.0;
                 // s = fmodglsl(pIndex, 2.0) < 0.5 ? 1.0 : -1.0;
 
                 rt *= rtDecay;
@@ -258,7 +268,7 @@ Shader "koturn/KRayMarching/RecursiveRings"
                 }
 
                 p.xyz = p.zxy;
-                rotAngle *= _TorusAnimDecay;
+                rotAngle *= torusAnimDecay;
             }
 
             return minDist;
@@ -275,7 +285,9 @@ Shader "koturn/KRayMarching/RecursiveRings"
         {
             float hueOffset = 1000.0;
             map(p, /* out */ hueOffset);
-            return half4(hueOffset == 1000.0 ? float3(0.8, 0.8, 0.8) : rgbAddHue(_TorusBaseColor, hueOffset), 1.0);
+            return half4(hueOffset == 1000.0
+                ? float3(0.8, 0.8, 0.8)
+                : rgbAddHue(UNITY_ACCESS_INSTANCED_PROP(Props, _TorusBaseColor), hueOffset), 1.0);
         }
         ENDCG
 

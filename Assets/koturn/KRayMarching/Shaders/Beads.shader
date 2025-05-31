@@ -166,6 +166,7 @@ Shader "koturn/KRayMarching/Beads"
 
         CGINCLUDE
         #pragma target 5.0
+        #pragma multi_compile_instancing
         #pragma shader_feature_local _ _CALCSPACE_WORLD
         #pragma shader_feature_local _ _MAXRAYLENGTHMODE_FAR_CLIP _MAXRAYLENGTHMODE_DEPTH_TEXTURE
         #pragma shader_feature_local _ _ASSUMEINSIDE_SIMPLE _ASSUMEINSIDE_MAX_LENGTH
@@ -187,18 +188,20 @@ Shader "koturn/KRayMarching/Beads"
         #endif  // defined(_USE_FAST_INVTRIFUNC_ON)
 
 
+        UNITY_INSTANCING_BUFFER_START(Props)
         //! Base color of torus.
-        uniform float3 _BeadsBaseColor;
+        UNITY_DEFINE_INSTANCED_PROP(float3, _BeadsBaseColor)
         //! Number of divisions.
-        uniform float _BeadsNumber;
+        UNITY_DEFINE_INSTANCED_PROP(float, _BeadsNumber)
         //! Thickness of torus.
-        uniform float _TorusThickness;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusThickness)
         //! Radius of torus.
-        uniform float _TorusRadius;
+        UNITY_DEFINE_INSTANCED_PROP(float, _TorusRadius)
         //! Animation speed.
-        uniform float _AnimSpeed;
+        UNITY_DEFINE_INSTANCED_PROP(float, _AnimSpeed)
         //! Animation speed.
-        uniform float _BeadsSize;
+        UNITY_DEFINE_INSTANCED_PROP(float, _BeadsSize)
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 
         /*!
@@ -222,30 +225,34 @@ Shader "koturn/KRayMarching/Beads"
         {
             hueOffset = 1000.0;
 
-            float rotUnit = UNITY_TWO_PI / _BeadsNumber;
+            const float beadsNumber = UNITY_ACCESS_INSTANCED_PROP(Props, _BeadsNumber);
+            float rotUnit = UNITY_TWO_PI / beadsNumber;
 
-            float t = _Time.y * _AnimSpeed;
-            float t1 = fmodglsl(t, _BeadsNumber);  // [0.0, _BeadsNumber]
+            float t = _Time.y * UNITY_ACCESS_INSTANCED_PROP(Props, _AnimSpeed);
+            float t1 = fmodglsl(t, beadsNumber);  // [0.0, beadsNumber]
             float t2 = frac(t);  // [0.0, 1.0]
 
-            float minDist = sdTorus(p.xzy, _TorusRadius, _TorusThickness);
+            const float torusRadius = UNITY_ACCESS_INSTANCED_PROP(Props, _TorusRadius);
+            const float torusThickness = UNITY_ACCESS_INSTANCED_PROP(Props, _TorusThickness);
+            float minDist = sdTorus(p.xzy, torusRadius, torusThickness);
 
             float c = smoothstep(0.0, 1.0, t2);
             p.xy = rotate2D(p.xy, (c + t1 - t2) * rotUnit);
 
             float pIndex;
-            p.xy = pmod(p.xy, atan2(p.y, p.x), _BeadsNumber, /* out */ pIndex);
+            p.xy = pmod(p.xy, atan2(p.y, p.x), beadsNumber, /* out */ pIndex);
 
-            const float d1 = sdSphere(p - float3(_TorusRadius, 0.0, 0.0), _BeadsSize);
-            // const float d2 = sdOctahedron(p - float3(_TorusRadius, 0.0, 0.0), _BeadsSize);
-            // const float d1 = sdTorus(p.zyx - float3(0.0, 0.0, _TorusRadius), _TorusRadius * 0.5, _TorusThickness);
-            const float d2 = sdTorus(p.zyx - float3(0.0, 0.0, _TorusRadius), _TorusRadius * 0.125, _TorusThickness);
+            const float beadsSize = UNITY_ACCESS_INSTANCED_PROP(Props, _BeadsSize);
+            const float d1 = sdSphere(p - float3(torusRadius, 0.0, 0.0), beadsSize);
+            // const float d2 = sdOctahedron(p - float3(torusRadius, 0.0, 0.0), beadsSize);
+            // const float d1 = sdTorus(p.zyx - float3(0.0, 0.0, torusRadius), torusRadius * 0.5, torusThickness);
+            const float d2 = sdTorus(p.zyx - float3(0.0, 0.0, torusRadius), torusRadius * 0.125, torusThickness);
             const float d = lerp(d1, d2, frac(t * 0.5) < 0.5 ? c : (1.0 - c));
 
             UNITY_FLATTEN
             if (d < minDist) {
                 minDist = d;
-                hueOffset = frac((pIndex + _BeadsNumber) / _BeadsNumber);
+                hueOffset = frac((pIndex + beadsNumber) / beadsNumber);
             }
 
             return minDist;
@@ -262,7 +269,9 @@ Shader "koturn/KRayMarching/Beads"
         {
             float hueOffset;
             map(p, /* out */ hueOffset);
-            return half4(hueOffset == 1000.0 ? float3(0.8, 0.8, 0.8) : rgbAddHue(_BeadsBaseColor, hueOffset), 1.0);
+            return half4(hueOffset == 1000.0
+                ? float3(0.8, 0.8, 0.8)
+                : rgbAddHue(UNITY_ACCESS_INSTANCED_PROP(Props, _BeadsBaseColor), hueOffset), 1.0);
         }
         ENDCG
 
