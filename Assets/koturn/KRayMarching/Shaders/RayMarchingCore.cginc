@@ -266,7 +266,8 @@ fout_raymarching fragRayMarchingForward(v2f_raymarching fi)
         worldFinalPos,
         worldNormal,
         getLightAttenRayMarching(fi, worldFinalPos),
-        getLightMap(fi));
+        getLightMap(fi),
+        half3(0.0, 0.0, 0.0));
     fo.color = applyFog(clipPos.z, color);
 #    endif
 #    if defined(_SVDEPTH_ON) || defined(_SVDEPTH_LESSEQUAL) || defined(_SVDEPTH_GREATEREQUAL)
@@ -346,6 +347,7 @@ gbuffer_raymarching fragRayMarchingDeferred(v2f_raymarching fi)
         worldNormal,
         getLightAttenRayMarching(fi, worldFinalPos),
         getLightMap(fi),
+        half3(0.0, 0.0, 0.0),
         /* out */ gb.diffuse,
         /* out */ gb.specular,
         /* out */ gb.normal);

@@ -240,7 +240,7 @@ Shader "koturn/KRayMarching/Sphere"
 
         float map(float3 p);
         half4 getBaseColor(float3 p, float3 normal, float rayLength);
-        half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
+        half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient);
         half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap);
 
         #if defined(UNITY_COMPILER_HLSL) \
@@ -287,14 +287,15 @@ Shader "koturn/KRayMarching/Sphere"
          * @param [in] worldNormal  Normal in world space.
          * @param [in] atten  Light attenuation.
          * @param [in] lmap  Light map parameters.
+         * @param [in] ambient  Ambient light.
          * @return Color with lighting applied.
          */
-        half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
+        half4 calcLighting(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient)
         {
         #if defined(_LIGHTING_CUSTOM)
-            return calcLightingCustom(color, worldPos, worldNormal, atten, lmap);
+            return calcLightingCustom(color, worldPos, worldNormal, atten, lmap, ambient);
         #else
-            return calcLightingUnity(color, worldPos, worldNormal, atten, lmap);
+            return calcLightingUnity(color, worldPos, worldNormal, atten, lmap, ambient);
         #endif  // defined(_LIGHTING_CUSTOM)
         }
 
@@ -305,9 +306,10 @@ Shader "koturn/KRayMarching/Sphere"
          * @param [in] worldNormal  Normal in world space.
          * @param [in] atten  Light attenuation.
          * @param [in] lmap  Light map parameters.
+         * @param [in] ambient  Ambient light.
          * @return Color with lighting applied.
          */
-        half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap)
+        half4 calcLightingCustom(half4 color, float3 worldPos, float3 worldNormal, half atten, float4 lmap, half3 ambient)
         {
             const float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos);
             const float3 worldLightDir = normalizedWorldSpaceLightDir(worldPos);
@@ -338,28 +340,9 @@ Shader "koturn/KRayMarching/Sphere"
 
             // Ambient color.
         #if defined(_AMBIENTMODE_SH)
-            const half3 ambient = ShadeSHPerPixel(
-                worldNormal,
-        #   if defined(VERTEXLIGHT_ON)
-                Shade4PointLights(
-                    unity_4LightPosX0,
-                    unity_4LightPosY0,
-                    unity_4LightPosZ0,
-                    unity_LightColor[0].rgb,
-                    unity_LightColor[1].rgb,
-                    unity_LightColor[2].rgb,
-                    unity_LightColor[3].rgb,
-                    unity_4LightAtten0,
-                    worldPos,
-                    worldNormal),
-        #   else
-                half3(0.0, 0.0, 0.0),
-        #   endif  // defined(VERTEXLIGHT_ON)
-                worldPos);
+            ambient = ShadeSHPerPixel(worldNormal, ambient, worldPos);
         #elif defined(_AMBIENTMODE_LEGACY)
-            const half3 ambient = UNITY_LIGHTMODEL_AMBIENT.rgb;
-        #else
-            const half3 ambient = half3(0.0, 0.0, 0.0);
+            ambient = UNITY_LIGHTMODEL_AMBIENT.rgb;
         #endif  // defined(_AMBIENTMODE_SH)
 
         #if defined(_ENABLE_REFLECTION_PROBE)

@@ -275,7 +275,8 @@ Shader "koturn/KRayMarching/RecursiveRingsEx"
                 worldFinalPos,
                 worldNormal,
                 getLightAttenRayMarching(fi, worldFinalPos),
-                getLightMap(fi));
+                getLightMap(fi),
+                half3(0.0, 0.0, 0.0));
 
             const float4 clipPos = UnityWorldToClipPos(worldFinalPos);
 
