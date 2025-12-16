@@ -2,7 +2,7 @@
 #define UTILS_INCLUDED
 
 #include "UnityCG.cginc"
-#include "AUtoLight.cginc"
+#include "AutoLight.cginc"
 
 
 float3 worldToObjectPos(float3 worldPos);
