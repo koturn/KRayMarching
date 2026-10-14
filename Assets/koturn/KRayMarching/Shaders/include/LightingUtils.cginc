@@ -72,6 +72,7 @@ half4 calcLightingUnityStandardSpecularDeferred(half4 color, float3 worldPos, fl
 
 UnityGI getGI(float3 worldPos, half atten);
 UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, float3 worldViewDir, half atten, float4 lmap, half3 ambient);
+void calcSHComponents(float3 worldPos, float3 worldNormal, out float3 L0, out float3 L1r, out float3 L1g, out float3 L1b);
 half3 calcLightVolumeAmbientAndSpecular(half3 albedo, float3 worldPos, float3 worldNormal, float3 worldViewDir, half glossiness, half metallic, half occlusion);
 
 
@@ -670,12 +671,29 @@ UnityGIInput getGIInput(UnityLight light, float3 worldPos, float3 worldNormal, f
 }
 
 
-void calcSHComponents(float3 worldPos, out float3 L0, out float3 L1r, out float3 L1g, out float3 L1b)
+/*!
+ * @brief Calculate SH components.
+ * @param [in] worldPos  World coordinate.
+ * @param [in] worldNormal  Normal in world space.
+ * @param [out] L0  Linear ambient RGB..
+ * @param [out] L1r  Red light directions and strength. Do not normalize them.
+ * @param [out] L1g  Green light directions and strength. Do not normalize them.
+ * @param [out] L1b  Blue light directions and strength. Do not normalize them.
+ */
+void calcSHComponents(float3 worldPos, float3 worldNormal, out float3 L0, out float3 L1r, out float3 L1g, out float3 L1b)
 {
 #if defined(_VRCLIGHTVOLUMES_ON)
+#    if defined(VRCLV_VERSION) && VRCLV_VERSION >= 3
+    LightVolumeSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b, (0.0).xxx, worldNormal);
+#    else
     LightVolumeSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b);
+#    endif  // defined(VRCLV_VERSION) && VRCLV_VERSION >= 3
 #elif defined(_VRCLIGHTVOLUMES_ADDITIVE)
+#    if defined(VRCLV_VERSION) && VRCLV_VERSION >= 3
+    LightVolumeAdditiveSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b, (0.0).xxx, worldNormal);
+#    else
     LightVolumeAdditiveSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b);
+#    endif  // defined(VRCLV_VERSION) && VRCLV_VERSION >= 3
 #else
     L0 = float3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w);
     L1r = unity_SHAr.xyz;
@@ -699,23 +717,11 @@ void calcSHComponents(float3 worldPos, out float3 L0, out float3 L1r, out float3
 half3 calcLightVolumeAmbientAndSpecular(half3 albedo, float3 worldPos, float3 worldNormal, float3 worldViewDir, half glossiness, half metallic, half occlusion)
 {
 #if defined(_VRCLIGHTVOLUMES_ON) || defined(_VRCLIGHTVOLUMES_ADDITIVE_ONLY) || defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
-    half3 emission;
-
     float3 L0, L1r, L1g, L1b;
-#    if defined(_VRCLIGHTVOLUMES_ADDITIVE)
-    LightVolumeAdditiveSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b);
-#    elif defined(_VRCLIGHTVOLUMES_ON)
-    LightVolumeSH(worldPos, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b);
-#    else
-    L0 = float3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w);
-    L1r = unity_SHAr.xyz;
-    L1g = unity_SHAg.xyz;
-    L1b = unity_SHAb.xyz;
-#    endif  // defined(_VRCLIGHTVOLUMES_ADDITIVE)
+    calcSHComponents(worldPos, worldNormal, /* out */ L0, /* out */ L1r, /* out */ L1g, /* out */ L1b);
 
     const float3 lvAmbient = LightVolumeEvaluate(worldNormal, L0, L1r, L1g, L1b) * albedo;
     float3 ambientAndSpecular = lvAmbient - lvAmbient * metallic;
-
 #    if (defined(_VRCLIGHTVOLUMESSPECULAR_ON) || defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)) && (defined(_LIGHTING_UNITY_STANDARD) || defined(_LIGHTING_UNITY_STANDARD_SPECULAR) || defined(_LIGHTING_UNITY_BLINN_PHONG))
 #        if defined(_VRCLIGHTVOLUMESSPECULAR_DOMINANT_DIR)
     ambientAndSpecular += LightVolumeSpecularDominant(albedo, glossiness, metallic, worldNormal, worldViewDir, L0, L1r, L1g, L1b) * occlusion;
